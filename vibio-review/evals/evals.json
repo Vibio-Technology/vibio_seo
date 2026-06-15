@@ -1,0 +1,23 @@
+{
+  "skill_name": "vibio-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "三周前你帮我改了品牌 schema 和 OG 图，现在见效了吗？",
+      "expected_output": "Should have vibio-memory read .vibio/changelog.md to find the change date and items, confirm ~3 weeks is enough re-crawl window for the schema (brand site-name) but note OG image affects click-through not ranking, route to seo-google (GSC: is the brand name now the site-name line? impressions/CTR on brand queries?) and seo-drift (did the WebSite JSON-LD survive redeploys?), judge each change effective/not/regressed, give next steps, and write the review back to changelog.md. Should not guess from feeling.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "给这个项目做个月度 SEO 复盘。",
+      "expected_output": "Should read .vibio/ (project.md + keyword tracker + changelog), re-measure via seo-google (month-over-month impressions/CTR/avg-position, biggest movers, positions 11-20, indexation changes) and seo-drift for regressions, judge against google-search-docs metric meanings, decide refresh/expand/CTR-repair/deprioritize per finding, update keyword tracker ranks+trend and append a REVIEW entry, then route follow-up work to vibio-fix or advance the bottleneck via vibio-plan. Monthly cadence, not daily rank-checking.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我昨天刚改完标题，排名涨了没？",
+      "expected_output": "Should recognize the re-crawl window is far too short (~1 day), explain title/description changes typically take 2-6 weeks to reflect in Google and that any movement now is noise, NOT report 'no effect', record a follow-up review date in changelog, and avoid promising the change will definitely work. May confirm the change is correctly live in rendered HTML in the meantime.",
+      "files": []
+    }
+  ]
+}

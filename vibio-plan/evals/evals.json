@@ -1,0 +1,23 @@
+{
+  "skill_name": "vibio-plan",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我们刚做了一个新的外贸独立站，想启动 SEO。不要讲概念，直接根据新站排一个 90 天执行计划：每周做什么、每月看什么、先做哪些页面，并说明该用哪些 SEO 工具。",
+      "expected_output": "Should classify as New site / Service-B2B, name the one dominant bottleneck, produce a dependency-sequenced 90-day roadmap with weekly + monthly cadence and tracking via delivery-template.md, name which specialist skills to run (b2b-seo, seo-content-brief, seo-cluster, seo-google), and end with the next 3 actions. No ranking promises.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "这个网站已经有很多博客了但流量起不来，给我接下来 30-90 天的优化计划，重点放在更新哪些页面、怎么排优先级、怎么复盘。",
+      "expected_output": "Should classify as Existing content site, focus on refreshes (positions 11-20), CTR repair, internal linking, cannibalization cleanup, and a monthly review loop. Should route to seo-google for GSC data and seo-content for E-E-A-T, not give generic new-site advice. Compress to diagnosis + next-30-90 days + cadence + next 3 actions.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "这个项目已经做了两个月 SEO 了，接下来该干嘛？",
+      "expected_output": "Should apply the continuation rule: not restart from scratch. First identify current phase, what's done, and the next bottleneck; then output only the next operating slice in the delivery-template structure, ending with next 3 actions.",
+      "files": []
+    }
+  ]
+}

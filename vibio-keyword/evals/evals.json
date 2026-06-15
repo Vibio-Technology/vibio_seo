@@ -1,0 +1,23 @@
+{
+  "skill_name": "vibio-keyword",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我们是做碳纤维和玻璃纤维的外贸厂，帮我看看产品该针对哪些关键词做 SEO 效果好。",
+      "expected_output": "Should read .vibio/ first, extract seed topics split into product / application-scenario / commercial-intent / informational buckets, expand candidates and route to seo-dataforseo for real volume/difficulty/intent (or state clearly if MCP unavailable and give a qualitative version, not invented numbers), classify by intent with b2b-seo buyer-journey lens biasing toward commercial + application terms, score each by relevance/can-answer/beatable-SERP/deserves-a-page, map keyword families to pages, group into 3-5 clusters, and write .vibio/trackers/keywords.md. Should not output a flat unsorted keyword list.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "帮我找一批高意图的关键词，重点是能带来询盘的那种。",
+      "expected_output": "Should prioritize commercial/transactional intent (manufacturer/supplier/wholesale/custom + specific application-selection terms) over informational traffic, score by actionability, map to commercial pages, and explain why high-intent B2B terms matter more than broad informational volume for an inquiry-driven site. Should route to b2b-seo and seo-dataforseo.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我新站权重很低，是不是该直接做 carbon fiber 这个大词？",
+      "expected_output": "Should push back honestly: a low-authority new site should not open with a high-difficulty head term. Apply the beatable-SERP actionability check, recommend long-tail / specific application + commercial-intent terms first, explain the dependency (earn relevance and links before competing for head terms), and offer to build the staged keyword map. Should cite the new-site branching logic.",
+      "files": []
+    }
+  ]
+}

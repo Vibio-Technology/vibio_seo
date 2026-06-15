@@ -1,0 +1,23 @@
+{
+  "skill_name": "vibio-memory",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "继续上次这个站的 SEO，之前做到哪了？",
+      "expected_output": "Should read .vibio/project.md + relevant trackers + recent changelog entries from the project root, then state the current phase, what's done, the last diagnosed bottleneck, the known stack, and the next action in one summary — and continue from there rather than restarting kickoff. If no .vibio/ exists, should say it's a new project and proceed to kickoff (creating .vibio/ on exit).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "把刚才这次审查发现的问题记下来。",
+      "expected_output": "Should append entries to .vibio/changelog.md (newest at top, append-only) with date, type=AUDIT finding, severity, what/where, verified state, and status; update project.md if the stack or phase changed. Should not overwrite the changelog or write outside the project root.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "这是个我们刚接的新站，建一下项目记忆。",
+      "expected_output": "Should create .vibio/ at the project root with project.md (from the snapshot/diagnosis template) and tracker skeletons (content.md, keywords.md), following references/state-templates.md field formats. Should fill known fields, leave unknowns blank, and suggest whether to commit or gitignore .vibio/.",
+      "files": []
+    }
+  ]
+}

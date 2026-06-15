@@ -1,0 +1,35 @@
+{
+  "skill_name": "vibio-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "审查一下这个项目的 SEO。这是一个英文 B2B 制造业站点。",
+      "expected_output": "Should read the codebase SEO config first (metadata, JSON-LD, robots, sitemap, layout/template head), detect the stack via stack-detection.md, run the seo-fix-principles spec as a checklist and/or route to seo-schema + seo-technical in parallel, adversarially verify findings against real rendered output, prioritize as Critical/High/Medium/Low (indexability blockers first), and hand the fixable ones to vibio-fix WITH the detected stack. Should not produce generic best-practice prose.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "https://example.com 帮我看看这个网站 SEO 怎么样。",
+      "expected_output": "Should treat the bare URL as a primary entry path: fetch the rendered page via seo-page/seo-firecrawl/seo-technical (or WebFetch), extract the real state of title/meta/canonical/robots-meta/JSON-LD/OG/headings/sitemap/llms.txt, fingerprint the stack from response headers/markup, adversarially verify, return prioritized findings, and pass the detected stack + edit-mode down to vibio-fix.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "这个页面内容看起来不错但就是排不上去，帮我看看为什么。",
+      "expected_output": "Should route diagnosis: seo-google (is it even indexed?) → seo-sxo (intent/page-type mismatch?) → seo-content (depth/E-E-A-T?). Should state what was checked in the real artifact, not guess. If it concludes intent/page-type mismatch, route the rewrite direction rather than calling it a technical bug.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "给我的线上站做个全站 SEO 体检。",
+      "expected_output": "Should first have vibio-memory read .vibio/ (continue if exists), route to seo-audit (which fans out internally) or fire seo-technical + seo-schema + seo-content + seo-sitemap + seo-geo in parallel, judge findings against references/google-search-docs.md (citing official URLs), integrate into a prioritized list (Critical for technical-requirement/spam-policy matches), write findings back to .vibio/changelog.md via vibio-memory, and route fixable items to vibio-fix.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "这些页面是用 AI 批量生成的，这样做 SEO 有没有风险？帮我查一下。",
+      "expected_output": "Should consult references/google-search-docs.md §3 spam policies — specifically 'scaled content abuse' (2024 policy: mass-producing pages incl. via generative AI primarily to manipulate rankings) and §4 helpful-content / people-first test — cite the official spam-policies URL, WebFetch it to confirm current wording given it's a newer policy, assess whether the pages add genuine value vs are ranking-manipulation filler, and flag as Critical if matched. Should not give a generic 'AI content is fine/bad' answer.",
+      "files": []
+    }
+  ]
+}

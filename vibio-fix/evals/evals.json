@@ -1,0 +1,29 @@
+{
+  "skill_name": "vibio-fix",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我新建的 zysfiber.com 在 Google 搜索结果里标题下面显示的是域名，搜公司全名也不会高亮，老站却可以。帮我改。",
+      "expected_output": "Should diagnose the two distinct mechanisms from seo-fix-principles.md (WebSite/og:site_name as site-name source vs meta-description query highlighting), detect the stack first, then apply the brand-SERP fix via the matching adapter (WebSite JSON-LD with legalName + alternateName, og:site_name = legal name, full company name in homepage meta description), verify in rendered HTML, and explain the engine must re-crawl (submit in Search Console).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "这是个 WordPress 外贸站，帮我把产品页的结构化数据和 OG 图补上。",
+      "expected_output": "Should detect WordPress and identify the SEO plugin (Yoast/Rank Math), then work through the plugin per wordpress.md: set Organization legal name + logo + default OG image in plugin settings, use WooCommerce for Product schema, set the full legal name for og:site_name. Should NOT hand-write tags the plugin will overwrite. Verify by fetching the live URL (after clearing cache) and grepping rendered HTML, not PHP source.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "这个 B2B 站（Next.js）的询盘表单要滚动才能看到，而且全站都是滚动渐显动画，帮我修。",
+      "expected_output": "Should detect Next.js and use stack-adapters/nextjs.md: lift the form/CTA above the fold (shrink hero padding, trim secondary copy, tighten form internals) and remove scroll-reveal animations (grep whileInView/ScrollTrigger/gsap/opacity-0, delete hooks and initial-hidden classes, keep genuine non-scroll interactions). Then run build/lint and grep the rendered HTML.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "https://example.com 这个站帮我看看 SEO 哪里能改，我用的是 Wix，改不了代码。",
+      "expected_output": "Should fetch the rendered page (via seo-page/seo-firecrawl or WebFetch), detect it's a hosted platform with no code access (url-only mode), diff against seo-fix-principles.md, and hand back per-finding fixes in the url-only.md format: what's wrong (quoted current value), target value/snippet, exactly where to paste it in Wix (SEO Basics / Custom code header), and how to verify after publishing. Should not pretend to edit code.",
+      "files": []
+    }
+  ]
+}
