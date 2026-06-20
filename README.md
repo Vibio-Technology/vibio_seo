@@ -1,8 +1,28 @@
-# Vibio SEO Skills
+<div align="center">
 
-> Vibio 的端到端 SEO 工具箱 — 一套把任意网站（任意技术栈，或只给一个 URL）变成可排名资产的 Claude Code skills
+<img src="assets/logo.png" alt="Vibio 维比欧" width="180" />
 
-多 skill 架构：不在一个巨型 skill 里分模式，而是拆成**主入口路由 + 专项子 skill + 末尾下一步路由串成工作流**。
+# 🌐 Vibio SEO Skills
+
+**Vibio 的端到端 SEO 工具箱**
+
+把任意网站（任意技术栈，或只给一个 URL）变成可排名资产的一套 Claude Code skills
+
+`PLAN` · `KEYWORD` · `AUDIT` · `FIX` · `REVIEW` · 主入口路由 + 8 个专项 + 27 个 seo-\* 专家
+
+</div>
+
+---
+
+多 skill 架构：不在一个巨型 skill 里分模式，而是拆成**主入口路由 + 专项子 skill + 末尾下一步路由串成工作流**。一次会话常常串起来——**AUDIT → FIX → 把剩下的 PLAN 掉**，过段时间再 **REVIEW** 复测见效、回到下一个瓶颈，形成闭环。
+
+## 目录
+
+- [Skills 列表](#skills-列表)
+- [四种操作模式](#四种操作模式)
+- [目录结构](#目录结构)
+- [设计原则](#设计原则跨模式底线)
+- [安装](#安装)
 
 ---
 
@@ -104,3 +124,9 @@ skills/
 ## 安装
 
 把各 `vibio*` 目录复制到本地 skills 目录（如 `~/.claude/skills/`），重启客户端后用 `/vibio` 或自然语言触发。
+
+---
+
+<div align="center">
+<sub>Vibio 维比欧 · 端到端 SEO 工具箱 · 把网站变成可排名资产</sub>
+</div>
