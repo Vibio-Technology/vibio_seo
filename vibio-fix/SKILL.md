@@ -2,7 +2,7 @@
 name: vibio-fix
 description: |
   当用户说「优化这个页面的 SEO」「加 schema / 结构化数据」「修 OG 图 / 社交分享图」「让公司名在 Google 搜索结果里显示 / 高亮」「加 llms.txt」「修 canonical / 重定向」「修 robots / sitemap」，或直接「给个网址帮我把 SEO 改好」时，应使用本 skill。栈无关：先识别站点用什么搭建（Next.js / WordPress / Shopify / 静态站 / 未知），载入对应适配器，套用通用目标规格直接动手改；没有代码权限时给出精确目标规格 + 可粘贴片段。改完在渲染产物里验证，并提醒面向 SERP 的改动需等搜索引擎重新抓取。
-  不应触发：要的是执行计划（用 vibio-plan）、要的是先全面诊断找问题（用 vibio-audit）、纯概念问答。
+  不应触发：要的是执行计划（用 vibio-plan）、要的是先全面诊断找问题（用 vibio-audit）、要的是写文章/正文成稿（用 vibio-content，本 skill 只做技术标记与落地，不写内容）、纯概念问答。
   Use for any concrete code- or CMS-level SEO fix on any stack (Next.js, WordPress, Shopify, static/Astro, or a hosted platform), or when given just a URL to fix. Detects the stack, loads the right adapter, applies the stack-agnostic spec, and verifies in rendered output.
 ---
 

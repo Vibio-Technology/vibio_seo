@@ -19,6 +19,7 @@ description: |-
 | 给站点排 SEO 计划 / 90 天路线图 / 每周做什么 | `vibio-plan` |
 | 关键词研究：我的产品该做哪些词 / 哪些值得做 / 怎么分组 | `vibio-keyword` |
 | 审查站点或代码库 / 检查页面 / 为什么排不上去 | `vibio-audit` |
+| 写一篇能排上去的文章 / 博客 / 产品页：逆向同行、写得更好、专业数据带可点击来源 | `vibio-content` |
 | 直接动手修：优化页面 / 加 schema / 修 OG 图 / 让品牌名在 SERP 显示（任意栈，或只给 URL）| `vibio-fix` |
 | 复盘：上次改的见效了吗 / 月度复盘 / 排名流量有变化吗 | `vibio-review` |
 | 把一个 SEO 流程封装成新的 vibio 子 skill | `vibio-factory` |
@@ -38,6 +39,8 @@ description: |-
 
 此外有一个专项入口 **`vibio-keyword`**（关键词研究）：「我的产品该做哪些词」「哪些值得做 / 怎么分组」。它是 PLAN 的前置/可独立触发的专项——产品/业务 → 真实搜索量+意图 → 关键词族映射到页面 → 写 `.vibio/`。
 
+还有一个专项入口 **`vibio-content`**（写成稿）：「针对这个词写一篇能排上去的文章」「逆向同行写一篇更好的」「数据帮我标来源」。它是 keyword/brief 的下游——定意图 → 逆向 SERP 头部对手找内容缺口 → 采一手素材 → 先建可点击来源的证据表（不编造）→ 写信息增益更高、GEO answer-first、去 AI 味但保留 B2B 技术结构的成稿 → 对抗式审稿 → 写回 `.vibio/`。落地成页面是可选下游（串 `vibio-fix`）。注意区分：要带字数的大纲是 `seo-content-brief`（上游），写成稿才是 `vibio-content`。
+
 ---
 
 ## 路由规则
@@ -47,6 +50,7 @@ description: |-
 - 要计划 / 路线图 / 节奏 / 先做什么 → `vibio-plan`
 - 要做关键词研究 / 该针对哪些词 → `vibio-keyword`
 - 要审查 / 诊断 / 查问题 / 为什么不排名 → `vibio-audit`
+- 要写文章 / 博客 / 产品页成稿（逆向同行、更好、带来源）→ `vibio-content`
 - 要动手改代码 / 加标记 / 修具体问题 → `vibio-fix`
 - 想知道之前改的见效没 / 月度复盘 → `vibio-review`
 - 想把某个重复 SEO 流程做成 skill → `vibio-factory`

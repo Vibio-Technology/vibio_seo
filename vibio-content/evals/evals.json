@@ -1,0 +1,29 @@
+{
+  "skill_name": "vibio-content",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "针对 carbon fiber for drone frames 这个词帮我写一篇能排上去的文章，要比同行写得更好，里面的数据帮我标来源。",
+      "expected_output": "Should read .vibio/ first (business model / B2B-or-not / target keyword family / existing content for internal links), lock the search intent and article format via seo-sxo before writing, route seo-competitor-pages to reverse-engineer the top 5-10 SERP pages into a coverage-vs-gap table, gather first-hand material from the user (3-5 insider questions), build a verified source table FIRST (WebFetch each data point, record clickable URL + figure + publication year + source tier, never invent), then write an answer-first GEO-friendly E-E-A-T draft whose 'better' means information gain (>=3 things competitors lack) not just longer, apply humanizer de-AI constraints while writing (keeping B2B technical structure like spec tables/bold params), run an adversarial second-pass edit, deliver the draft with front-matter + source list, and write back to .vibio/trackers/content.md. Should route b2b-seo for buyer-journey if project is B2B. Should NOT fabricate data or sources, should NOT just make it longer.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我手头有竞品的几篇文章，你逆向一下写一篇更强的博客出来。",
+      "expected_output": "Should tear down each competitor page across intent/subtopics/depth/data-with-sources/unique-angle/structure/gaps, build a coverage-vs-gap table to find collective blind spots (subtopics all competitors miss = highest value), then assemble a winning outline = must-answer skeleton + gap reinforcement + first-hand injection. Should push for first-hand material since pure second-hand synthesis stays homogeneous and gets suppressed by helpful-content systems. Should mark [needs-evidence] spots for the source table. Should not simply rewrite the competitor content longer.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "帮我写篇 SEO 文章，要去掉 AI 味，但别写得不专业。",
+      "expected_output": "Should apply the humanizer ruleset as a hard constraint during writing (kill inflated-meaning phrases, vague attribution, AI vocabulary, fake parallelism, marketing fluff, filler, over-hedging, generic endings) while explicitly exempting B2B technical structure: spec/parameter tables, bold thresholds and functional lists that carry real information are kept, since they are both readability essentials and the best structure for AI citation. The de-AI judgment is: delete formatting that loses no information, keep structure that carries content. Should run a second-pass review specifically for AI tells missed in the first pass. Should not flatten informative tables/lists into plain prose just to look less AI.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "这个词的内容大纲帮我列一下字数。",
+      "expected_output": "Should recognize this is a content-brief request (word-count outline), which is the UPSTREAM of vibio-content, and route to seo-content-brief rather than writing a full draft. Should offer to come back and write the finished draft (vibio-content) once the brief exists.",
+      "files": []
+    }
+  ]
+}
