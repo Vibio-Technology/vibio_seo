@@ -2,7 +2,7 @@
 name: vibio-content
 description: |
   当用户说「帮我写一篇 SEO 文章 / 博客 / 产品页 / 行业指南」「针对这个关键词写一篇能排上去的内容」「写一篇比同行更好的文章」「内容里的数据帮我标来源」「逆向竞品的文章写一篇更强的」「把这个词落地成成稿」时，应使用本 skill。
-  内容引擎：读 .vibio/ 锁定目标词与意图 → 用 seo-sxo 定死搜索意图与文章形态 → 路由 seo-competitor-pages 逆向 SERP 头部对手做「覆盖 vs 缺口」拆解 → 采集只有内部人答得出的一手素材 → 先建可点击来源的证据表（WebFetch 核实，不编造）→ 写出信息增益更高、E-E-A-T 更强、GEO answer-first、可被 AI 摘引的成稿 → 对抗式审稿重写 + 去 AI 痕迹（保留 B2B 技术结构）→ 交成稿并写回 .vibio/trackers/content.md。落地成站点页面是可选下游（串 vibio-fix）。面向 B2B/外贸默认走 b2b-seo 买家旅程视角。
+  内容引擎：读 .vibio/ 锁定目标词与意图 → 用 seo-sxo 定死搜索意图与文章形态 → 路由 seo-competitor-pages 逆向 SERP 头部对手做「覆盖 vs 缺口」拆解 → 采集只有内部人答得出的一手素材 → 先建可点击来源的证据表（WebFetch 核实，不编造）→ 写出信息增益更高、E-E-A-T 更强、GEO answer-first、可被 AI 摘引的成稿 → **5 Agent 独立盲审循环（95 分闸门，不过关就打回重写，最多 5 轮）** + 去 AI 痕迹（保留 B2B 技术结构）→ 交成稿并写回 .vibio/trackers/content.md。落地成站点页面是可选下游（串 vibio-fix）。面向 B2B/外贸默认走 b2b-seo 买家旅程视角。
   不应触发：只要带字数的内容大纲（用 seo-content-brief，这是本 skill 的上游）、关键词研究/词→页映射（用 vibio-keyword）、纯技术标记如 schema/OG/title（用 vibio-fix）、整体 90 天计划（用 vibio-plan）、纯 SEO 概念问答。
   Use when the user wants to write an SEO article / blog / product page / industry guide that out-performs competitors, with professional data points backed by clickable sources. Reverse-engineers the top SERP pages, gathers first-hand material, builds a verified source table, writes a higher-information-gain E-E-A-T draft optimized for GEO/AI citation, then adversarially edits and de-AIs it. Writing a draft is the deliverable; shipping it as a page is an optional vibio-fix hand-off.
 ---
@@ -15,6 +15,7 @@ description: |
 
 1. **信息增益，不是更长更全。** "更好" = 提供 SERP 现有页面**没有的增量**（独家一手经验 / 更新更准的数据 / 原创对比框架 / 更清晰的选型逻辑），不是把对手的内容堆得更长。删了不掉信息的段落就是水段。
 2. **不编造数据、不编造来源。** 每个具体数字/统计/专业论断，先 `WebFetch` 核实它真实存在、数字对得上、有发布日期，再引用到权威可点击 URL。核不到就不写，或明确标「估计」并说明依据。LLM 会幻觉看似合理的假 URL——所以事实核查与写作必须**分离**（见 Step 4 的证据表）。
+3. **95 分闸门，不过关不交付。** 初稿写完不是终点。必须通过 5 个独立 Agent 盲审（信息增益/EEAT/可读性/来源质量/去AI），平均分 ≥ 95 且每个维度 ≥ 15 才能交付。不过关就改，改完重新盲审，最多 5 轮。这是闸门，不是建议。
 
 ---
 
@@ -63,8 +64,26 @@ description: |
 - **内链**：从 `trackers/content.md` / `keywords.md` 取目标页做锚文本内链。
 - **写作时就启用 humanizer 硬约束**（见 reference）：不写套话开头、不模糊归因、不堆 AI 词汇、不为排版而排版——但**保留承载真实信息的 B2B 技术结构**（规格粗体、对比表、参数/步骤列表）。判据：删了不掉信息就删，删了掉信息就留。
 
-### Step 6：对抗式审稿 → 重写
-**一次成稿是平庸的根源，第二稿提升最大。** 用对抗性编辑视角逐条挑刺（清单见 `references/sourcing-and-eeat.md` 的 review 部分）：哪句没源？哪段是水段（删了不掉信息）？哪里和对手雷同、没有增量？意图答到了吗？answer-first 了吗？还有哪些 AI 痕迹（第二轮专查第一轮遗漏）？然后定向重写。
+### Step 6：多 Agent 盲审循环 → 95 分闸门 → 重写
+
+**一次成稿是平庸的根源，单人审稿有盲区。这一版升级为 5 个独立 Agent 盲审——每人只看稿子正文，不知道关键词/竞品/大纲/客户，模拟一个真实的搜索用户/AI 爬虫第一次读到这篇文章的体验。**
+
+**执行协议**（完整规则见 `references/adversarial-review.md`）：
+
+1. **发起盲审**：同时启动 5 个独立 Agent，每个 Agent 只拿到文章正文 + 自己维度的评分标准，彼此不知道对方存在：
+   - Agent 1：信息增益与竞争力（0-20 分）— 相对 SERP 现有内容提供了多少实质增量
+   - Agent 2：E-E-A-T 与可信度（0-20 分）— 读起来像不像有经验的专业人士写的
+   - Agent 3：可读性、结构与 GEO 就绪度（0-20 分）— 是否易于人类扫读 + AI 摘引
+   - Agent 4：技术准确性与来源质量（0-20 分）— 事实是否正确、来源是否可靠
+   - Agent 5：语言质量与去 AI 痕迹（0-20 分）— 读起来像不像人写的、专业编辑过的
+
+2. **汇总判定**：平均分 ≥ 95 **且**所有单维 ≥ 15 → ✅ 通过；否则 ❌ 打回。
+
+3. **修订重审**：汇总所有 Agent 的**具体扣分点**（不是模糊评语，是「第 X 段的 Y 句子有 Z 问题」），逐条修改后重新发起盲审。每轮 Agent 是全新实例，不知道上一轮的评分。
+
+4. **迭代上限**：最多 5 轮。5 轮后仍未达标 → 如实报告未通过的维度和原因，建议补一手素材或换角度。
+
+**不要把这个步骤简化成一个 checklist 自检。必须真正启动多个独立 Agent 做盲审。**
 
 ### Step 7：交付 + 写回记忆
 交成稿：Markdown 正文 + front-matter（`title` / `description` / 目标关键词 / **来源清单**）。用 `Write`/`Edit` 把这篇写回 `.vibio/trackers/content.md`（标题/URL/页型/关键词族/意图/状态=已写待发/日期/负责人，字段见 `vibio-memory`）。**落地是可选下游**：用户要发上去就串 `vibio-fix`（建页/路由、Article+FAQ schema、内链、OG）。

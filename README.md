@@ -1,132 +1,108 @@
-<div align="center">
+# Vibio SEO v3 — 统一搜索优化操作系统
 
-<img src="assets/logo.png" alt="Vibio 维比欧" width="180" />
+Vibio 的端到端搜索优化技能。不是用来"解释 SEO 是什么"的——它是一个完整的 SEO/GEO 操作系统：诊断瓶颈、自动识别技术栈、多栈修复、逆向 SERP 写作、5-Agent 盲审、闭环复盘、权威阶梯、预测排名、竞品战争、算法恢复、内容修剪、归因 ROI。同一个质量信号同时服务于传统搜索排名和 AI 搜索引用（Google AI Overviews / ChatGPT / Perplexity）。
 
-# 🌐 Vibio SEO Skills
+## v3 进化
 
-**Vibio 的端到端 SEO 工具箱**
+| 维度 | v1 | v3 |
+|------|-----|-----|
+| 工作模式 | 3 | 7 (PLAN/AUDIT/FIX/WRITE/KEYWORD/REVIEW/RECOVER) |
+| 修复栈 | Next.js 仅 | 5 栈 (Next.js/WordPress/Shopify/Static/URL-only) |
+| Reference 文件 | 5 个 / 760 行 | 36 个 / 4,433 行 |
+| 项目记忆 | 无 | .vibio/ 持久化，跨会话连续 |
+| 审查基准 | 民间 best practice | Google 官方文档，每条发现带规范 URL |
+| 内容质量 | 基础流水线 | 竞品拆解 → 证据表 → AI 优先写作 → 5-Agent 盲审 95 分闸门 |
+| SEO/GEO 统一 | 分离 | 一次优化，全域制胜 |
+| 闭环复盘 | 无 | 改动 → 等重抓窗口 → 阈值判定 → 决策 → 写回 |
+| 预测能力 | 无 | 排名概率/流量预估/时间线/收入预测 + 预测兑现调和 |
+| 竞品监控 | 无 | 竞品战争室 + AI 可见性情报 |
+| 算法恢复 | 无 | 5 原因诊断 + 分因恢复手册 |
+| ROI 归因 | 无 | B2B 队列归因含 18 个月滞后调整 |
+| 权威阶梯 | 无 | KD 分级关键词排序战略 |
+| 内容修剪 | 无 | 季度库存评分 + 合并/删除决策矩阵 |
+| PAA 缺口 | 无 | SERP 问题级缝隙提取，直入 WRITE 管线 |
+| 语义网络 | 无 | 实体节点 + 用户旅程 + 格式矩阵 + 内链拓扑 |
+| GEO 体系 | 无 | 统一审计/内容模板/竞品情报/平台策略 |
+| SEO 实验 | 无 | A/B 测试框架含统计显著性 |
 
-把任意网站（任意技术栈，或只给一个 URL）变成可排名资产的一套 Claude Code skills
+## 七种工作模式
 
-`PLAN` · `KEYWORD` · `AUDIT` · `FIX` · `REVIEW` · 主入口路由 + 8 个专项 + 27 个 seo-\* 专家
+- **PLAN** — 90 天路线图、权威阶梯架构、周/月节奏
+- **AUDIT** — 全站审查 + 统一搜索审计（传统 + AI 可见性）→ 0-100 评分
+- **FIX** — 5 栈修复（代码编辑 / CMS 配置 / 可粘贴片段）
+- **WRITE** — SERP 逆向 → PAA 缺口 → 证据表 → AI 优先写作 → 5-Agent 盲审 95 分闸门
+- **KEYWORD** — 种子词 → 真实数据 → 意图 + 级联阶段 → 页面映射 → 簇
+- **REVIEW** — 读改动历史 → 重抓窗口 → 定量阈值判定 → 预测调和 → 决策
+- **RECOVER** — 流量下降 → 5 原因诊断 → 分因恢复 → 监控
 
-</div>
-
----
-
-多 skill 架构：不在一个巨型 skill 里分模式，而是拆成**主入口路由 + 专项子 skill + 末尾下一步路由串成工作流**。一次会话常常串起来——**AUDIT → FIX → 把剩下的 PLAN 掉**，过段时间再 **REVIEW** 复测见效、回到下一个瓶颈，形成闭环。
-
-## 目录
-
-- [Skills 列表](#skills-列表)
-- [四种操作模式](#四种操作模式)
-- [目录结构](#目录结构)
-- [设计原则](#设计原则跨模式底线)
-- [安装](#安装)
-
----
-
-## Skills 列表
-
-| Skill | 功能 | 触发方式 |
-|-------|------|---------|
-| `vibio` | 主入口，判断意图并路由 | `/vibio`、SEO 意图模糊时 |
-| `vibio-plan` | PLAN 引擎：90 天路线图 + 周/月节奏 + 追踪 | 「排个 SEO 计划」「90 天路线图」 |
-| `vibio-keyword` | KEYWORD 引擎：产品/业务 → 真实搜索量+意图 → 关键词族映射到页面 → 主题簇 | 「我的产品该做哪些词」「关键词研究」 |
-| `vibio-audit` | AUDIT 引擎：读真实产物 → 对照 Google 官方文档 → 路由 27 个 seo-* 专家 → 优先级化发现 | 「审查我的站」「为什么排不上去」 |
-| `vibio-fix` | FIX 引擎（栈无关）：识别栈 → 套通用目标规格 → 在 Next.js/WordPress/Shopify/静态站里落地，或给可粘贴片段 | 「加 schema」「修 OG 图」「让品牌名在 Google 显示」「给个网址帮我改好」 |
-| `vibio-review` | REVIEW 引擎（闭环复盘）：读改动历史 → 等重抓窗口 → GSC+基线复测 → 判定见效 → 决定下一步 | 「上次改的见效了吗」「月度复盘」 |
-| `vibio-factory` | 元技能：按本系列架构生产/优化新的 vibio 子 skill | 「把这个流程做成 skill」 |
-| `vibio-memory` | 项目记忆层：读写项目根 `.vibio/`（诊断/进度/三张追踪表/改动日志） | 由 plan/audit/fix/review 调用；「继续上次的 SEO」 |
-
-底层还路由 27 个独立的 `seo-*` 专家 skill（audit/technical/schema/content/geo/backlinks…），它们不属于本系列，由 `vibio-audit` 调度。审查以 Google 官方文档为基准（`vibio-audit/references/google-search-docs.md`，覆盖技术要求/结构化数据/垃圾政策/helpful content，每条带官方 URL，存疑时实时 WebFetch 核实）。
-
----
-
-## 四种操作模式
-
-每个请求先归类，由主入口 `vibio` 分发：
-
-- **PLAN** → `vibio-plan`：「启动 SEO / 90 天路线图 / 每周做什么」。跑执行操作系统，按交付模板输出。
-- **AUDIT** → `vibio-audit`：「审查我的站 / 检查页面 / 为什么排不上去」。读真实产物 → 对照 Google 官方文档 → 路由专家 → 优先级排序的发现 + 修复。
-- **FIX** → `vibio-fix`：「优化页面 / 加 schema / 修 OG 图」或直接给个 URL。**栈无关**——所有 SEO 问题都暴露在渲染出的 HTML 里，跟谁生成的无关。先识别栈，用通用目标规格（`seo-fix-principles.md`）定义「要达成什么」，再按栈适配器（Next.js / WordPress / Shopify / 静态站 / URL-only）落地，最后在渲染产物里验证。
-- **REVIEW** → `vibio-review`：「上次改的见效了吗 / 月度复盘」。读 `.vibio/` 改动历史 → 等够重抓窗口 → 用 GSC + 基线对比复测 → 判定见效 → 决定刷新/扩展/降级/推进。
-
-专项入口 **`vibio-keyword`**（关键词研究）：「我的产品该做哪些词」。产品/业务 → 扩种子词 → `seo-dataforseo` 拉真实搜索量/难度/意图 → 按意图分类打分 → 关键词族映射到页面 → 主题簇 → 写 `.vibio/trackers/keywords.md`。是 PLAN 第 2 周"关键词架构"阶段的主力，也能独立触发。
-
-一次会话常常串起来：**AUDIT → FIX → 把剩下的 PLAN 掉**；过段时间再 **REVIEW** 复测见效、回到下一个瓶颈，形成闭环。每个 skill 末尾的「下一步路由」表负责衔接，记忆层 `.vibio/` 把跨会话的历史串起来。
-
----
-
-## 目录结构
+## 文件结构
 
 ```text
-skills/
-├── vibio/SKILL.md                       # 主入口路由器
-├── vibio-plan/
-│   ├── SKILL.md
-│   ├── evals/evals.json
-│   └── references/
-│       ├── operating-system.md          # PLAN 引擎：kickoff/诊断/90天/节奏/追踪
-│       └── delivery-template.md         # PLAN 交付标准结构
-├── vibio-keyword/
-│   ├── SKILL.md                       # KEYWORD 引擎：种子词→真实量/意图→词→页映射→簇
-│   └── evals/evals.json
-├── vibio-audit/
-│   ├── SKILL.md
-│   ├── evals/evals.json
-│   └── references/
-│       ├── skill-arsenal.md           # 27 个 seo-* 专家的能力地图与调度规则
-│       ├── google-search-docs.md      # 审查基准：Google 官方文档蒸馏（每条带 URL）+ 混合用法
-│       ├── seo-fix-principles.md      # 同步副本（权威源在 vibio-fix）：审查用的目标规格
-│       └── stack-detection.md         # 同步副本（权威源在 vibio-fix）：识别栈传给 fix
-├── vibio-fix/
-│   ├── SKILL.md
-│   ├── evals/evals.json
-│   └── references/
-│       ├── seo-fix-principles.md      # 栈无关目标规格 + 渲染产物验证（FIX 核心）
-│       ├── stack-detection.md         # 从代码库/URL 指纹识别栈 + 判断能否改代码
-│       └── stack-adapters/            # 各栈的落地方式
-│           ├── nextjs.md              #   最完整，真实验证过的 App Router 配方
-│           ├── wordpress.md           #   Yoast/Rank Math + 主题
-│           ├── shopify.md             #   Liquid 模板 + 主题设置
-│           ├── static-astro.md        #   Astro/Hugo/Jekyll/纯 HTML
-│           └── url-only.md            #   无代码权限：给规格 + 可粘贴片段
-├── vibio-review/
-│   ├── SKILL.md                       # REVIEW 引擎：读改动历史→复测→判定见效→决策
-│   └── evals/evals.json
-├── vibio-memory/
-│   ├── SKILL.md                       # 项目记忆：读写项目根 .vibio/
-│   ├── evals/evals.json
-│   └── references/
-│       └── state-templates.md         # project.md / 三张 tracker / changelog 标准格式
-└── vibio-factory/SKILL.md               # 造 skill 的元技能
-
-> 项目记忆落在**被操作项目**的根目录 `.vibio/`（project.md + trackers/ + changelog.md），不在 skill 目录里。
+vibio_seo/
+├── SKILL.md                              # 269 行：7 模式 + 13 核心规则（含 SEO/GEO 统一原则）
+├── README.md
+├── evals/
+│   └── evals.json                        # 20 条测试用例
+└── references/                           # 36 文件 / 4,433 行
+    ├── operating-system.md               # PLAN 引擎 + GEO 追踪 + 阈值 + 预测调和
+    ├── skill-arsenal.md                  # 27 专家工具地图
+    ├── delivery-template.md              # PLAN 交付结构
+    │
+    ├── seo-fix-principles.md             # 12+1 维度修复目标规格（含 AI 搜索就绪度）
+    ├── stack-detection.md                # 8 种栈自动检测
+    ├── google-search-docs.md             # Google 官方文档审查基准
+    ├── stack-adapters/                   # 5 栈修复配方
+    │   ├── nextjs.md
+    │   ├── wordpress.md
+    │   ├── shopify.md
+    │   ├── static-astro.md
+    │   └── url-only.md
+    │
+    ├── write-playbook.md                 # 11 阶段文章生产管线 + 5-Agent 盲审闸门
+    ├── competitor-teardown.md            # 竞品拆解 + 覆盖 vs 缺口矩阵
+    ├── sourcing-and-eeat.md              # 证据表 + EEAT 配方 + AI 可摘引 + 去 AI 规则 + 盲审计分依据
+    ├── adversarial-review.md             # 5 Agent 独立盲审，95 分闸门，5 轮迭代上限
+    ├── geo-content-patterns.md           # 7 种 AI 优先内容模板 + 跨平台差异速查
+    │
+    ├── geo-dominance.md                  # 统一 AI 搜索策略：llms.txt / 实体信号 / 平台差异
+    ├── geo-audit.md                      # 5 阶段 0-100 分统一搜索审计
+    ├── geo-competitive-intel.md          # GEO 竞品情报 + 攻击手册
+    │
+    ├── authority-cascade.md              # 🆕 权威阶梯：KD 分级排序战略
+    ├── semantic-networks.md              # 🆕 语义内容网络：超越 topic cluster
+    ├── content-pruning.md                # 🆕 内容修剪：季度库存评分 + 删除/合并决策
+    ├── paa-gap-analysis.md               # 🆕 PAA 缺口：SERP 问题级缝隙提取
+    │
+    ├── predictive-seo.md                 # 排名/流量/时间/收入预测 + 调和闭环
+    ├── competitive-war-room.md           # 竞品战争室（含 AI 可见性维度）
+    ├── recovery-playbook.md              # 算法恢复手册
+    ├── roi-attribution.md                # SEO→收入管道 + B2B 队列归因
+    ├── serp-feature-targeting.md         # SERP 特征攻占
+    ├── entity-strategy.md                # 知识图谱 + 主题权威
+    ├── migration-playbook.md             # 域名/平台迁移
+    ├── content-decay.md                  # 内容衰减检测 + 刷新阶梯
+    ├── multi-language-ops.md             # 多语言运营
+    ├── seo-experimentation.md            # A/B 测试 + 统计显著性
+    │
+    ├── state-templates.md                # .vibio/ 项目记忆模板
+    ├── keyword-engine.md                 # KEYWORD 引擎
+    └── review-engine.md                  # REVIEW 引擎（含定量阈值）
 ```
 
----
+## 设计原则
 
-## 设计原则（跨模式底线）
-
-- 先看真实项目（代码库或 URL），再下计划
-- 先找一个主瓶颈，再排优先级（不列五个并列优先级）
-- 默认动手修，不只描述；栈无关——有代码改代码并 build/lint，托管平台给可粘贴片段，都在渲染产物里验证
-- 能路由到 seo-* 专家就不手搓分析
-- 以周/月为节奏，不做日常焦虑型 SEO
+- SEO 和 AI 搜索是同一个问题——一次优化，全域制胜
+- 先读 `.vibio/` 项目记忆，再干活；收工写回，不重启
+- 自动检测技术栈，不假设 Next.js
+- 先找主瓶颈，再排优先级
+- 默认动手修，改完在渲染产物里验证
+- 审查引用 Google 官方文档 URL
+- 能路由到 27 个专家工具就不手搓
+- 内容不达 95 分盲审闸门不交付
+- 预测必须调和——每月对比预测值和实际值
+- SERP 改动等 2-6 周重抓窗口再判见效
 - 不承诺排名、不承诺快速见效
-- 面向 SERP 的改动会提醒：需等搜索引擎重新抓取，可在 Search Console 请求索引加速
-- 有记忆：每个项目落 `.vibio/`，开工先读、收工写回，从「每次重新认识项目」变成「记得上次干了什么」
-- 审查有据：发现以 Google 官方文档为准并引到 URL，不靠民间 best practice
-
----
 
 ## 安装
 
-把各 `vibio*` 目录复制到本地 skills 目录（如 `~/.claude/skills/`），重启客户端后用 `/vibio` 或自然语言触发。
-
----
-
-<div align="center">
-<sub>Vibio 维比欧 · 端到端 SEO 工具箱 · 把网站变成可排名资产</sub>
-</div>
+把本目录复制到 `~/.claude/skills/vibio_seo`，重启 Claude Code 生效。

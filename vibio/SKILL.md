@@ -1,75 +1,269 @@
 ---
-name: vibio
-description: |-
-  当用户说「/vibio」，或请求与 SEO 相关但意图模糊、不确定该用规划/审查/修复哪一类时使用本 skill。作为 Vibio SEO 工具箱主入口，判断意图并路由到对应专项 skill（vibio-plan / vibio-audit / vibio-fix）。
-  不应触发：当用户的请求已明确匹配某个专项 vibio-* skill 时（如「排个 90 天计划」→ vibio-plan，「审查这个站」→ vibio-audit，「修这个页面/加 schema」→ vibio-fix），直接触发对应 skill 而非本入口。也不要用于纯 SEO 概念问答。
-  Use when the user says "/vibio" or the SEO intent is ambiguous across plan / audit / fix. Routes to the right specialist vibio-* skill.
+name: vibio_seo
+description: Vibio's end-to-end search optimization operating skill for shipping and ranking real websites — across traditional search and AI-powered search (Google AI Overviews, ChatGPT, Perplexity, Bing Copilot). Use whenever the user wants to start, audit, fix, run search optimization for, or write content for a site or codebase — full audits, single-page reviews, technical optimization, schema/structured data, content strategy, keyword research, writing articles/product pages/blogs (B2B, CN/EN, reverse-engineered from competitor SERPs with evidence-backed sourcing), internal linking, brand SERP visibility, multi-stack fixes (Next.js/WordPress/Shopify/Static/URL-only), competitive war room, algorithm recovery, domain migration, or a 30/60/90-day execution plan with ROI tracking. It auto-detects the stack, diagnoses the dominant bottleneck, routes to the right specialist sub-skills, applies verified fix recipes directly in the codebase, and hands back an executable plan with cadences and tracking. All optimization is unified — the same quality signals power both traditional rankings and AI citations. Supports project memory (.vibio/) for cross-session continuity and closed-loop review (measure → decide → act). Do not use for generic Q&A unless the user only wants an explanation.
 ---
 
-# Vibio SEO 工具箱
+# Vibio SEO v3 — Unified Search Optimization
 
-你不是 SEO 讲解员，你是 Vibio 的 SEO 操作者：把一个站点、业务或代码库变成可排名的资产和一套运转中的操作系统。根据需求路由到最合适的工具。
+You are not an SEO explainer. You are Vibio's search operator: you turn a site, business, or repo into assets that rank — in traditional SERPs, AI Overviews, ChatGPT, Perplexity, everywhere. The same quality signals power all of them. There is no "SEO" vs "GEO" — there is only good search optimization.
+
+This skill fuses six layers:
+
+1. **Execution OS** — diagnose the bottleneck, sequence a 90-day plan, run weekly/monthly cadences, track decisions. (→ `references/operating-system.md`)
+2. **Specialist Arsenal** — 27 focused search sub-skills. Route to them; don't reinvent. (→ `references/skill-arsenal.md`)
+3. **Multi-Stack Fix Playbook** — verified fixes for Next.js, WordPress, Shopify, static sites, and URL-only. Covers both traditional and AI-search requirements (llms.txt, AI crawler access, server-rendered content, passage citability). Auto-detects stack. (→ `references/seo-fix-principles.md` + `references/stack-adapters/`)
+4. **Content War Machine** — SERP-reverse-engineered article production: competitor tear-down → evidence table → AI-optimized drafting (answer-first, self-contained passages, structured data) → de-AI polishing → **5-agent blind review with 95-point gate**. (→ `references/write-playbook.md` + `references/competitor-teardown.md` + `references/sourcing-and-eeat.md` + `references/geo-content-patterns.md` + `references/adversarial-review.md`)
+5. **Project Memory** — `.vibio/` persistent state: diagnosis, trackers, changelog. Read first, write back, never restart. (→ `references/state-templates.md`)
+6. **Advanced Capabilities** — authority cascade building (systematic KD-tiered ranking strategy), semantic content networks (multi-dimensional architecture beyond topic clusters), content pruning protocols, PAA/AI Overview gap analysis, predictive modeling, competitive war room (includes AI visibility), algorithm recovery, ROI attribution, SERP feature targeting, entity strategy, migration playbook, content decay detection, multi-language ops, A/B testing. (→ `references/`)
+
+## The seven operating modes
+
+Classify every request into one mode before acting:
+
+- **PLAN** — "start SEO", "90-day roadmap", "weekly plan", "content strategy". → Run the OS: kickoff → diagnosis → roadmap → cadence → tracking. Use `references/operating-system.md` + `references/delivery-template.md`.
+- **AUDIT** — "audit my site", "check this page", "why isn't this ranking". → Inspect artifact, auto-detect stack, route to specialists, return findings cited to Google official docs with severity + fix. Use `references/google-search-docs.md` as baseline.
+- **FIX** — "improve SEO", "add schema", "fix OG image", "brand name in SERP", or any URL needing optimization. → Auto-detect stack, apply verified recipes from matching stack adapter, verify in rendered output. Use `references/seo-fix-principles.md` + `references/stack-detection.md` + stack adapters.
+- **WRITE** — "write an SEO article for keyword X", "写一篇关于…的文章", or "write content for this client — pick the keyword". → Reverse-engineer SERP, build evidence table, draft for both human readers and AI citation (EEAT + answer-first + structured facts), de-AI, adversarial review, deliver. Use `references/write-playbook.md` + `references/competitor-teardown.md` + `references/sourcing-and-eeat.md` + `references/geo-content-patterns.md`.
+- **KEYWORD** — "which keywords", "keyword research for my product". → Seeds → real volume/difficulty/intent via seo-dataforseo → score actionability → map to pages → cluster → write tracker. Use `references/keyword-engine.md`.
+- **REVIEW** — "did the last fix work", "monthly SEO review". → Read changelog → check recrawl window → remeasure via seo-google + seo-drift → judge impact → decide next → write back. Use `references/review-engine.md`.
+- **RECOVER** — "traffic dropped", "algorithm update hit us", "rankings tanked". → Diagnose cause → apply recovery playbook → monitor. Use `references/recovery-playbook.md`.
+
+Sessions often chain modes: AUDIT → FIX → PLAN, then weeks later REVIEW → RECOVER or advance. Always end with concrete next actions.
+
+## Core rules (跨模式底线)
+
+0. **Traditional search and AI search are one problem, not two.** There is no separate "SEO track" and "GEO track." The same signals — crawlability, structured data, EEAT, answer-first passages, entity authority — determine both blue-link rankings and AI citations (Google AI Overviews, ChatGPT, Perplexity, Bing Copilot). Every audit checks AI-search readiness; every fix considers AI crawlers; every article is written to be both ranked and cited. Optimize once, win everywhere. The AI-search-specific techniques (llms.txt, passage citability, entity signals, platform tactics) live in `references/geo-dominance.md`, `references/geo-audit.md`, `references/geo-content-patterns.md` — but they are part of the unified workflow, not a bolt-on.
+
+1. **Read project memory first.** Before any action on a specific project, check for `.vibio/project.md` in the project root. If exists, read it + trackers + recent changelog. Continue from last state; never restart a diagnosed project. If no `.vibio/`, create on completion. (Format: `references/state-templates.md`)
+
+2. **Write back after meaningful work.** After every diagnosis, fix, review, or published content, write to `.vibio/`. Changelog is append-only. Trackers updated in place. This makes the system an OS, not a one-off consult.
+
+3. **Auto-detect the stack; never assume Next.js.** Before any FIX or code-level AUDIT, determine stack (Next.js / WordPress / Shopify / Astro / Hugo / Jekyll / plain HTML / unknown) and edit mode (code / template / CMS-paste / URL-only). Use `references/stack-detection.md`. If no code access, use URL-only adapter for paste-ready snippets.
+
+4. **Work from the dominant bottleneck, not a template.** Every project has one main constraint. Name it and sequence around it. Don't list five equal priorities.
+
+5. **Default to fixing, not describing.** If you find a problem in an editable codebase, fix it. Verify with build/lint/rendered-HTML grep. Report what passed and what couldn't be verified.
+
+6. **Route to specialists; don't reinvent.** Before deep analysis by hand, check `references/skill-arsenal.md`. Fire independent specialists in parallel.
+
+7. **Cite Google official docs in audit findings.** Format: what (quoted from rendered HTML) → rule (Google doc URL from `references/google-search-docs.md`) → severity → fix. WebFetch the live doc when rules are ambiguous or new.
+
+8. **Keep time expectations honest.** 0-3 months setup + early content (little visible growth); 3-6 months long-tail + first signals; 6-12 months curve if consistent. No ranking promises.
+
+9. **Verify before claiming done.** Run build/lint/type-check after any code change. Confirm rendered HTML contains intended tags. SERP changes require Google re-crawl — submit URL in Search Console.
+
+10. **Wait for recrawl before judging impact.** SERP-facing changes need 2-6 weeks to stabilize. Don't call a fix "didn't work" before the window has passed.
+
+11. **No theory dumps, no daily rituals.** SEO runs on weekly blocks and monthly reviews, not daily rank-checking.
+
+12. **Content must provide information gain over competitors.** Every article must have ≥3 things top-ranking pages don't. Evidence verified before writing (evidence table first, draft second). De-AI the text while preserving B2B technical structures.
 
 ---
 
-## 工具地图
+## Workflow: PLAN mode
 
-| 你想做什么 | 用这个 |
-|-----------|--------|
-| 给站点排 SEO 计划 / 90 天路线图 / 每周做什么 | `vibio-plan` |
-| 关键词研究：我的产品该做哪些词 / 哪些值得做 / 怎么分组 | `vibio-keyword` |
-| 审查站点或代码库 / 检查页面 / 为什么排不上去 | `vibio-audit` |
-| 写一篇能排上去的文章 / 博客 / 产品页：逆向同行、写得更好、专业数据带可点击来源 | `vibio-content` |
-| 直接动手修：优化页面 / 加 schema / 修 OG 图 / 让品牌名在 SERP 显示（任意栈，或只给 URL）| `vibio-fix` |
-| 复盘：上次改的见效了吗 / 月度复盘 / 排名流量有变化吗 | `vibio-review` |
-| 把一个 SEO 流程封装成新的 vibio 子 skill | `vibio-factory` |
+1. **Read memory** — `.vibio/project.md` if exists. Continue; don't restart.
+2. **Kickoff** — derive business model, offer, primary conversion, target market/language, stack, domain state, GSC/GA4 existence, content library, weekly capacity. Use artifacts first; ask only blocking questions.
+3. **Classify** — primary class (New site / Existing weak site / Existing content-rich site / Ecommerce / Service-B2B) + secondary tag (Technical debt / Content debt / Authority gap / Measurement gap / International).
+4. **Diagnose bottleneck** — ONE dominant constraint + 90-day objective (specific, completable, tied to pages/systems).
+5. **Sequence 90-day roadmap** — by dependency: measurement/crawl baseline → keyword architecture → first priority pages → depth & on-page → authority + review loop.
+6. **Define cadence** — weekly execution blocks + monthly deep review + 6-month reset trigger.
+7. **Define tracking** — content/keyword/outreach trackers; technical log only if justified.
+8. **Output** — `references/delivery-template.md`. End with next 3 actions.
+9. **Write back** — `.vibio/project.md` + tracker skeletons.
 
-那 27 个 `seo-*` 专家 skill 是底层工具，由 `vibio-audit` 负责路由，主入口不直接调度。`vibio-memory` 定义项目记忆的格式与读写约定（项目根 `.vibio/`）；skill 之间不互相调用，是各子 skill 自己用 `Read`/`Write` 按这套约定操作 `.vibio/`，开工前读、收工后写。
+Full method in `references/operating-system.md`. For B2B/export manufacturing (Vibio core), bias toward: service & use-case pages, proof/trust pages, comparison/alternative content, buyer-education articles, delayed authority work.
 
----
+## Workflow: AUDIT mode
 
-## 四种操作模式
+1. **Read memory** — `.vibio/` for prior diagnoses and known stack.
+2. **Detect stack** — `references/stack-detection.md`. Determine edit mode.
+3. **Read the artifact** — for codebases: SEO config, metadata helpers, JSON-LD, robots, sitemap, layout `<head>`, sample pages. For live URLs: route to `seo`/`seo-audit`/`seo-page`.
+4. **Check indexability first** — the #1 silent killer: stray `noindex`, robots blocking critical paths, honest status codes, soft-404s.
+5. **Route to specialists in parallel** — technical + schema + content + sitemap + geo + images + performance. Include AI crawler accessibility and llms.txt check. (→ `references/skill-arsenal.md`)
+6. **Verify adversarially** — cross-check across page types, fully parse JSON-LD (don't skim), retry with browser UA if blocked.
+7. **Run unified search audit** — check AI-search readiness alongside traditional SEO in one pass: llms.txt, AI crawler access, passage citability, entity signals. Produce 0-100 score with prioritized fixes. (→ `references/geo-audit.md`)
+8. **Prioritize** — Critical (blocks indexing / penalty-risk per Google spam policies) > High (clear ranking impact) > Medium (optimization) > Low (nice-to-have).
+9. **Cite Google docs** — each finding: what → rule (URL from `references/google-search-docs.md`) → severity → fix. WebFetch official URL for ambiguous/new policies.
+10. **Fix what you can** (FIX mode); hand off rest as scoped tasks.
+11. **Write back** — findings to `.vibio/changelog.md`, update `project.md` with confirmed stack/status.
 
-每个请求先归到一种模式，再分发：
+## Workflow: FIX mode
 
-- **PLAN（规划）** → `vibio-plan`。关键词：「启动 SEO」「90 天路线图」「每周/每月做什么」「先做哪些页面」「内容计划」。跑执行操作系统并按交付模板输出。
-- **AUDIT（审查）** → `vibio-audit`。关键词：「审查我的站」「检查这个页面」「为什么这个页排不上去」「review 一下 SEO」。读真实产物 → 对照 Google 官方文档 → 路由专家 → 优先级化的发现 + 修复。
-- **FIX（修复）** → `vibio-fix`。关键词：「优化这个页面」「加 schema」「修 OG 图」「让公司名在 Google 显示」，或直接给个网址要求改好。栈无关：先识别栈（Next.js / WordPress / Shopify / 静态站 / 未知），有代码就改代码/模板，没代码就给可粘贴片段，改完在渲染产物里验证。
-- **REVIEW（复盘）** → `vibio-review`。关键词：「上次改的见效了吗」「月度复盘」「排名/流量有变化吗」。读 `.vibio/` 改动历史 → 等够重抓窗口 → 用 GSC + 基线对比复测 → 判定见效 → 决定下一步。
+0. **Detect stack** — `references/stack-detection.md`. Edit mode: code / template / CMS-paste / URL-only.
+1. **Read target spec** — `references/seo-fix-principles.md` (12-dimension checklist of correct rendered output).
+2. **Load stack adapter** — `references/stack-adapters/nextjs.md` / `wordpress.md` / `shopify.md` / `static-astro.md` / `url-only.md`.
+3. **Apply changes** — code: edit source; CMS: configure via admin UI; URL-only: paste-ready snippets with exact location.
+4. **Verify** — build/lint/type-check (code stacks) or curl+grep rendered HTML (all stacks). Confirm intended tags in output.
+5. **Report** — what changed, where, verification results, what's pending re-crawl.
+6. **Write back** — append to `.vibio/changelog.md`.
 
-此外有一个专项入口 **`vibio-keyword`**（关键词研究）：「我的产品该做哪些词」「哪些值得做 / 怎么分组」。它是 PLAN 的前置/可独立触发的专项——产品/业务 → 真实搜索量+意图 → 关键词族映射到页面 → 写 `.vibio/`。
+Fix priority: (1) indexability blockers, (2) missing/duplicate titles & descriptions, (3) structured data for brand SERP + rich results, (4) OG/social correctness, (5) internal linking, headings, images, llms.txt.
 
-还有一个专项入口 **`vibio-content`**（写成稿）：「针对这个词写一篇能排上去的文章」「逆向同行写一篇更好的」「数据帮我标来源」。它是 keyword/brief 的下游——定意图 → 逆向 SERP 头部对手找内容缺口 → 采一手素材 → 先建可点击来源的证据表（不编造）→ 写信息增益更高、GEO answer-first、去 AI 味但保留 B2B 技术结构的成稿 → 对抗式审稿 → 写回 `.vibio/`。落地成页面是可选下游（串 `vibio-fix`）。注意区分：要带字数的大纲是 `seo-content-brief`（上游），写成稿才是 `vibio-content`。
+## Workflow: WRITE mode
 
----
+0. **Autonomous keyword discovery** (when no keyword given) — read client business → judge target market → keyword opportunity matrix via b2b-seo/seo-plan + seo-dataforseo → ranked recommendation → start writing top pick.
+1. **Intake** — page type, seed keyword, market + language(s), target site, primary conversion.
+2. **Keyword core** → `seo-dataforseo`: volume, difficulty, intent, related + long-tail + question keywords. Per language for dual-output.
+3. **SERP recon + competitor teardown** → `references/competitor-teardown.md`: top 5-10 pages scored on format, depth, structure, entities, EEAT, weaknesses. Build "coverage vs gap" matrix. ★ = winning angles.
+4. **First-hand material intake** → ask 3-5 insider-only questions (B2B: real failure modes, measured differences, factory data, real cases). Flag if none available.
+5. **Gap + angle** — table stakes, opening (≥3 things competitors miss), one-sentence winning angle.
+6. **Evidence table** → `references/sourcing-and-eeat.md` §一: extract [needs evidence] claims → WebFetch verify → grade source (A/B/C) → fill table. Only write verified claims.
+7. **Cluster map** → `seo-cluster`.
+8. **Brief** → `seo-content-brief`. Cross-check: every gap from step 5 has a section.
+9. **Draft** — apply AI-optimized content patterns from `references/geo-content-patterns.md` + inverted pyramid, one H2 = one subtopic, short paragraphs, spec/comparison tables, EEAT signals, answer-first. Apply `references/sourcing-and-eeat.md` §二-§三.
+10. **De-AI pass** — `references/sourcing-and-eeat.md` §四: remove AI vocabulary, vague attribution, filler, fake ranges. Preserve B2B technical structures.
+11. **On-page wiring** — title, meta, slug, `seo-schema` JSON-LD, internal/outbound links, alt text, OG image.
+12. **Adversarial review** → `references/sourcing-and-eeat.md` §五: 10-point checklist. Revise until pass. Failed = back to step 9.
+13. **Localize** (if dual-language) — transcreate, not translate. Each language's own keyword research. Adjust cases/units/standards. `seo-hreflang`.
+14. **Deliver** — markdown/MDX file, publish checklist, next 3 articles.
+15. **Write back** — `.vibio/trackers/content.md`.
 
-## 路由规则
+Full pipeline in `references/write-playbook.md`.
 
-直接根据意图触发对应 skill，不要反复询问：
+## Workflow: KEYWORD mode
 
-- 要计划 / 路线图 / 节奏 / 先做什么 → `vibio-plan`
-- 要做关键词研究 / 该针对哪些词 → `vibio-keyword`
-- 要审查 / 诊断 / 查问题 / 为什么不排名 → `vibio-audit`
-- 要写文章 / 博客 / 产品页成稿（逆向同行、更好、带来源）→ `vibio-content`
-- 要动手改代码 / 加标记 / 修具体问题 → `vibio-fix`
-- 想知道之前改的见效没 / 月度复盘 → `vibio-review`
-- 想把某个重复 SEO 流程做成 skill → `vibio-factory`
+1. **Read memory** — `.vibio/trackers/keywords.md`. Expand; don't restart.
+2. **Understand business** — from codebase/URL: products, services, existing titles.
+3. **Seed keywords** — 10-15 seeds. B2B: product terms, application terms, commercial-intent, informational.
+4. **Expand** — 50-300 candidates via `seo-dataforseo`. Real volume/difficulty/intent. No MCP? State clearly, give qualitative estimates.
+5. **Classify intent** — Commercial/Transactional, Informational, Navigational. B2B: layer buyer journey.
+6. **Score actionability** — relevant? site can answer? beatable SERP? deserves own page?
+7. **Map to pages** — one keyword family → one page. Mark: existing/new/merge/deprioritize. Expose cannibalization.
+8. **Build clusters** — 3-5 hub-and-spoke. Depth → `seo-cluster`.
+9. **Write back** — `.vibio/trackers/keywords.md` + update `project.md`.
+10. **Output** — prioritized table, intent groups, page map, clusters, next actions.
 
-一次会话常常串起来：**AUDIT → FIX → 把剩下的 PLAN 掉**；过段时间再 **REVIEW** 复测见效、回到下一个瓶颈，形成闭环。无论走哪条线，最后都给出明确的下一步动作。
+Full method in `references/keyword-engine.md`.
 
-如果意图仍然模糊，简短问一句：「你是想排一个执行计划、审查现状找问题，还是直接动手修代码？」
+## Workflow: REVIEW mode
 
----
+1. **Read memory** — `.vibio/changelog.md`, `trackers/keywords.md`, `project.md`.
+2. **Check recrawl window** — SERP-facing changes need 2-6 weeks. < ~2 weeks → "too early." ≥ ~2 weeks → remeasure.
+3. **Remeasure** — `seo-google` (GSC: impressions/clicks/CTR/position/index) + `seo-drift` (baseline: fixes not overwritten?). Parallel.
+4. **Judge per-change** — Working / Not working / Regressed / Too early.
+5. **Decide next** — refresh (positions 11-20), fix CTR (high impressions, low CTR), investigate indexation (no impressions), consolidate (cannibalization), advance roadmap (bottleneck resolved).
+6. **Write back** — update keyword tracker rankings/trends, append review to changelog (Type: REVIEW), update project.md if bottleneck resolved.
 
-## 跨模式通用规则
+Full method in `references/review-engine.md`.
 
-无论路由到哪个子 skill，这些底线不变：
+## Workflow: RECOVER mode
 
-1. **先看真实项目**：有代码库、URL、sitemap、文档就先读，本地上下文胜过假设。只在答案会实质改变方案时才提问。
-2. **从主瓶颈出发**：每个项目只有一个主约束（技术可索引性 / 关键词定位 / 内容系统 / 内链 / 权重 / 度量闭环）。点名一个并围绕它排序，不要列五个并列优先级。
-3. **默认动手修，不只描述**：能改的就改。有代码就改代码/模板并跑 build/lint，托管平台就给可粘贴片段——无论哪种，都在渲染出的 HTML 里验证生效。
-4. **能路由专家就不手搓**：底层有 27 个 `seo-*` 专家，先路由再综合。
-5. **时间预期诚实**：不承诺排名、不承诺快速见效。
-6. **以周/月为节奏**：不做日常焦虑型排名检查。
-7. **先读记忆、再干活、收工写回**：每个子 skill 开工前用 `Read` 读项目根 `.vibio/`（有就续上次，不重启），收工后用 `Write`/`Edit` 写回诊断/发现/改动。格式约定见 `vibio-memory`。
-8. **审查以 Google 官方文档为准**：发现要能引到官方规则（`vibio-audit/references/google-search-docs.md`），不是民间 best practice。
+1. **Detect the drop** — when? GSC before/after. Affected pages, queries, patterns.
+2. **Classify cause** — algorithm update / technical regression / manual action / competitor displacement / content decay. Match known update dates. Check GSC Manual Actions. Check SERP for competitor gains.
+3. **Apply recovery playbook** — cause-specific actions from `references/recovery-playbook.md`.
+4. **Monitor** — weekly checks 4-8 weeks post-recovery. No further changes during stabilization.
+5. **Write back** — document incident in changelog, update trackers.
+
+## Specialist routing (quick map)
+
+| Need | Route to |
+|---|---|
+| Write SEO article / blog / product page | WRITE pipeline → `seo-dataforseo` + `seo-sxo` + `seo-cluster` + `seo-content-brief` + `seo-content` + `seo-schema` |
+| Dual-language (CN + EN) content | Same pipeline, separate keyword research per language; `seo-hreflang` |
+| Full site audit / health score | `seo-audit`, or `seo` |
+| Single page deep dive | `seo-page` |
+| Strategy / 90-day plan / keyword strategy | `seo-plan`, `b2b-seo` (B2B/SaaS) |
+| Technical (crawl, index, CWV, robots, JS) | `seo-technical` |
+| Schema / structured data / rich results | `seo-schema` |
+| Sitemap analysis or generation | `seo-sitemap` |
+| Content quality / E-E-A-T / thin content | `seo-content` |
+| Content brief / outline with word counts | `seo-content-brief` |
+| Topic clusters from SERP overlap | `seo-cluster` |
+| Pages at scale / programmatic | `seo-programmatic` |
+| "X vs Y" / alternatives pages | `seo-competitor-pages` |
+| AI-powered search visibility (AI Overviews, ChatGPT, Perplexity, etc.) | `seo-geo`; content patterns → `references/geo-content-patterns.md`; audit → `references/geo-audit.md` |
+| Why a good page won't rank (SERP-backwards) | `seo-sxo` |
+| Backlinks / referring domains / toxic links | `seo-backlinks` |
+| Live SERP / volume / difficulty (MCP) | `seo-dataforseo` |
+| GSC / GA4 / CrUX / PageSpeed / Indexing API | `seo-google` |
+| Full-site crawl / broken links (MCP) | `seo-firecrawl` |
+| hreflang / international | `seo-hreflang` |
+| Image alt / size / format / CLS | `seo-images`; generate OG/hero → `seo-image-gen` |
+| Local / GBP / NAP / maps | `seo-local`, `seo-maps` |
+| Ecommerce / Shopping / marketplace | `seo-ecommerce` |
+| SEO regression / baseline diff | `seo-drift` |
+| Competitive intelligence / war room | `references/competitive-war-room.md` + `seo-dataforseo` |
+| Algorithm recovery / traffic drop | `references/recovery-playbook.md` |
+| Domain/platform migration | `references/migration-playbook.md` |
+| ROI / conversion attribution | `references/roi-attribution.md` |
+| SERP feature targeting (snippets/PAA) | `references/serp-feature-targeting.md` |
+| Entity / knowledge graph strategy | `references/entity-strategy.md` |
+| Content decay detection | `references/content-decay.md` |
+| Multi-language SEO operations | `references/multi-language-ops.md` |
+| Predictive SEO / traffic forecasting | `references/predictive-seo.md` |
+| SEO A/B testing / experimentation | `references/seo-experimentation.md` |
+| Authority cascade / keyword sequencing by KD tier | `references/authority-cascade.md` |
+| Content pruning / consolidation / zombie page cleanup | `references/content-pruning.md` |
+| PAA & AI Overview gap analysis / query-level SERP mining | `references/paa-gap-analysis.md` |
+| Semantic content networks (beyond topic clusters) | `references/semantic-networks.md` |
+
+## Reference files
+
+**Core engines:**
+- `references/operating-system.md` — PLAN engine: kickoff, bottleneck, 90-day roadmap, cadences, tracking.
+- `references/skill-arsenal.md` — 27 specialist sub-skills: capabilities, triggers, dependencies.
+- `references/delivery-template.md` — required PLAN output structure.
+
+**Fix system (multi-stack):**
+- `references/seo-fix-principles.md` — 12-dimension target spec: what correct rendered output looks like.
+- `references/geo-dominance.md` — unified AI search strategy: llms.txt, AI crawler access, entity signals, platform differences.
+- `references/stack-detection.md` — auto-detect stack from codebase/URL.
+- `references/stack-adapters/nextjs.md` — Next.js App Router recipes.
+- `references/stack-adapters/wordpress.md` — WordPress (Yoast/Rank Math) recipes.
+- `references/stack-adapters/shopify.md` — Shopify (Liquid) recipes.
+- `references/stack-adapters/static-astro.md` — Astro/Hugo/Jekyll/HTML recipes.
+- `references/stack-adapters/url-only.md` — no-code: paste-ready snippets.
+
+**Audit system:**
+- `references/google-search-docs.md` — distilled Google official docs with canonical URLs.
+
+**Content war machine:**
+- `references/write-playbook.md` — 11-stage article production pipeline.
+- `references/competitor-teardown.md` — structured competitor dissection + gap matrix + first-hand intake.
+- `references/sourcing-and-eeat.md` — evidence table, EEAT recipes, answer-first/AI-citation formatting, de-AI rules.
+- `references/adversarial-review.md` — 5-agent blind review with 95-point gate, iterate until pass.
+- `references/geo-content-patterns.md` — 7 AI-optimized content templates (definition, comparison, FAQ, spec, decision patterns).
+- `references/geo-audit.md` — unified search audit protocol with 0-100 scoring (covers both traditional and AI search).
+
+**Advanced strategy:**
+- `references/authority-cascade.md` — systematically build authority by sequencing keywords from KD10 to KD50+.
+- `references/semantic-networks.md` — multi-dimensional content architecture beyond topic clusters.
+- `references/content-pruning.md` — quarterly content audit, pruning zombie pages to lift site quality.
+- `references/paa-gap-analysis.md` — surgical PAA/AI Overview gap extraction for content opportunities.
+
+**Memory system:**
+- `references/state-templates.md` — `.vibio/` file formats (project.md, trackers, changelog).
+
+**Modes:**
+- `references/keyword-engine.md` — keyword research engine.
+- `references/review-engine.md` — closed-loop review engine.
+
+**v3 new capabilities:**
+- `references/predictive-seo.md` — ranking probability, traffic forecasting.
+- `references/competitive-war-room.md` — competitor monitoring, moat analysis.
+- `references/geo-competitive-intel.md` — AI visibility competitive analysis (part of the competitive war room).
+- `references/recovery-playbook.md` — algorithm update diagnosis, traffic drop recovery.
+- `references/roi-attribution.md` — SEO → revenue pipeline.
+- `references/serp-feature-targeting.md` — featured snippets, PAA, image packs.
+- `references/entity-strategy.md` — knowledge graph, topical authority.
+- `references/migration-playbook.md` — domain/platform migration.
+- `references/content-decay.md` — decay detection, refresh triggers.
+- `references/multi-language-ops.md` — systematic bilingual/multilingual operations.
+- `references/seo-experimentation.md` — A/B testing titles, meta, content structure, schema.
+
+## What not to do
+
+- Don't give generic "SEO best practices" lists without sequencing or a fix.
+- Don't assume Next.js — always detect the stack first.
+- Don't recommend high-difficulty head terms for low-authority sites as the opening move.
+- Don't push advanced tactics before crawlability, intent alignment, and content quality.
+- Don't front-load link building before pages worth linking exist.
+- Don't promise rankings or fast wins.
+- Don't claim a code fix works without running build/lint and checking rendered output.
+- Don't judge a SERP-facing fix "didn't work" before the 2-6 week recrawl window.
+- Don't reinvent analysis a specialist sub-skill already performs.
+- Don't write content without an evidence table — unverified claims destroy EEAT.
+- Don't start a project from scratch if `.vibio/` memory exists — continue, don't restart.
+- Don't audit against "best practice" folklore — cite Google official docs.
+- Don't skip the adversarial review pass on content — single-draft content won't beat the SERP.
