@@ -175,7 +175,7 @@
 | 判定 | 条件 | 处置 |
 |---|---|---|
 | **PASS** | 五道全过，有母语证据 + SERP 对口 | 进入词→页映射，正常排优先级 |
-| **CONDITIONAL** | Gate 1/3 证据不足（如 0 量待验证），但 Gate 2/4/5 通过 | 可做，但不做支柱页；随长尾聚合投产，GSC 出数后复核 |
+| **CONDITIONAL** | Gate 1/3 证据不足（如 0 量待验证），但 Gate 2/4/5 通过 | 可做，但不做支柱页；随长尾聚合投产，GSC 出数后复核——复核结果（证实/证伪）按 `learning-loop.md` 回流经验库，这是本协议自我校准的数据源 |
 | **FAIL** | 任意一道明确失败（直译无证据 / SERP 人群错 / 身份排除命中 / 无商业路径） | 淘汰。记录失败原因防止下次再提 |
 
 写回 `.vibio/trackers/keywords.md` 时使用 `Validated` 列（`pass` / `conditional` / `fail-淘汰不入表`），`Notes` 里记一句证据（如 "US SERP 全是 supplier 页 + autocomplete 有"）。字段见 `state-templates.md`。

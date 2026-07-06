@@ -1,6 +1,6 @@
 ---
 name: vibio_seo
-description: Vibio's end-to-end search optimization operating skill for shipping and ranking real websites — across traditional search and AI-powered search (Google AI Overviews, ChatGPT, Perplexity, Bing Copilot). Use whenever the user wants to start, audit, fix, run search optimization for, or write content for a site or codebase — full audits, single-page reviews, technical optimization, schema/structured data, content strategy, keyword research with target-market validation (verifying real buyers in the target country actually search each term — native-language evidence, SERP litmus test, per-country volume), writing articles/product pages/blogs (B2B, CN/EN, reverse-engineered from competitor SERPs with evidence-backed sourcing), internal link architecture (topology, anchor rules, orphan-page rescue, publish-time backfill), external link building (linkable assets, industry directories, digital PR, outreach, brand mentions for AI citations), brand SERP visibility, multi-stack fixes (Next.js/WordPress/Shopify/Static/URL-only), competitive war room, algorithm recovery, domain migration, or a 30/60/90-day execution plan with ROI tracking. It auto-detects the stack, diagnoses the dominant bottleneck, routes to the right specialist sub-skills, applies verified fix recipes directly in the codebase, and hands back an executable plan with cadences and tracking. All optimization is unified — the same quality signals power both traditional rankings and AI citations. Supports project memory (.vibio/) for cross-session continuity and closed-loop review (measure → decide → act). Do not use for generic Q&A unless the user only wants an explanation.
+description: Vibio's end-to-end search optimization operating skill for shipping and ranking real websites — across traditional search and AI-powered search (Google AI Overviews, ChatGPT, Perplexity, Bing Copilot). Use whenever the user wants to start, audit, fix, run search optimization for, or write content for a site or codebase — full audits, single-page reviews, technical optimization, schema/structured data, content strategy, keyword research with target-market validation (verifying real buyers in the target country actually search each term — native-language evidence, SERP litmus test, per-country volume), writing articles/product pages/blogs (B2B, CN/EN, reverse-engineered from competitor SERPs with evidence-backed sourcing), internal link architecture (topology, anchor rules, orphan-page rescue, publish-time backfill), external link building (linkable assets, industry directories, digital PR, outreach, brand mentions for AI citations), inquiry conversion (traffic-but-no-leads diagnosis, CTA ladders, RFQ form design, trust elements, WhatsApp/regional contact channels, gating decisions), video search (YouTube strategy for exporters, factory/QC video assets, VideoObject schema, transcripts for AI citation), brand SERP visibility, multi-stack fixes (Next.js/WordPress/Shopify/Static/URL-only), competitive war room, algorithm recovery, domain migration, or a 30/60/90-day execution plan with ROI tracking. It auto-detects the stack, diagnoses the dominant bottleneck, routes to the right specialist sub-skills, applies verified fix recipes directly in the codebase, and hands back an executable plan with cadences and tracking. All optimization is unified — the same quality signals power both traditional rankings and AI citations. Supports project memory (.vibio/) for cross-session continuity and closed-loop review (measure → decide → act). Do not use for generic Q&A unless the user only wants an explanation.
 ---
 
 # Vibio SEO v4 — Unified Search Optimization
@@ -37,7 +37,7 @@ Sessions often chain modes: AUDIT → FIX → PLAN, then weeks later REVIEW → 
 
 1. **Read project memory first.** Before any action on a specific project, check for `.vibio/project.md` in the project root. If exists, read it + trackers + recent changelog. Continue from last state; never restart a diagnosed project. If no `.vibio/`, create on completion. (Format: `references/state-templates.md`)
 
-2. **Write back after meaningful work.** After every diagnosis, fix, review, or published content, write to `.vibio/`. Changelog is append-only. Trackers updated in place. This makes the system an OS, not a one-off consult.
+2. **Write back after meaningful work.** After every diagnosis, fix, review, or published content, write to `.vibio/`. Changelog is append-only. Trackers updated in place. This makes the system an OS, not a one-off consult. Beyond project memory there is a second layer — the cross-project learning loop (`references/learning-loop.md`, stored at `~/.vibio-global/`): REVIEW/RECOVER distill lessons that would change future decisions; a lesson repeated ≥3 times queues a reference-revision proposal (human-approved, never auto-applied). Read the relevant domain of `~/.vibio-global/learnings.md` when starting KEYWORD/WRITE/LINK/PLAN work.
 
 3. **Auto-detect the stack; never assume Next.js.** Before any FIX or code-level AUDIT, determine stack (Next.js / WordPress / Shopify / Astro / Hugo / Jekyll / plain HTML / unknown) and edit mode (code / template / CMS-paste / URL-only). Use `references/stack-detection.md`. If no code access, use URL-only adapter for paste-ready snippets.
 
@@ -85,7 +85,7 @@ Full method in `references/operating-system.md`. For B2B/export manufacturing (V
 2. **Detect stack** — `references/stack-detection.md`. Determine edit mode.
 3. **Read the artifact** — for codebases: SEO config, metadata helpers, JSON-LD, robots, sitemap, layout `<head>`, sample pages. For live URLs: route to `seo`/`seo-audit`/`seo-page`.
 4. **Check indexability first** — the #1 silent killer: stray `noindex`, robots blocking critical paths, honest status codes, soft-404s.
-5. **Route to specialists in parallel** — technical + schema + content + sitemap + geo + images + performance. Include AI crawler accessibility and llms.txt check. (→ `references/skill-arsenal.md`)
+5. **Route to specialists in parallel** — technical + schema + content + sitemap + geo + images + performance. Include AI crawler accessibility and llms.txt check. (→ `references/skill-arsenal.md`) When the complaint is "traffic but no inquiries", add the five-cause conversion diagnosis from `references/conversion-playbook.md` §一 (traffic-quality mismatch / CTA gaps / trust deficit / form friction / response-channel gaps) and output a conversion-leak list alongside SEO findings.
 6. **Verify adversarially** — cross-check across page types, fully parse JSON-LD (don't skim), retry with browser UA if blocked.
 7. **Run unified search audit** — check AI-search readiness alongside traditional SEO in one pass: llms.txt, AI crawler access, passage citability, entity signals. Produce 0-100 score with prioritized fixes. (→ `references/geo-audit.md`)
 8. **Prioritize** — Critical (blocks indexing / penalty-risk per Google spam policies) > High (clear ranking impact) > Medium (optimization) > Low (nice-to-have).
@@ -103,7 +103,7 @@ Full method in `references/operating-system.md`. For B2B/export manufacturing (V
 5. **Report** — what changed, where, verification results, what's pending re-crawl.
 6. **Write back** — append to `.vibio/changelog.md`.
 
-Fix priority: (1) indexability blockers, (2) missing/duplicate titles & descriptions, (3) structured data for brand SERP + rich results, (4) OG/social correctness, (5) internal linking, headings, images, llms.txt.
+Fix priority: (1) indexability blockers, (2) missing/duplicate titles & descriptions, (3) structured data for brand SERP + rich results, (4) OG/social correctness, (5) internal linking, headings, images, llms.txt, (6) conversion elements — CTA ladder, RFQ form, trust blocks, contact channels, GA4 lead events per `references/conversion-playbook.md`; video embeds/schema per `references/video-seo.md` §三.
 
 ## Workflow: WRITE mode
 
@@ -150,7 +150,7 @@ Full method in `references/keyword-engine.md`.
 4. **Build/verify linkable assets** — original data, spec references, calculators, flagship guides (`backlink-playbook.md` §二). No asset → asset creation routes to WRITE mode before outreach starts.
 5. **Run tiered tactics** — Tier 1 foundational → mention reclamation → competitor link-gap replication (`seo-backlinks` / `seo-dataforseo`) → digital PR / expert-quote platforms → resource pages. Personalization rules and realistic response-rate expectations per `backlink-playbook.md` §五.
 6. **Safety check** — anchor distribution (branded-heavy, exact ≤5-10%), steady velocity, no bought links. Disavow only for manual actions / negative SEO.
-7. **Track mentions for AI search** — unlinked brand mentions are a first-class KPI (they outweigh backlinks for AI citations); log in outreach tracker.
+7. **Track mentions for AI search** — unlinked brand mentions are a first-class KPI (they outweigh backlinks for AI citations); log in outreach tracker. Own video/YouTube presence is the strongest single lever here — `references/video-seo.md`.
 8. **Write back** — `trackers/outreach.md` rows for every prospect/send/result; changelog entry; review cadence per `backlink-playbook.md` §九.
 
 ## Workflow: REVIEW mode
@@ -161,6 +161,7 @@ Full method in `references/keyword-engine.md`.
 4. **Judge per-change** — Working / Not working / Regressed / Too early.
 5. **Decide next** — refresh (positions 11-20), fix CTR (high impressions, low CTR), investigate indexation (no impressions), consolidate (cannibalization), advance roadmap (bottleneck resolved).
 6. **Write back** — update keyword tracker rankings/trends, append review to changelog (Type: REVIEW), update project.md if bottleneck resolved.
+7. **Distill learnings** — for each verdict, ask "would this change the next similar decision?" If yes, write an anonymized entry to `~/.vibio-global/learnings.md` per `references/learning-loop.md`; a lesson repeated ≥3 times queues a reference-revision proposal in `calibration.md` for the user to approve.
 
 Full method in `references/review-engine.md`.
 
@@ -170,7 +171,7 @@ Full method in `references/review-engine.md`.
 2. **Classify cause** — algorithm update / technical regression / manual action / competitor displacement / content decay. Match known update dates. Check GSC Manual Actions. Check SERP for competitor gains.
 3. **Apply recovery playbook** — cause-specific actions from `references/recovery-playbook.md`.
 4. **Monitor** — weekly checks 4-8 weeks post-recovery. No further changes during stabilization.
-5. **Write back** — document incident in changelog, update trackers.
+5. **Write back** — document incident in changelog, update trackers; on closure always write a learning entry (diagnosed cause + what actually worked) to `~/.vibio-global/learnings.md` per `references/learning-loop.md`.
 
 ## Specialist routing (quick map)
 
@@ -180,6 +181,8 @@ Full method in `references/review-engine.md`.
 | Validate keywords against target-market search behavior | `references/keyword-validation.md` (five gates, buyer-language mining, regional variants, zero-volume judgment) |
 | Internal linking (topology, orphans, anchors, backfill) | `references/link-architecture.md` + `seo-firecrawl` (crawl) + `seo-google` (GSC links) |
 | External link building / outreach / linkable assets | `references/backlink-playbook.md` + `seo-backlinks` (analysis) + `seo-dataforseo` (gap data) |
+| Traffic but no inquiries / CTA / RFQ forms / trust elements / WhatsApp | `references/conversion-playbook.md` |
+| Video / YouTube strategy / VideoObject schema / factory video assets | `references/video-seo.md` |
 | Dual-language (CN + EN) content | Same pipeline, separate keyword research per language; `seo-hreflang` |
 | Full site audit / health score | `seo-audit`, or `seo` |
 | Single page deep dive | `seo-page` |
@@ -254,12 +257,15 @@ Full method in `references/review-engine.md`.
 
 **Memory system:**
 - `references/state-templates.md` — `.vibio/` file formats (project.md, trackers, changelog).
+- `references/learning-loop.md` — cross-project learning loop: `~/.vibio-global/` entry formats, write/read protocols per mode, ≥3-repeat calibration gate for evolving the references themselves.
 
 **Modes:**
 - `references/keyword-engine.md` — keyword research engine.
 - `references/keyword-validation.md` — target-market keyword validation: five gates, buyer-language mining toolbox, US/UK/AU variants, zero-volume judgment, free-data fallback chain.
 - `references/link-architecture.md` — internal link operations: topology, anchor rules, publish-time backfill protocol, orphan detection, donor-acceptor equity routing.
 - `references/backlink-playbook.md` — external link acquisition: readiness gate, linkable assets, tiered tactics (directories/PR/reclaim/outreach), anchor & velocity safety, brand mentions for AI citations.
+- `references/conversion-playbook.md` — inquiry conversion: traffic-but-no-leads diagnosis, CTA ladder, RFQ form rules, trust-element system, regional contact channels, gating decisions, GA4 lead measurement.
+- `references/video-seo.md` — video search system: exporter video types (factory/QC/spec), YouTube optimization reusing validated keywords, VideoObject/watch-page rules, facade embeds, transcripts for AI citation.
 - `references/review-engine.md` — closed-loop review engine.
 
 **v3 capabilities:**

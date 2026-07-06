@@ -148,7 +148,7 @@ PBN、链接交易包、Fiverr 批量链、垃圾目录群发、评论区/论坛
 **战术含义：**
 - **无链提及也是资产。** 数字 PR / 贸易刊物 / 播客的品牌名提及，即使没给链接，也在给 ChatGPT/Perplexity/AI Overviews 的引用概率加权。争取链接，但别因为"只给提及不给链"就放弃机会。
 - **KPI 双轨**：引用域数量（传统排名）+ 品牌提及量趋势（AI 引用），后者用 Google Alerts / `seo-dataforseo` 的 LLM 提及追踪。
-- **YouTube 是被低估的渠道**：第三方评测/访谈/工厂参观视频的提及，对 AI 引用的信号强度超过多数文字链接。
+- **YouTube 是被低估的渠道**：第三方评测/访谈/工厂参观视频的提及，对 AI 引用的信号强度超过多数文字链接。自有视频资产的完整打法见 `video-seo.md`——它是本节品牌提及层的最强执行载体。
 - **平台不重叠**：ChatGPT 与 Perplexity 的引用域仅约 11% 重叠；Perplexity 重 Reddit（其最高引用源）与时效，ChatGPT 重高权威站。多平台铺提及，别单点押注。
 - 实体级信号（Wikipedia/Wikidata、Knowledge Panel、sameAs）见 `entity-strategy.md`；AI 平台策略全貌见 `geo-dominance.md`。
 

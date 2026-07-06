@@ -89,6 +89,7 @@ Traffic dropped
 - Log all observations in `.vibio/changelog.md`
 - If recovery partial after 8 weeks, re-assess cause classification
 - After stabilization, resume monthly REVIEW mode cadence
+- **On closure, always write a learning entry** (`learning-loop.md` format → `~/.vibio-global/learnings.md`, domain `recover`): the diagnosed cause + which recovery action actually worked. Recovery cases are rare and every one is worth keeping.
 
 ## 6. Prevention
 

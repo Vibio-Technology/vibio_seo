@@ -77,7 +77,7 @@ Include one for the current bottleneck, one for the current production motion, o
 - **Technical baseline** — verify measurement, crawl access, discovery, indexation, page health; bucket issues.
 - **Keyword seed expansion & intent sorting** — 10-15 seeds → 50-300 candidates from real buyer language → label intent → validate against target-market search behavior (five gates per `keyword-validation.md`: native-language evidence, SERP litmus, per-country volume, identity filters, path to money) → score actionability (relevance, can the site answer it, beatable SERP, deserves a page).
 - **Keyword-to-page mapping** — assign one keyword family to one primary page; mark existing/new/merge/deprioritize; expose cannibalization.
-- **Commercial page build** — pick intent, define structure (H1, value prop, trust, proof, FAQ, CTA), add title/meta/internal links/schema.
+- **Commercial page build** — pick intent, define structure (H1, value prop, trust, proof, FAQ, CTA), add title/meta/internal links/schema. CTA ladder, RFQ form and trust elements per `conversion-playbook.md`.
 - **Support content build** — pick a clear-intent query, define which commercial page it supports, answer completely, link up to parent + siblings.
 - **Old content refresh** — select `11-20` / high-impression-low-CTR / declining pages, compare to top SERP, refresh surgically, re-submit for indexing.
 - **Internal linking pass** — link priority pages from relevant older pages with descriptive anchors; kill orphans; run the donor-acceptor equity pass. Full method: `link-architecture.md`.

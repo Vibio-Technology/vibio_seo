@@ -2,6 +2,8 @@
 
 Standard formats for `.vibio/` files. Keep fields consistent so the next session can read them mechanically. Dates as `YYYY-MM-DD`. Fill what's known, leave the rest blank — don't invent.
 
+Second memory layer: cross-project learnings live outside `.vibio/` at `~/.vibio-global/` (learnings.md + calibration.md) — formats and protocols in `learning-loop.md`, not duplicated here.
+
 ---
 
 ## project.md
