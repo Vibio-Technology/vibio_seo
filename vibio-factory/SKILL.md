@@ -18,9 +18,11 @@ description: |
 ```
 vibio/              主入口路由器：判断 PLAN/AUDIT/FIX 意图 → 分发到专项子 skill
 vibio-plan/         PLAN 引擎（references: operating-system.md + delivery-template.md）
-vibio-keyword/       KEYWORD 引擎（关键词研究：种子词→真实量/意图→词→页映射→簇；PLAN 前置/可独立触发）
+vibio-keyword/       KEYWORD 引擎（关键词研究：种子词→真实量/意图→目标市场验证五道闸门→词→页映射→簇；references: keyword-validation.md）
 vibio-audit/        AUDIT 引擎（references: skill-arsenal.md 路由 27 个专家 + google-search-docs.md 官方审查基准）
 vibio-fix/          FIX 引擎（栈无关：seo-fix-principles.md + stack-detection.md + stack-adapters/）
+vibio-content/      CONTENT 引擎（逆向 SERP 写作 + 证据表 + 5-Agent 盲审 95 分闸门）
+vibio-link/         LINK 引擎（内链审计/回填/导流 + 外链分级获取；references: link-architecture.md + backlink-playbook.md）
 vibio-review/       REVIEW 引擎（闭环复盘：读 changelog→复测 GSC/drift→判定见效→决策→写回）
 vibio-memory/       项目记忆的格式规范与读写约定（.vibio/）；各 skill 自己用 Read/Write 操作，非互相调用
 vibio-<新模式>/      新增的专项 skill，自包含自己的 references

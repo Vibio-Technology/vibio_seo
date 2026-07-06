@@ -18,6 +18,18 @@
       "prompt": "我新站权重很低，是不是该直接做 carbon fiber 这个大词？",
       "expected_output": "Should push back honestly: a low-authority new site should not open with a high-difficulty head term. Apply the beatable-SERP actionability check, recommend long-tail / specific application + commercial-intent terms first, explain the dependency (earn relevance and links before competing for head terms), and offer to build the staged keyword map. Should cite the new-site branching logic.",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "老板定了几个词让我做：non-standard customization、carbon fiber technician jobs、carbon fiber fabric supplier。帮我看看这些词行不行。",
+      "expected_output": "Should run the five validation gates from references/keyword-validation.md instead of accepting the list: 'non-standard customization' should FAIL the native-language gate (translated Chinglish — real buyers say custom fabrication/custom machining; must not use other Chinese exporters' sites as evidence), 'carbon fiber technician jobs' should FAIL the searcher-identity gate (jobs = job seekers, not buyers), 'carbon fiber fabric supplier' should PASS as a commercial-intent term. Failed terms must be rejected with the logged reason and suggested replacements — not silently included in the page map. Should push back on authority ('老板定了') with evidence, not comply.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "这个词 3k carbon fiber tube 30mm ASTM 工具里查出来搜索量是 0，是不是不用做了？",
+      "expected_output": "Should NOT drop the term just because tools show zero volume. Should apply the zero-volume judgment framework from keyword-validation.md: spec/standard/grade terms are systematically under-measured by clickstream panels; check GSC impressions, autocomplete/PAA presence, whether the SERP has dedicated commercial pages, and inquiry/RFQ evidence. Should explain aggregation logic (fold into a cluster page rather than a standalone page) and weight by commercial proximity (a zero-volume spec term tied to real RFQs can outvalue a high-volume generic term).",
+      "files": []
     }
   ]
 }

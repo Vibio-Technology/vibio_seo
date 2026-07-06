@@ -35,7 +35,7 @@ Exactly one `<h1>` per page, reflecting the primary keyword/intent. No level ski
 Every meaningful image has descriptive `alt`. Modern formats (WebP/AVIF) where possible, explicit dimensions to prevent CLS, lazy-load below the fold. Use the `seo-images` skill for depth; generate missing OG/hero images with `seo-image-gen`.
 
 ### 8. Internal linking
-Key landing pages link to each other with descriptive anchors; footer/nav cover top pages; no orphan pages. Internal links pass equity to commercial pages.
+Key landing pages link to each other with descriptive anchors; footer/nav cover top pages; no orphan pages. Internal links pass equity to commercial pages: money pages ≤3 clicks from home, 2-5 contextual in-content links per 1,000 words, every new page gets 2-3 inbound links from existing pages on publish day. This section is the target spec; the full operational manual (topology, anchor bank, backfill protocol, audit methods, donor-acceptor routing) is `link-architecture.md`.
 
 ### 9. Sitemap & robots
 `sitemap.xml` lists all indexable URLs (generated from the same data source as the pages so it never drifts), referenced from `robots.txt`. `robots.txt` allows `/`, disallows API/admin/cart, sets the correct host.

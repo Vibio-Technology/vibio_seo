@@ -44,7 +44,7 @@ Sequence by dependency. Don't stack technical cleanup + keyword planning + full 
 - **Week 2 — Keyword architecture & page mapping:** 10-15 seed topics → candidate set → classify by intent → commercial vs informational → map each family to an owning page (existing / new / merge / deprioritize) → define 3-5 clusters. Done = usable keyword map, each theme has an owner page, cannibalization visible.
 - **Weeks 3-4 — First priority pages:** improve homepage + primary service/collection pages, build first commercial landing pages + first supporting articles, fix titles/H1s/meta/internal links, ensure new pages are linked + indexable. Done = real target pages for top themes, internally connected, publish rhythm started.
 - **Month 2 — Depth & on-page:** next wave of supporting pages, tighten cluster + commercial↔informational links, improve impressions-but-weak-CTR pages and near-page-one pages, add/validate schema. Done = at least one cluster has real depth, intentional internal linking, early GSC patterns reviewable.
-- **Month 3 — Authority + review cadence:** identify linkable assets, build a prospect list (guest post / review / partner / media request), start light weekly outreach, review ranking/impression/index data, decide refresh/expand/deprioritize. Done = outreach is operational, monthly review loop exists, next iteration is evidence-based.
+- **Month 3 — Authority + review cadence:** run the full acquisition system per `backlink-playbook.md` — check the readiness gate, identify/build linkable assets, complete Tier 1 foundational links (industry directories / associations / certifications — these can start from day one), build a prospect list, start light weekly outreach with realistic conversion expectations, review ranking/impression/index data, decide refresh/expand/deprioritize. Done = outreach is operational, monthly review loop exists, next iteration is evidence-based.
 
 Adapt output volume to capacity: lean `3-5h/wk` (month 1: baseline + map + 2-4 page updates), moderate `6-10h/wk` (month 1: baseline + architecture + 4-8 pages), strong `10+h/wk` (broader but still sequenced).
 
@@ -52,32 +52,36 @@ Adapt output volume to capacity: lean `3-5h/wk` (month 1: baseline + map + 2-4 p
 
 SEO is weekly execution + monthly review, never daily rank-checking. Default weekly budget `4-10h`, split into 3 blocks:
 - **Block 1 — Content (2-3h):** draft/publish 1-2 pages OR refresh 1-2 older pages, expand weak commercial sections, fix titles/H1s/FAQs/internal links. Not every week needs new content; refreshing often has higher leverage.
-- **Block 2 — Data & authority (1-2h):** scan GSC for drops/spikes, check newly indexed pages, review impressions/CTR on priority pages, send/follow up outreach. Action signals, not dashboard admiration.
+- **Block 2 — Data & authority (1-2h):** scan GSC for drops/spikes, check newly indexed pages, review impressions/CTR on priority pages, send/follow up outreach. Action signals, not dashboard admiration. Thresholds: +50% impressions WoW for a page = investigate (new query or cannibalization?). −30% impressions sustained 2+ weeks = flag for review. CTR deviation >25% from position-expected = investigate title/meta/SERP-feature change.
 - **Block 3 — Technical & internal (30-60m):** confirm new pages indexed, add internal links from older pages to new ones, resolve GSC technical issues, validate schema/canonical on new key pages. Maintenance, not inventing complex work.
 
-**Monthly deep review (2-3h):** compare month-over-month in GSC (biggest growth/decline pages, strong-impression-weak-CTR queries, positions `11-20`); pick pages to refresh/merge/deprioritize; check whether organic landing pages feed the conversion path; choose next month's 2-5 priorities.
+**Monthly deep review (2-3h):** compare month-over-month in GSC (biggest growth/decline pages, strong-impression-weak-CTR queries, positions `11-20`); check AI Overviews impressions/clicks (GSC → Search Appearance filter); spot-check brand mentions in ChatGPT/Perplexity for 5 priority queries; pick pages to refresh/merge/deprioritize; check whether organic landing pages feed the conversion path; reconcile any predictions made ≥3 months ago against actuals (per predictive-seo.md §9); choose next month's 2-5 priorities.
+
+**3-month health check:** if after 3 months, zero target keywords have entered top 50 AND organic impressions have not increased >10% from baseline → escalate to strategy review (not full reset, but deeper diagnosis: wrong keywords? weak authority? technical gap?). Don't wait 6 months before course-correcting.
 
 **6-month reset trigger:** revisit only when justified — 6 months of no movement on a core direction, repeated failure of a content type, major technical blockers, business/market change, or organic traffic that's irrelevant to commercial goals. Don't change direction just because the first 1-3 months are slow.
 
 ## Phase 5 — Tracking
 
-Tracking preserves decision history and reveals the next move — not reporting theater. Maintain three trackers (add a fourth only if needed):
+Tracking preserves decision history and reveals the next move — not reporting theater. Maintain the core trackers below (add a GEO tracker only if AI search is a primary channel):
 - **Content tracker:** title, URL, page type, primary keyword family, intent, status (`planned/drafting/published/refresh needed/merged/redirected/retired`), publish date, last updated, owner, notes.
-- **Keyword tracker:** keep it lean (`20-60` meaningful terms). keyword, intent, owner page, priority, difficulty note, current vs last ranking, trend (`improving/flat/declining/not yet ranking`), notes. Review monthly.
-- **Outreach tracker** (once authority work starts): target site, contact/channel, type (`guest post/product review/partner/media request/resource`), promoted page, dates, status (`not started/sent/follow-up due/in conversation/won/lost`), result.
+- **Keyword tracker:** keep it lean (`20-60` meaningful terms). keyword, intent, validated (`pass/conditional` per `keyword-validation.md`), cascade phase (`1-4` per `authority-cascade.md`), owner page, priority, difficulty note, current vs last ranking, trend (`improving/flat/declining/not yet ranking`), notes. Review monthly.
+- **Outreach tracker** (once authority work starts; process per `backlink-playbook.md`): target site, contact/channel, type (directory/association/certification/trade-show/partner/guest-post/product-review/media-request/digital-PR/expert-quote/reclaim/broken-link/resource), promoted page, dates, status (`not started/drafted/pending-human-review/sent/follow-up due/in conversation/won/lost`), result (won link URL or unlinked mention).
+- **Links tracker** (create at first internal-link audit; per `link-architecture.md`): orphan pages, weak-linked priority pages, backfill queue for new pages, money-page inlink counts, last audit date.
 - **Technical issues log** (only if enough technical work): issue, affected pages/templates, severity (`critical/important/later`), source, owner, date found, status, resolution.
+- **GEO tracker** (create once site is live and AI-search is relevant): 10-20 priority queries checked monthly — AI Overviews citation (✓/✗), ChatGPT web search mention (✓/✗), Perplexity source appearance (✓/✗), llms.txt last updated, Knowledge Panel status, brand entity mentions. Track trend month-over-month. Use manual spot-checks + GSC AI Overviews filter when available.
 
 ## Task SOPs (pull only 2-4 per deliverable)
 
 Include one for the current bottleneck, one for the current production motion, one for maintenance, plus authority if ready:
 - **Technical baseline** — verify measurement, crawl access, discovery, indexation, page health; bucket issues.
-- **Keyword seed expansion & intent sorting** — 10-15 seeds → 50-300 candidates → label intent → score actionability (relevance, can the site answer it, beatable SERP, deserves a page).
+- **Keyword seed expansion & intent sorting** — 10-15 seeds → 50-300 candidates from real buyer language → label intent → validate against target-market search behavior (five gates per `keyword-validation.md`: native-language evidence, SERP litmus, per-country volume, identity filters, path to money) → score actionability (relevance, can the site answer it, beatable SERP, deserves a page).
 - **Keyword-to-page mapping** — assign one keyword family to one primary page; mark existing/new/merge/deprioritize; expose cannibalization.
 - **Commercial page build** — pick intent, define structure (H1, value prop, trust, proof, FAQ, CTA), add title/meta/internal links/schema.
 - **Support content build** — pick a clear-intent query, define which commercial page it supports, answer completely, link up to parent + siblings.
 - **Old content refresh** — select `11-20` / high-impression-low-CTR / declining pages, compare to top SERP, refresh surgically, re-submit for indexing.
-- **Internal linking pass** — link priority pages from relevant older pages with descriptive anchors; kill orphans.
-- **Authority launch** — choose linkable assets, build a relevance-first prospect list, steady weekly outreach, log results.
+- **Internal linking pass** — link priority pages from relevant older pages with descriptive anchors; kill orphans; run the donor-acceptor equity pass. Full method: `link-architecture.md`.
+- **Authority launch** — check the readiness gate, choose linkable assets, complete Tier 1 foundational links, build a relevance-first prospect list, steady weekly outreach, log results. Full method: `backlink-playbook.md`.
 
 ## Branching by class
 

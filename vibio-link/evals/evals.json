@@ -1,0 +1,29 @@
+{
+  "skill_name": "vibio-link",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我们博客发了 30 多篇文章，但好像互相都没链接，帮我看看内链怎么优化。",
+      "expected_output": "Should read .vibio/ first, then run the internal pass from references/link-architecture.md: detect orphan pages (crawl vs sitemap vs GSC cross-check, or grep source for code stacks), find weak-linked money pages and click depth >3 pages, check anchor cannibalization, run the donor-acceptor equity pass (high-impression pages link to weak commercial pages), clear the backfill queue, fix in priority order (orphan money pages first), write snapshot to .vibio/trackers/links.md and log changes. Should NOT jump to external link building.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "帮我做外链建设，我们是做数控加工件出口的工厂，网站上线三个月。",
+      "expected_output": "Should apply the readiness gate from references/backlink-playbook.md: Tier 1 foundational links (Thomasnet, Kompass, Europages, trade associations, chamber of commerce, certification bodies, trade show exhibitor pages, customer/partner links) start immediately; but page-targeted outreach requires ≥1 linkable asset or ≥5 strong pages AND authority-cascade Phase 3+ targets. For a 3-month-old site, should honestly sequence: complete Tier 1 checklist now, build a linkable asset before outreach, set realistic expectations (2-5 quality referring domains/month, 2-6 month lag), track in .vibio/trackers/outreach.md. Should not promise rankings or recommend buying links.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "竞品的外链比我们多好几倍，怎么追？",
+      "expected_output": "Should route to seo-backlinks / seo-dataforseo for competitor backlink gap analysis: pick 3-5 competitors, find domains linking to 2+ competitors but not us, segment by source type (directory → register directly, resource page → asset outreach, editorial → digital PR angle), prioritize domains linking to 3+ competitors. Should also mention brand mentions (even unlinked) as an AI-citation KPI roughly 3x stronger than backlinks, and check the readiness gate before starting outreach. Results tracked in outreach tracker.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "刚发了一篇新文章，接下来链接方面要做什么？",
+      "expected_output": "Should execute the publish-time backfill protocol from link-architecture.md §五: add contextual links from 2-3 relevant existing pages (donors found via content tracker same-cluster pages, GSC top pages, or site:/grep search) to the new article same day; verify the new article links out to its pillar + 1 money page + siblings with descriptive anchors; update the pillar page to link to the new article; log to changelog. Should warn that an orphan page halves the value of the content.",
+      "files": []
+    }
+  ]
+}

@@ -61,7 +61,7 @@ description: |
 按 `references/sourcing-and-eeat.md` 的配方写：
 - **GEO answer-first 结构**：开头直接回答主问题；每段自包含（脱离上下文也能被 AI 单独摘引）；实体和定义明确。这决定 AI Overviews / ChatGPT 引不引你。
 - **E-E-A-T 信号**：第一手经验（Step 3 的素材）、具体出处而非「专家认为」、作者/经验线索。
-- **内链**：从 `trackers/content.md` / `keywords.md` 取目标页做锚文本内链。
+- **内链**：从 `trackers/content.md` / `keywords.md` 取目标页做锚文本内链——正文每 1000 字 2-5 个上下文链，链向所属支柱页 + 1 个钱页 + 同级页；锚文本预告目标页内容（禁「点击这里」）；同时**预定好发布时哪 2-3 个旧页要插链进来**（内链规则全文见主库 `references/link-architecture.md`）。
 - **写作时就启用 humanizer 硬约束**（见 reference）：不写套话开头、不模糊归因、不堆 AI 词汇、不为排版而排版——但**保留承载真实信息的 B2B 技术结构**（规格粗体、对比表、参数/步骤列表）。判据：删了不掉信息就删，删了掉信息就留。
 
 ### Step 6：多 Agent 盲审循环 → 95 分闸门 → 重写
@@ -86,7 +86,7 @@ description: |
 **不要把这个步骤简化成一个 checklist 自检。必须真正启动多个独立 Agent 做盲审。**
 
 ### Step 7：交付 + 写回记忆
-交成稿：Markdown 正文 + front-matter（`title` / `description` / 目标关键词 / **来源清单**）。用 `Write`/`Edit` 把这篇写回 `.vibio/trackers/content.md`（标题/URL/页型/关键词族/意图/状态=已写待发/日期/负责人，字段见 `vibio-memory`）。**落地是可选下游**：用户要发上去就串 `vibio-fix`（建页/路由、Article+FAQ schema、内链、OG）。
+交成稿：Markdown 正文 + front-matter（`title` / `description` / 目标关键词 / **来源清单** / **内链清单**：链出目标页 + 发布时要插链进来的 2-3 个 donor 旧页及插链位置）。用 `Write`/`Edit` 把这篇写回 `.vibio/trackers/content.md`（标题/URL/页型/关键词族/意图/状态=已写待发/日期/负责人，字段见 `vibio-memory`）。**落地是可选下游**：用户要发上去就串 `vibio-fix`（建页/路由、Article+FAQ schema、内链回填四步、OG）——提醒用户：**没有入链的新文章是孤儿页，发布时必须执行内链回填**。
 
 ---
 
@@ -111,7 +111,9 @@ description: |
 | 成稿写好，用户要发布上线 | 「成稿已交付并写进 `.vibio/trackers/content.md`。要落地成真实页面就跑 `vibio-fix`：建页/路由、加 Article+FAQ schema、内链、OG 图，并在渲染产物里验证。」 |
 | 还有同一簇的其他页要写 | 「这篇是 `<簇>` 的一篇。整簇排期跑 `vibio-plan`，按 hub-and-spoke 决定先写哪几篇、什么节奏。」 |
 | 发布一段时间后想看见效 | 「发布并被重抓后，2-6 周跑 `vibio-review` 用 GSC 对比基线复测排名/曝光，判定要不要二次优化。」 |
-| 写之前发现关键词/意图还没定 | 「目标词族还没定清。先跑 `vibio-keyword` 把词→页映射和意图定下来，再回来写。」 |
+| 写之前发现关键词/意图还没定 | 「目标词族还没定清。先跑 `vibio-keyword` 把词→页映射、目标市场验证和意图定下来，再回来写。」 |
+| 目标词没过目标市场验证（直译词/SERP 人群错配） | 「这个词在目标市场没有真实买家搜索证据。先跑 `vibio-keyword` 的验证闸门确认或换词——为假词写文章是全损。」 |
+| 文章成稿后要系统性建内外链 | 「这篇的内链回填在发布时做（`vibio-fix`）；整站的内链架构和外链获取跑 `vibio-link`。」 |
 | 需要带字数的精细大纲 | 「要更细的分节字数预算就先跑 `seo-content-brief`，出大纲后回到本 skill 写成稿。」 |
 
 ---
@@ -124,6 +126,8 @@ description: |
 - 不靠纯二手综述——没有一手素材的稿子是百科拼接，被 helpful content 系统打压。
 - 不把去 AI 痕迹拖到最后清洗——写作时就启用 humanizer 硬约束。
 - 不无差别套用 humanizer 的排版洁癖规则——B2B 技术内容里承载信息的粗体/对比表/参数列表必须保留。
+- 不给未过目标市场验证的词写稿——直译假词上的几小时投入是全损。
+- 不交付没有内链清单的稿子——链出目标 + donor 回填计划是 front-matter 的一部分。
 - 不重做大纲（那是 `seo-content-brief`）或关键词研究（那是 `vibio-keyword`）。
 - 不在本 skill 里改代码建页（那是 `vibio-fix`）——本 skill 只到「交成稿 + 写回 content tracker」。
 - 不跳过读 `.vibio/` 就重写一篇已有的内容，或用错内链锚点。

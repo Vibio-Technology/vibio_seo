@@ -97,7 +97,8 @@ What you have that competitors cannot easily copy:
 ### Response to Competitor Backlink Surge
 1. Analyze their new links: what type of content attracts them?
 2. Create a more linkable asset (original data > listicles)
-3. Outreach to the same sites that linked to them (HARO/podcasts/reviews)
+3. Outreach to the same sites that linked to them (expert-quote platforms / podcasts / reviews)
+4. Full acquisition method — asset design, tiered tactics, outreach templates, realistic conversion rates — per `backlink-playbook.md`
 
 ### Response to Competitor Ranking Gains
 1. Check if they improved content or gained links

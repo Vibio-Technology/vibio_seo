@@ -24,6 +24,12 @@
       "prompt": "这个词的内容大纲帮我列一下字数。",
       "expected_output": "Should recognize this is a content-brief request (word-count outline), which is the UPSTREAM of vibio-content, and route to seo-content-brief rather than writing a full draft. Should offer to come back and write the finished draft (vibio-content) once the brief exists.",
       "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "稿子写好了，交付吧。",
+      "expected_output": "Delivery must include front-matter with title/description/target keyword/source list AND an internal-link list: outbound targets (pillar + money page + sibling pages with descriptive anchors, 2-5 contextual links per 1,000 words) plus the 2-3 pre-registered donor pages and insertion spots for publish-day backfill. Should warn that a new article without inbound internal links is an orphan page that halves the content's value, and route publishing (page build + backfill execution) to vibio-fix. Should write back to .vibio/trackers/content.md.",
+      "files": []
     }
   ]
 }

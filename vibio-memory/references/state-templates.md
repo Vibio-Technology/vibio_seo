@@ -9,7 +9,7 @@ Standard formats for `.vibio/` files. Keep fields consistent so the next session
 ```md
 # <Project Name> — SEO State
 
-> Single source of truth. Updated by vibio-plan (diagnosis/roadmap) and vibio-audit (status/stack). Read this first.
+> Single source of truth. Updated by PLAN (diagnosis/roadmap) and AUDIT (status/stack). Read this first.
 
 ## Snapshot
 - Site / URL:
@@ -21,7 +21,7 @@ Standard formats for `.vibio/` files. Keep fields consistent so the next session
 - Domain state: (new / aged)
 - GSC verified: (yes/no)   GA4: (yes/no)
 
-## Diagnosis (from vibio-plan)
+## Diagnosis (from PLAN)
 - Primary class:
 - Secondary tag:
 - Dominant bottleneck:
@@ -66,10 +66,12 @@ Status values: planned / drafting / published / refresh-needed / merged / redire
 ```md
 # Keyword Tracker (keep lean: 20-60 meaningful terms)
 
-| Keyword | Intent | Owner page | Priority | Difficulty | Current rank | Last rank | Trend | Notes |
-|---|---|---|---|---|---|---|---|---|
-| | | | | | | | not-yet-ranking | |
+| Keyword | Intent | Validated | Cascade | Owner page | Priority | Difficulty | Current rank | Last rank | Trend | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| | | | | | | | | | not-yet-ranking | |
 
+Validated values: pass / conditional (per keyword-validation.md five gates; failed terms don't enter the table — log the reason in Notes of a related term or in changelog)
+Cascade values: 1-4 (KD tier per authority-cascade.md)
 Trend values: improving / flat / declining / not-yet-ranking
 Review monthly.
 ```
@@ -79,14 +81,39 @@ Review monthly.
 ## trackers/outreach.md
 
 ```md
-# Outreach Tracker (create once authority work starts)
+# Outreach Tracker (create once authority work starts; process defined in backlink-playbook.md)
 
 | Target site | Contact / channel | Type | Promoted page | Date sent | Follow-up | Status | Result |
 |---|---|---|---|---|---|---|---|
 | | | | | | | not-started | |
 
-Type values: guest-post / product-review / partner / media-request / resource
-Status values: not-started / sent / follow-up-due / in-conversation / won / lost
+Type values: directory / association / certification / trade-show / partner / guest-post / product-review / media-request / digital-PR / expert-quote / reclaim / broken-link / resource
+Status values: not-started / drafted / pending-human-review / sent / follow-up-due / in-conversation / won / lost
+(The agent advances status only up to pending-human-review; a human sends/registers and backfills sent+. See backlink-playbook.md execution boundary.)
+Result: link URL, or "mention-unlinked" (unlinked brand mentions count — they feed AI citations)
+```
+
+---
+
+## trackers/links.md (optional — create at first internal-link audit)
+
+```md
+# Internal Link Health (per link-architecture.md; refresh quarterly)
+
+Last audit: YYYY-MM-DD
+
+## Orphan pages (inlinks = 0)
+- url — planned donor pages
+
+## Weak-linked priority pages (inlinks < 5)
+- url — current inlinks — planned donors
+
+## Backfill queue (new pages awaiting inbound links)
+- url — published date — donor pages + anchor — done? (clear weekly)
+
+## Money-page inlink counts
+| Page | Inlinks | Click depth | Last donor pass |
+|---|---|---|---|
 ```
 
 ---
@@ -98,10 +125,10 @@ Status values: not-started / sent / follow-up-due / in-conversation / won / lost
 
 > Append-only. Every AUDIT finding and FIX change, newest at top. Never overwrite.
 
-## YYYY-MM-DD — <AUDIT|FIX> — <short title>
-- Type: AUDIT finding | FIX change
+## YYYY-MM-DD — <AUDIT|FIX|REVIEW> — <short title>
+- Type: AUDIT finding | FIX change | REVIEW conclusion
 - Severity (audit): Critical / High / Medium / Low
-- What: <what was found or changed>
+- What: <what was found, changed, or concluded>
 - Where: <file / template / CMS location / URL>
 - Verified: <build/lint result, or grep of rendered HTML, or "pending re-crawl">
 - Status: open / fixed / deferred

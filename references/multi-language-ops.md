@@ -20,10 +20,11 @@ Chinese and English users search differently for the same product. Example:
 - ZH: "碳纤维布厂家" (different structure, different intent modifiers)
 
 ### Run independent research per language:
-1. Seed keywords in the target language (not translated — brainstormed natively)
-2. `seo-dataforseo` for each language separately
+1. Seed keywords in the target language (not translated — brainstormed natively, mined from real buyer language per `keyword-validation.md` §三)
+2. `seo-dataforseo` for each language separately (per-country `location_code`, not global volume)
 3. Intent classification may differ: same product, different buyer journey stages per market
 4. Difficulty assessment per market (competitors in EN market may be stronger than ZH market)
+5. Every candidate passes the five validation gates of `keyword-validation.md` in its own language — the native-language evidence gate is exactly what catches translated keywords
 
 ## 3. Content Strategy Per Market
 
