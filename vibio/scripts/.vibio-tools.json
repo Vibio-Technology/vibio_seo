@@ -1,0 +1,14 @@
+{
+  "canonical_root": "../../runtime",
+  "files": {
+    "__init__.py": "cb0b2ba9d01b38de81f7a35f9e6e5e2351e26ae9bd68cb87e9b7ec78041a3c86",
+    "experiment.py": "916b52806058240cdf8394cf19677799c6a377fe51095daf7dc99d05a3c8bc60",
+    "gsc_ai_compare.py": "63d4bd158d59a85835eae2e9bbe0525c47ab2589f3096224597115c2ad6b5e07",
+    "gsc_compare.py": "9c1d511074a46c96f4ce206282f7e4252713544fdf2a56cc011629119ea6b169",
+    "measurement_review.py": "51393be694910c85adbef20abda65a360c0d1077e02e7311e648fc2ac3f50da3",
+    "seo_inspect.py": "138b2f9fd2862e7a26788b25f3214b8962a53f561721b8a39d126502df305cdc",
+    "state_manager.py": "52a7f4131bd924014c77017a404f52137286f8b444fa7410567c370c21f74da8"
+  },
+  "generated_by": "scripts/build_skills.py",
+  "skill": "vibio-seo"
+}

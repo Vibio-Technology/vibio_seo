@@ -9,12 +9,37 @@
 - GSC + GA4：https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console
 - GA4 当前归因模型：https://support.google.com/analytics/answer/10596866
 - GA4 推荐 lead events：https://developers.google.com/analytics/devguides/collection/ga4/reference/events
+- Search Analytics 查询、分页与数据边界：https://developers.google.com/webmaster-tools/v1/searchanalytics/query
+- GA4 Data API metadata 与 property 时区：https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/properties/runReport
 
 ## 测量边界
 
 GSC 测量访问前的 Google Search 展示与点击；Analytics 测量页面成功加载后的站内行为。两套数字设计上就不会完全一致。
 
 不能把某条 GSC query 与某个 GA4 用户或转化做确定性连接。只在 landing page、country、device、date 等共享聚合维度上结合。Query 级收入/CPA 只能是模型，必须标为估算。
+
+### 时间合同
+
+- `analysis_timezone`：做窗口、决策和展示时采用的 IANA 时区。
+- `source_timezone`：来源系统形成日期桶时采用的时区。Search Console 常规日数据按 `America/Los_Angeles`；GA4 使用 property 时区；CRM 使用其导出/业务系统时区。
+- date 粒度不能事后无损换日界。若两个来源只有日期且 source timezone 不同或未知，禁止逐日 join；分别按明确 baseline/current 窗口聚合，或重新导出 timestamp 粒度并统一到 analysis timezone。
+- 同一窗口名不代表相同绝对时间范围。报告必须同时保存分析时区、各来源时区、窗口边界是否包含端点，以及每个来源实际观察到的起止日期。
+
+### 来源完整性合同
+
+每个 GSC、GA4、CRM 或实验 panel 来源机器记录：
+
+```text
+source_kind | source_timezone | data_as_of | finality | preliminary |
+row_limit_hit | pagination_complete | sampling_rate（适用时） |
+thresholding_applied（适用时） | data_quality | attribution_model（适用时）
+```
+
+Search Analytics API 查询可能需要通过 `startRow` 分页，响应也不保证返回所有数据行；不能把“拿到一个响应”当作完整导出。GA4 复盘要保存 property 时区、采样/阈值状态和实际归因模型。CRM 要保存 cohort 归属规则与数据截止点。以下任一情况都使强结论失格：字段缺失或互相矛盾、数据仍 preliminary、触及行数上限、分页未完成、采样率小于 1、发生阈值处理、来源声明 degraded/unknown，或归因模型未记录。
+
+受控实验要把来源身份与采集状态分开：实施前冻结 analysis timezone、temporal grain、source ID/kind/timezone、指标的唯一来源映射与 attribution model；分析 metadata 只能更新 `data_as_of`、finality/preliminary、row-limit、pagination、sampling、thresholding 和 data quality。它不得新增来源、更换指标归属或归因模型，也不能把计划中缺失的合同事后修复成 complete。
+
+这些问题下仍可展示明确标注的来源内描述性窗口汇总，但总判定必须是 `inconclusive`；不得进入 `incremental-positive` 或 `no-detectable-change`。
 
 ## Event 与 CRM 设计
 

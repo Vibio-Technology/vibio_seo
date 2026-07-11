@@ -4,11 +4,17 @@
     {
       "id": 1,
       "name": "代码库 B2B 全面审计",
-      "prompt": "审查一下这个项目的 SEO。这是一个英文 B2B 制造业站点。",
-      "expected_output": "应先读取项目记忆、代码配置和渲染后 HTML，识别技术栈与代表性页面模板；再按可抓取与可索引、意图与页型、内容证据、结构化数据、性能和转化路径审计。每项发现都要给观察证据、官方规则、业务影响、置信度、修复与验证方式，并按真实影响排序。外部 seo-* 能力不可用时，必须用仓库、渲染 HTML、站点文件和官方资料降级完成，不得给泛化清单或虚构测量值。",
-      "files": [],
+      "prompt": "审查附件 industrial-site 的 SEO。这是英文 B2B 制造业站点的渲染构建产物，生产基准 URL 是 https://example-industrial.test/。请实际运行 Skill 自带检查器，保存 JSON/Markdown 证据，再按业务风险解释；不要只给通用清单，也不要把工具 finding 总数当健康分。",
+      "expected_output": "应运行 scripts/seo_inspect.py 读取真实 HTML、sitemap 与 robots.txt，保留参数 URL、链接边、JSON-LD 解析和输入产物证据；识别 noindex 与 sitemap/canonical 冲突、断链、重复 metadata、hreflang 返回链、无效 JSON-LD、缺失 alt 和不受支持的 robots noindex。每项发现给观察证据、影响边界、置信度、修复与复验方式，并说明本地产物不能证明 HTTP、Google 抓取/收录或排名效果。",
+      "files": [
+        "evals/fixtures/industrial-site/index.html",
+        "evals/fixtures/industrial-site/products/index.html",
+        "evals/fixtures/industrial-site/de/index.html",
+        "evals/fixtures/industrial-site/sitemap.xml",
+        "evals/fixtures/industrial-site/robots.txt"
+      ],
       "expectations": [
-        "读取真实产物并识别技术栈，而不是输出通用建议",
+        "运行自带检查器读取真实产物，而不是输出通用建议",
         "按证据、影响、置信度、修复和验证形成可执行发现",
         "外部能力缺失时走本地降级路径"
       ],

@@ -1,0 +1,9 @@
+{
+  "canonical_root": "../../runtime",
+  "files": {
+    "experiment.py": "916b52806058240cdf8394cf19677799c6a377fe51095daf7dc99d05a3c8bc60",
+    "state_manager.py": "52a7f4131bd924014c77017a404f52137286f8b444fa7410567c370c21f74da8"
+  },
+  "generated_by": "scripts/build_skills.py",
+  "skill": "vibio-memory"
+}

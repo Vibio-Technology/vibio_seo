@@ -1,0 +1,9 @@
+Date,Page,Country,Device,Clicks,Impressions,CTR,Position
+2026-05-05,https://example-industrial.test/products/,DEU,DESKTOP,6,60,99%,5
+2026-05-19,https://example-industrial.test/products/,DEU,MOBILE,4,40,99%,5
+2026-05-08,https://example-industrial.test/de/,DEU,DESKTOP,3,30,99%,8
+2026-05-22,https://example-industrial.test/de/,DEU,MOBILE,1,20,99%,8
+2026-06-05,https://example-industrial.test/products/,DEU,DESKTOP,10,100,1%,4
+2026-06-19,https://example-industrial.test/products/,DEU,MOBILE,6,60,1%,4
+2026-06-08,https://example-industrial.test/de/,DEU,DESKTOP,2,35,1%,7
+2026-06-22,https://example-industrial.test/de/,DEU,MOBILE,1,25,1%,7

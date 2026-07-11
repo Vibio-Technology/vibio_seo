@@ -18,9 +18,37 @@ compatibility: 代码库、URL 或导出数据均可作为输入。联网、Sear
 - `references/evidence-policy.md`：证据等级、数值论断和建议记录。
 - `references/capability-routing.md`：能力选择、降级方案和不可知边界。
 - `references/google-search-docs.md`：Google 当前规则；易变事项行动前重新核验实时官方页。
+- `references/javascript-rendering.md`：HTTP 源码、静态构建、浏览器 DOM 的证据边界与 SPA 验证。
 - `references/seo-fix-principles.md`：与技术栈无关的目标状态。
+- `references/core-web-vitals.md`：有 CrUX/RUM/PSI/Lighthouse 输入时区分字段与实验室证据。
+- `references/faceted-navigation.md`：目录、筛选、排序、分页或站内搜索形成参数空间时读取。
+- `references/bing-webmaster-docs.md`：目标市场包含 Bing、IndexNow 或 Bing AI Performance 时读取。
 - `references/stack-detection.md`：代码、渲染栈和编辑模式识别。
 - `references/paid-search-intelligence.md`：仅在付费数据能回答 SEO 决策时使用。
+
+## 自带确定性工具
+
+当输入包含静态构建目录、浏览器导出 DOM，或允许对线上 URL 做有限抓取时，优先运行 `scripts/seo_inspect.py`，先生成 JSON 证据和中文 Markdown，再由本 Skill 判断业务影响。工具解析完整 HTML、JSON-LD、sitemap、robots 与范围内链接图；在静态构建模式还检查本地图片引用是否真实存在，不使用字符串 grep 或无来源健康分。报告必须保留 `evidence_mode=http_source|static_build|browser_dom`；只有 `--browser-provenance` 将每个 URL、DOM SHA-256、浏览器、采集时间和 JavaScript 状态校验通过时，才可写 `client_side_dom_verified=true`。
+
+```bash
+python scripts/seo_inspect.py \
+  --site-dir dist --base-url https://example.com/ \
+  --sitemap public/sitemap.xml --robots public/robots.txt \
+  --json-out .vibio/runs/audit.json \
+  --markdown-out .vibio/runs/audit.md
+```
+
+客户端站点另保存浏览器导出的 DOM；能取得初始源码时用同一路径布局配对：
+
+```bash
+python scripts/seo_inspect.py --rendered-dom .vibio/evidence/rendered \
+  --source-input .vibio/evidence/source \
+  --browser-provenance .vibio/evidence/browser-provenance.json \
+  --base-url https://example.com/ \
+  --json-out .vibio/runs/browser-dom.json --markdown-out .vibio/runs/browser-dom.md
+```
+
+线上模式使用 `--start-url` 和明确的 `--max-pages`，但内置有界 HTTP 抓取器不执行 JavaScript。它只连接经校验的公网目标、逐跳复验重定向、将 robots 自动发现的 sitemap 限于站点同源，并限制单响应字节数。浏览器不可用或未提供 DOM 时，把客户端 metadata、正文、canonical、结构化数据与链接写成“未经 JavaScript 渲染验证”，不能从源码断言其最终状态。只有用户确认输入代表生产目标站时才加 `--production`；静态构建或浏览器 DOM 文件都不能证明 HTTP。报告命中是调查证据，不自动等于排名原因；工具未覆盖内容质量、搜索意图、Google-selected canonical、真实收录或业务结果。
 
 ## 工作流
 
@@ -41,9 +69,9 @@ compatibility: 代码库、URL 或导出数据均可作为输入。联网、Sear
 
 ### 3. 检查真实产物
 
-按业务风险选择代表性页面类型，至少区分首页、列表/分类、详情/产品、内容和本地化模板中实际存在的类型。检查：
+先保存工具命令、输入范围、失败 URL 与 JSON 报告；再按业务风险选择代表性页面类型，至少区分首页、列表/分类、详情/产品、内容和本地化模板中实际存在的类型。检查：
 
-1. **搜索资格**：状态码、Googlebot 访问、`noindex`、robots、登录墙、关键 JS 渲染和可索引主内容。
+1. **搜索资格**：按 `references/javascript-rendering.md` 分开验证状态码/HTTP 源码与浏览器 DOM；检查 `noindex`、robots、登录墙、关键 JS、soft-404、History API、权限回退和可索引主内容。
 2. **URL 信号**：重定向、canonical、sitemap、hreflang、参数 URL 和内部链接是否表达同一意图。
 3. **意图与价值**：页面类型是否匹配当前目标市场 SERP，是否提供原创事实、专家经验或完成任务所需的信息。
 4. **发现与架构**：重要页面是否可通过可抓取链接发现，是否存在孤儿页、重复所有权或规模化低价值页面。
@@ -51,7 +79,7 @@ compatibility: 代码库、URL 或导出数据均可作为输入。联网、Sear
 6. **体验与业务结果**：移动端关键任务、真实用户性能证据、表单/购买路径、测量覆盖和合格转化定义。
 7. **AI 搜索**：先检查正常 Search 资格与非同质化价值。Google 不要求 `llms.txt`、特殊 AI Schema 或 AI 专用改写；不得将其缺失列为 Google 排名问题。
 
-解析完整 JSON-LD 对象，不用字符串 grep 代替结构验证。抓取被 WAF/CDN 拒绝时可更换浏览器 UA 或来源，但要区分“工具未取到”与“搜索引擎无法访问”。代码库审计要尽量同时检查源码、构建结果和代表性渲染输出。
+解析完整 JSON-LD 对象，不用字符串 grep 代替结构验证。抓取被 WAF/CDN 拒绝时可更换浏览器 UA 或来源，但要区分“工具未取到”与“搜索引擎无法访问”。代码库审计要尽量同时检查源码、构建结果和代表性浏览器 DOM。重要链接必须在相应证据层中表现为可解析的 `<a href>`；浏览器 DOM 快照之外的 console/network 异常与路由导航仍需单独验证。
 
 ### 4. 判定证据
 

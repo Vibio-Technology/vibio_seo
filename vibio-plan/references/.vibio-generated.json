@@ -2,17 +2,20 @@
   "canonical_root": "../../references",
   "files": {
     "authority-cascade.md": "5256bfd2c53e3abc9c149cae6b675018adfbf0851c56289171b9902c7e147bc5",
-    "capability-routing.md": "0ea79e0dcbb29f36de2f7c2b1c9d9220d9e3b43a0452787e8e195eec2f0433d6",
+    "bing-webmaster-docs.md": "88a2d26e45822a8bd08511eb733517d41c7d28f978968cffd141e43133c1a975",
+    "capability-routing.md": "f2d2a127d94dddd5ffb63553a4eec34c10927575422733f7a0b3d11976821586",
+    "core-web-vitals.md": "198db61c21b30a458856413c165eb41ee94a8909688d45c37e7beadbb855d18a",
     "delivery-template.md": "4ec30fe13fc304282e15020ac0bcf17647ea910e2419c6424cd1dc37a107cbaf",
     "evidence-policy.md": "1595b2941d9e2c7d58b746403f650316faa90bab49b9546eacee65831b3b5137",
+    "faceted-navigation.md": "490dd66b2b101278c7a7110afff42be29d9384438777709d4f53643d770df5a3",
     "link-architecture.md": "cc5cf7f89c5798018e59ebc7a3ac128b32bbc92f2aaff2fcd6cf1c13e55c9208",
     "operating-system.md": "03b07df6ee3b2ab363110065b7223cb8ea2ee0178f44bd06e4b292bdce42e8f6",
-    "paid-search-intelligence.md": "fd74a76a36e631485ea7b9de4b8039fb57998b9b6a29192c8cc083b627ae17e3",
+    "paid-search-intelligence.md": "a67e5e8c15dab0a040314c4b5b99fd1448dbdf7dfdd5b840e584e120c2eceaae",
     "predictive-seo.md": "be2c1e39911a3ded95cb7e1fefbefdeac71e0cdd6ede8b8f0d72e5d0c318ddc1",
-    "review-engine.md": "b59f695c70a8bdccc6ea266d0093f15daa00b9e6da958b24936058d1e5644c7e",
-    "roi-attribution.md": "77c3ff3b60db492a5abb4a14a851a0b20b16ccb2d58a7619eb220fd590220b94",
-    "seo-experimentation.md": "1b561b1ae10141950ec7d2cd07f98fe54edebb5e11616b7bd8b36f153843e96f",
-    "state-templates.md": "e03fb71ec8f9a2877f3b2009b6b636ad52cd064f4e8fd7decb763f2b823fdceb"
+    "review-engine.md": "0d1c242f8ee57d8acd95d226b5fc8475da45b61c010a409049bd7eacc5ff4ba4",
+    "roi-attribution.md": "99015de27a36daae1147b6fb4f8d8a2786a650504da53baf61132507e543c2e8",
+    "seo-experimentation.md": "b480763ea96fc5e44a639283017f9efe507a10fa53e4379cd2d9f11731d7cab0",
+    "state-templates.md": "b00c33a8465711b61479ab3fcf4538aa0798507f2f34f1e8f2ac55682fd55a2d"
   },
   "generated_by": "scripts/build_skills.py",
   "skill": "vibio-plan"

@@ -1,0 +1,461 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vibio.local/gsc_compare.report/1.3.0/schema.json",
+  "title": "Vibio GSC 窗口对比报告",
+  "description": "runtime/gsc_compare.py 输出的描述性 GSC 窗口对比契约。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "analysis_kind",
+    "generated_at",
+    "methodology",
+    "dataset_contract",
+    "periods",
+    "coverage",
+    "sources",
+    "data_quality",
+    "verdict_eligibility",
+    "overall",
+    "cohorts"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.3.0"},
+    "analysis_kind": {"const": "descriptive_gsc_window_comparison"},
+    "generated_at": {"type": "string", "minLength": 1},
+    "methodology": {"$ref": "#/$defs/methodology"},
+    "dataset_contract": {"$ref": "#/$defs/datasetContract"},
+    "periods": {
+      "type": "object",
+      "required": ["baseline", "current"],
+      "properties": {
+        "baseline": {"$ref": "#/$defs/period"},
+        "current": {"$ref": "#/$defs/period"}
+      },
+      "additionalProperties": true
+    },
+    "coverage": {"$ref": "#/$defs/coverage"},
+    "sources": {
+      "type": "object",
+      "required": ["baseline", "current"],
+      "properties": {
+        "baseline": {"$ref": "#/$defs/source"},
+        "current": {"$ref": "#/$defs/source"}
+      },
+      "additionalProperties": true
+    },
+    "data_quality": {"$ref": "#/$defs/reportDataQuality"},
+    "verdict_eligibility": {"$ref": "#/$defs/verdictEligibility"},
+    "overall": {
+      "type": "object",
+      "required": ["baseline", "current", "delta"],
+      "properties": {
+        "baseline": {"$ref": "#/$defs/metrics"},
+        "current": {"$ref": "#/$defs/metrics"},
+        "delta": {"$ref": "#/$defs/delta"}
+      },
+      "additionalProperties": true
+    },
+    "cohorts": {
+      "type": "object",
+      "required": ["page", "query", "country", "device"],
+      "properties": {
+        "page": {"$ref": "#/$defs/cohort"},
+        "query": {"$ref": "#/$defs/cohort"},
+        "country": {"$ref": "#/$defs/cohort"},
+        "device": {"$ref": "#/$defs/cohort"}
+      },
+      "additionalProperties": {"$ref": "#/$defs/cohort"}
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "dimension": {"enum": ["page", "query", "country", "device"]},
+    "nullableString": {"type": ["string", "null"]},
+    "nullableOffsetDateTime": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|[+-][0-9]{2}:[0-9]{2})$"
+        }
+      ]
+    },
+    "nullableNumber": {"type": ["number", "null"]},
+    "nonNegativeNumber": {"type": "number", "minimum": 0},
+    "nonNegativeInteger": {"type": "integer", "minimum": 0},
+    "fileReference": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?![A-Za-z][A-Za-z0-9+.-]*:)(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+"
+    },
+    "methodology": {
+      "type": "object",
+      "required": [
+        "causal_inference",
+        "warnings",
+        "ctr",
+        "position",
+        "zero_denominator",
+        "grain_alignment"
+      ],
+      "properties": {
+        "causal_inference": {"const": false},
+        "warnings": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "ctr": {"type": "string", "minLength": 1},
+        "position": {"type": "string", "minLength": 1},
+        "zero_denominator": {"type": "string", "minLength": 1},
+        "grain_alignment": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "datasetContract": {
+      "type": "object",
+      "required": [
+        "property_id",
+        "search_type",
+        "timezone",
+        "analysis_timezone",
+        "source_timezones",
+        "temporal_grain",
+        "filter_notes",
+        "current_grain",
+        "baseline_grain",
+        "grains_aligned",
+        "allow_unaligned_overall",
+        "windows_disjoint",
+        "baseline_precedes_current",
+        "contract_complete",
+        "measurement_integrity_complete",
+        "warning"
+      ],
+      "properties": {
+        "property_id": {"$ref": "#/$defs/nullableString"},
+        "search_type": {"$ref": "#/$defs/nullableString"},
+        "timezone": {"$ref": "#/$defs/nullableString"},
+        "analysis_timezone": {"$ref": "#/$defs/nullableString"},
+        "source_timezones": {
+          "type": "object",
+          "required": ["baseline", "current"],
+          "properties": {
+            "baseline": {"type": "string", "minLength": 1},
+            "current": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "temporal_grain": {"const": "date"},
+        "filter_notes": {"$ref": "#/$defs/nullableString"},
+        "current_grain": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/dimension"}},
+        "baseline_grain": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/dimension"}},
+        "grains_aligned": {"type": "boolean"},
+        "allow_unaligned_overall": {"type": "boolean"},
+        "windows_disjoint": {"const": true},
+        "baseline_precedes_current": {"const": true},
+        "contract_complete": {"type": "boolean"},
+        "measurement_integrity_complete": {"type": "boolean"},
+        "warning": {"$ref": "#/$defs/nullableString"}
+      },
+      "additionalProperties": true
+    },
+    "period": {
+      "type": "object",
+      "required": [
+        "label",
+        "requested_start",
+        "requested_end",
+        "observed_start",
+        "observed_end",
+        "effective_start",
+        "effective_end",
+        "boundary_source",
+        "source"
+      ],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "requested_start": {"$ref": "#/$defs/nullableString"},
+        "requested_end": {"$ref": "#/$defs/nullableString"},
+        "observed_start": {"$ref": "#/$defs/nullableString"},
+        "observed_end": {"$ref": "#/$defs/nullableString"},
+        "effective_start": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "effective_end": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "boundary_source": {"enum": ["declared", "observed"]},
+        "source": {"$ref": "#/$defs/fileReference"}
+      },
+      "additionalProperties": true
+    },
+    "dimensionCoverage": {
+      "type": "object",
+      "required": ["column_present", "populated_rows", "blank_rows"],
+      "properties": {
+        "column_present": {"type": "boolean"},
+        "populated_rows": {"$ref": "#/$defs/nonNegativeInteger"},
+        "blank_rows": {"$ref": "#/$defs/nonNegativeInteger"}
+      },
+      "additionalProperties": true
+    },
+    "windowCoverage": {
+      "type": "object",
+      "required": [
+        "source",
+        "source_rows",
+        "included_rows",
+        "excluded_rows",
+        "date_column_present",
+        "observed_date_start",
+        "observed_date_end",
+        "zero_impression_rows",
+        "position_rows",
+        "position_impressions",
+        "position_impression_coverage",
+        "dimensions"
+      ],
+      "properties": {
+        "source": {"$ref": "#/$defs/fileReference"},
+        "source_rows": {"$ref": "#/$defs/nonNegativeInteger"},
+        "included_rows": {"$ref": "#/$defs/nonNegativeInteger"},
+        "excluded_rows": {"$ref": "#/$defs/nonNegativeInteger"},
+        "date_column_present": {"type": "boolean"},
+        "observed_date_start": {"$ref": "#/$defs/nullableString"},
+        "observed_date_end": {"$ref": "#/$defs/nullableString"},
+        "zero_impression_rows": {"$ref": "#/$defs/nonNegativeInteger"},
+        "position_rows": {"$ref": "#/$defs/nonNegativeInteger"},
+        "position_impressions": {"$ref": "#/$defs/nonNegativeNumber"},
+        "position_impression_coverage": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "dimensions": {
+          "type": "object",
+          "required": ["page", "query", "country", "device"],
+          "properties": {
+            "page": {"$ref": "#/$defs/dimensionCoverage"},
+            "query": {"$ref": "#/$defs/dimensionCoverage"},
+            "country": {"$ref": "#/$defs/dimensionCoverage"},
+            "device": {"$ref": "#/$defs/dimensionCoverage"}
+          },
+          "additionalProperties": {"$ref": "#/$defs/dimensionCoverage"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "missingDimension": {
+      "type": "object",
+      "required": ["current_missing", "baseline_missing"],
+      "properties": {
+        "current_missing": {"type": "boolean"},
+        "baseline_missing": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["baseline", "current", "shared_dimensions", "missing_dimensions"],
+      "properties": {
+        "baseline": {"$ref": "#/$defs/windowCoverage"},
+        "current": {"$ref": "#/$defs/windowCoverage"},
+        "shared_dimensions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/dimension"}
+        },
+        "missing_dimensions": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/missingDimension"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256",
+        "source_id",
+        "source_kind",
+        "source_timezone",
+        "temporal_grain",
+        "data_as_of",
+        "finality",
+        "preliminary",
+        "row_limit_hit",
+        "pagination_complete",
+        "sampling_rate",
+        "thresholding_applied",
+        "data_quality",
+        "attribution_model"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/fileReference"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "source_id": {"enum": ["baseline", "current"]},
+        "source_kind": {"const": "gsc_search_analytics"},
+        "source_timezone": {"type": "string", "minLength": 1},
+        "temporal_grain": {"const": "date"},
+        "data_as_of": {"$ref": "#/$defs/nullableOffsetDateTime"},
+        "finality": {"enum": ["final", "preliminary", "unknown"]},
+        "preliminary": {"type": "boolean"},
+        "row_limit_hit": {"type": ["boolean", "null"]},
+        "pagination_complete": {"type": ["boolean", "null"]},
+        "sampling_rate": {"type": "null"},
+        "thresholding_applied": {"type": "null"},
+        "data_quality": {"$ref": "#/$defs/sourceDataQuality"},
+        "attribution_model": {"type": "null"}
+      },
+      "additionalProperties": true
+    },
+    "sourceDataQuality": {
+      "type": "object",
+      "required": ["declared", "status", "issues"],
+      "properties": {
+        "declared": {"enum": ["complete", "degraded", "unknown"]},
+        "status": {"enum": ["complete", "degraded", "unknown"]},
+        "issues": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "complete"}}, "required": ["status"]},
+          "then": {"properties": {"issues": {"maxItems": 0}}}
+        },
+        {
+          "if": {"properties": {"status": {"enum": ["degraded", "unknown"]}}, "required": ["status"]},
+          "then": {"properties": {"issues": {"minItems": 1}}}
+        }
+      ]
+    },
+    "qualityIssue": {
+      "type": "object",
+      "required": ["code", "source"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "reportDataQuality": {
+      "type": "object",
+      "required": ["status", "complete", "issues"],
+      "properties": {
+        "status": {"enum": ["complete", "inconclusive"]},
+        "complete": {"type": "boolean"},
+        "issues": {"type": "array", "items": {"$ref": "#/$defs/qualityIssue"}}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "complete"}}, "required": ["status"]},
+          "then": {
+            "properties": {"complete": {"const": true}, "issues": {"maxItems": 0}}
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "inconclusive"}}, "required": ["status"]},
+          "then": {
+            "properties": {"complete": {"const": false}, "issues": {"minItems": 1}}
+          }
+        },
+        {
+          "if": {"properties": {"complete": {"const": true}}, "required": ["complete"]},
+          "then": {"properties": {"status": {"const": "complete"}}}
+        }
+      ]
+    },
+    "verdictEligibility": {
+      "type": "object",
+      "required": [
+        "recommended_verdict",
+        "maximum_supported_verdict",
+        "incremental_positive_allowed",
+        "no_detectable_change_allowed",
+        "reasons"
+      ],
+      "properties": {
+        "recommended_verdict": {"enum": ["descriptive", "inconclusive"]},
+        "maximum_supported_verdict": {"const": "descriptive"},
+        "incremental_positive_allowed": {"const": false},
+        "no_detectable_change_allowed": {"const": false},
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "clicks",
+        "impressions",
+        "ctr",
+        "weighted_position",
+        "rows",
+        "position_rows",
+        "position_impressions"
+      ],
+      "properties": {
+        "clicks": {"$ref": "#/$defs/nonNegativeNumber"},
+        "impressions": {"$ref": "#/$defs/nonNegativeNumber"},
+        "ctr": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "weighted_position": {"type": ["number", "null"], "minimum": 0},
+        "rows": {"$ref": "#/$defs/nonNegativeInteger"},
+        "position_rows": {"$ref": "#/$defs/nonNegativeInteger"},
+        "position_impressions": {"$ref": "#/$defs/nonNegativeNumber"}
+      },
+      "additionalProperties": true
+    },
+    "delta": {
+      "type": "object",
+      "required": [
+        "clicks",
+        "clicks_relative",
+        "impressions",
+        "impressions_relative",
+        "ctr_percentage_points",
+        "weighted_position"
+      ],
+      "properties": {
+        "clicks": {"$ref": "#/$defs/nullableNumber"},
+        "clicks_relative": {"$ref": "#/$defs/nullableNumber"},
+        "impressions": {"$ref": "#/$defs/nullableNumber"},
+        "impressions_relative": {"$ref": "#/$defs/nullableNumber"},
+        "ctr_percentage_points": {"$ref": "#/$defs/nullableNumber"},
+        "weighted_position": {"$ref": "#/$defs/nullableNumber"}
+      },
+      "additionalProperties": true
+    },
+    "cohortRow": {
+      "type": "object",
+      "required": ["value", "baseline", "current", "delta"],
+      "properties": {
+        "value": {"type": "string", "minLength": 1},
+        "baseline": {"$ref": "#/$defs/metrics"},
+        "current": {"$ref": "#/$defs/metrics"},
+        "delta": {"$ref": "#/$defs/delta"}
+      },
+      "additionalProperties": true
+    },
+    "cohort": {
+      "type": "object",
+      "required": ["label", "available", "groups_total", "groups_returned", "rows"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "available": {"type": "boolean"},
+        "groups_total": {"$ref": "#/$defs/nonNegativeInteger"},
+        "groups_returned": {"$ref": "#/$defs/nonNegativeInteger"},
+        "rows": {"type": "array", "items": {"$ref": "#/$defs/cohortRow"}}
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "canonical_root": "../../runtime",
+  "files": {
+    "gsc_compare.py": "9c1d511074a46c96f4ce206282f7e4252713544fdf2a56cc011629119ea6b169"
+  },
+  "generated_by": "scripts/build_skills.py",
+  "skill": "vibio-keyword"
+}

@@ -52,7 +52,7 @@
 Google Search 会忽略 `llms.txt`；不要为了改善 Google 可见性而安装相关插件或添加 rewrite。只有目标平台已有支持文档且实验获得批准时，才考虑使用该文件。
 
 ## 验证
-抓取最终线上响应，而不是 PHP 源码，因为插件在渲染时运行。解析 DOM，检查 title、canonical、OG 和 JSON-LD 的实际值；验证可索引性时，应解析最终生效的 `<meta name="robots">` 指令，以及重定向链中每一跳的 `X-Robots-Tag` 响应头：
+抓取最终线上 HTTP 响应，而不是 PHP 文件，因为插件会在服务端生成 HTML。`curl` 只证明响应源码与 headers，不执行浏览器 JavaScript；若主题或插件会在客户端改写字段，按 `../javascript-rendering.md` 另采集浏览器 DOM。检查 title、canonical、OG 和 JSON-LD；验证可索引性时，应解析初始 `<meta name="robots">`，以及重定向链中每一跳的 `X-Robots-Tag` 响应头：
 ```bash
 curl -sL https://example.com/ | grep -oiE 'name="description"[^>]*|rel="canonical"[^>]*|property="og:site_name"[^>]*|"@type":"(Organization|WebSite)"'
 curl -sSIL https://example.com/ | grep -i '^x-robots-tag:'

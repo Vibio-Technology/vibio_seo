@@ -15,7 +15,7 @@ URL-only 不等于只能给泛泛建议。必须完成“抓取现状 -> 逐项 
 
 ## 2. 获取真实现状
 
-对首页和每类代表页面检查：
+按 `../javascript-rendering.md` 分开采集 HTTP 响应源码与外部浏览器 DOM；普通 HTTP 抓取器不执行 JavaScript。对首页和每类代表页面检查：
 
 - 状态码、重定向链、canonical host。
 - 渲染 title、description、robots、canonical、hreflang、OG。
@@ -23,6 +23,8 @@ URL-only 不等于只能给泛泛建议。必须完成“抓取现状 -> 逐项 
 - H1/主内容、导航和上下文链接是否真实渲染。
 - robots.txt、sitemap、404 和参数 URL。
 - 移动端主任务、表单和关键媒体是否可用。
+
+SPA 还要直接打开真实/不存在路由，检查 HTTP soft-404、History API 刷新与前进后退、初始 noindex/canonical、`<a href>`、匿名权限/API 回退和 console/network 异常。没有浏览器或无法导出 DOM 时，将客户端状态标为未验证。
 
 被 WAF/CDN 拦截时使用正常浏览器 UA 或浏览器检查，并明确采集限制。不能从单页推断全站。
 

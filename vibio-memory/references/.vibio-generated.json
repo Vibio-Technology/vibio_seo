@@ -3,8 +3,8 @@
   "files": {
     "evidence-policy.md": "1595b2941d9e2c7d58b746403f650316faa90bab49b9546eacee65831b3b5137",
     "learning-loop.md": "85305e5f97134abe35241562325b6f774040104e5560d00213ce8c77438b2536",
-    "roi-attribution.md": "77c3ff3b60db492a5abb4a14a851a0b20b16ccb2d58a7619eb220fd590220b94",
-    "state-templates.md": "e03fb71ec8f9a2877f3b2009b6b636ad52cd064f4e8fd7decb763f2b823fdceb"
+    "roi-attribution.md": "99015de27a36daae1147b6fb4f8d8a2786a650504da53baf61132507e543c2e8",
+    "state-templates.md": "b00c33a8465711b61479ab3fcf4538aa0798507f2f34f1e8f2ac55682fd55a2d"
   },
   "generated_by": "scripts/build_skills.py",
   "skill": "vibio-memory"

@@ -1,8 +1,73 @@
 # 状态模板
 
-以下是 `.vibio/` 文件的标准格式。保持字段一致，便于后续会话机械读取；日期使用 `YYYY-MM-DD`。只填写已知事实，其余留空或标 unknown，不得编造。
+结构化状态优先使用 `scripts/state_manager.py` 维护：
 
-`.vibio/` 是唯一自动使用的状态层。只有用户明确授权时，才能使用项目外经验库，并遵守 `learning-loop.md` 的匿名化、证据与人工审查协议；默认不得创建或读取全局层。
+```text
+.vibio/state/
+├── project.json
+├── project.sha256
+├── changes.jsonl
+└── reviews.jsonl
+```
+
+`project.sha256` 锁定项目身份；`changes.jsonl` 与 `reviews.jsonl` 是绑定项目摘要和另一条链 head 的追加式 SHA-256 链，跨进程写入由文件锁串行化。状态转移、复盘资格和敏感信息由工具校验；不要手改或覆写。下面的 Markdown 模板用于兼容旧项目或由 `state_manager.py render` 生成的人读视图，不再声称可通过自由文本可靠机械解析。迁移旧项目时先保留原文件，再从可验证记录初始化结构化状态，不能把历史推测成事实。该机制提供项目内篡改证据，不是外部签名；需要更强不可抵赖性时，把链 head 另存到受控的外部日志或版本库。
+
+需要实验强结论时，先由 `experiment.py plan` 生成冻结计划，再在实施前把下面对象放入该 change 的首条 `planned` 记录。文件摘要必须来自实际 plan 文件；复盘时状态工具会重新读取并绑定正式 result、数值方向、CI、guardrail 与证据摘要。首条 planned 未注册的实验不能事后冒充预注册：
+
+```json
+{
+  "experiment_registration": {
+    "experiment_id": "seo-exp-001",
+    "plan": ".vibio/experiments/seo-exp-001/frozen/plan.json",
+    "plan_file_sha256": "<64 hex>",
+    "plan_hash": "<plan.json 中的 plan_hash>"
+  }
+}
+```
+
+强结论的 review 记录还必须绑定产生 result 的原始输入。`measurement_metadata` 只在分析时确实提供该文件时出现；所有路径必须位于项目内：
+
+```json
+{
+  "experiment_plan": ".vibio/experiments/seo-exp-001/frozen/plan.json",
+  "experiment_result": ".vibio/experiments/seo-exp-001/result.json",
+  "experiment_result_sha256": "<64 hex>",
+  "experiment_inputs": {
+    "panel": {
+      "path": ".vibio/experiments/seo-exp-001/panel.csv",
+      "sha256": "<64 hex>"
+    },
+    "artifact_report": {
+      "path": ".vibio/experiments/seo-exp-001/artifact.json",
+      "sha256": "<64 hex>"
+    },
+    "measurement_metadata": {
+      "path": ".vibio/experiments/seo-exp-001/measurement-metadata.json",
+      "sha256": "<64 hex>"
+    }
+  }
+}
+```
+
+状态工具会重跑 `experiment.py analyze` 并比对除 `analyzed_at` 外的整份正式报告，额外字段同样会被拒绝。因此，加入自定义因果声明、修改报告数值后重算 result SHA-256，或使用另一份 panel 生成内部自洽报告，都不能通过强结论门禁。
+
+`no-detectable-change` 不能使用手写 `power=0.8` 作为独立功效证据。先让状态工具从冻结计划与正式实验报告确定性生成证据：
+
+```bash
+python scripts/state_manager.py detectability \
+  --project-root . \
+  --experiment-plan .vibio/experiments/seo-exp-001/frozen/plan.json \
+  --experiment-result .vibio/experiments/seo-exp-001/result.json \
+  --out .vibio/experiments/seo-exp-001/detectability.json
+```
+
+证据会固定 `vibio-seo-detectability` 的 tool/version/method、plan/panel/artifact/measurement metadata/result 摘要、alpha、结构化 MDE、标准误与置信区间，并用双侧正态近似重算 power。review 记录必须保存该文件路径与 SHA-256；状态工具会再次重算整份证据，只有 power >= 0.8 且正式实验置信区间包含 0 时才允许 `no-detectable-change`。
+
+0.8 是 v5 强状态的项目内验收门槛，不是通用样本量、无效果证明或排名保证。双侧正态近似不能修复错误设计、页面非独立、污染、数据不完整或机制不成立。
+
+日期使用 `YYYY-MM-DD`。只填写已知事实，其余留空或标 unknown，不得编造。
+
+`.vibio/` 是唯一自动使用的状态层。只有用户明确授权时，才能使用项目外经验库，并遵守 `learning-loop.md` 的匿名化、证据与人工审查协议；默认不得创建或读取全局层。只有用户授权项目内写入时，才能运行 init/append；读取与 validate 不扩大写权限。
 
 ---
 

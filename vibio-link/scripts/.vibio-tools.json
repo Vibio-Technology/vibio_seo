@@ -1,0 +1,8 @@
+{
+  "canonical_root": "../../runtime",
+  "files": {
+    "seo_inspect.py": "138b2f9fd2862e7a26788b25f3214b8962a53f561721b8a39d126502df305cdc"
+  },
+  "generated_by": "scripts/build_skills.py",
+  "skill": "vibio-link"
+}

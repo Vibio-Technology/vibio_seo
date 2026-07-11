@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /private/
+Noindex: /legacy/
+Sitemap: https://example-industrial.test/sitemap.xml

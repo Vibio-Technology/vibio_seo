@@ -129,6 +129,8 @@ function JsonLd({ data }: { data: object }) {
 
 Google 能处理 JavaScript，但服务器/静态渲染通常让关键内容更稳定地被用户、抓取器和分享工具获取。
 
+证据采集按 `../javascript-rendering.md` 分层：构建目录是 `static_build`，对 URL 的普通 HTTP 请求是 `http_source`，只有外部浏览器导出的 DOM 才是 `browser_dom`。不要因为 `next build` 或 `curl` 成功就声称客户端组件已渲染。
+
 - 产品名称、核心事实、正文、主导航和内部链接应在初始渲染结果中存在。
 - 不要把主内容永久初始为 `opacity: 0`，或只有滚动/点击后才注入。
 - Client component 只用于真实交互；能在 server component 获取和渲染的数据不要无理由推迟到客户端。
@@ -173,5 +175,8 @@ npm run build
 - Sitemap/robots URL、内容与响应类型。
 - 404、重定向、参数和多语言边界。
 - 关键内容/内链在渲染结果中存在。
+- App/Pages Router 的真实 deep link、未知动态参数和 rewrite fallback 返回正确状态；不存在实体不得成为 200 soft-404。
+- 客户端导航、刷新、前进/后退后 URL、title、robots、canonical 和正文一致；重要入口是 `<a href>`。
+- 匿名/无 cookie 状态、数据 API 失败及浏览器 console/network 无阻断关键内容的异常。
 
 报告分为：`build/static verification passed`、`served artifact passed`、`GSC/crawl/search effect pending`。只有文件存在不能证明运行时正确。

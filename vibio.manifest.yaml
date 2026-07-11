@@ -1,7 +1,7 @@
 schema_version: 1
 pack:
   name: vibio-seo
-  version: 5.0.0-dev
+  version: 5.0.0
   description: Evidence-led search optimization skill pack for technical SEO, content, links, measurement, and AI search.
   baseline_commit: 99d4931d26c90c10f36748a5080d673d0c12dfef
 
@@ -62,6 +62,75 @@ reference_policy:
     - search-console
     - structured-data
     - ai-search
+
+tool_policy:
+  canonical_root: runtime
+  generated_directory: scripts
+  generated_marker: .vibio-tools.json
+  bundles:
+    vibio:
+      - __init__.py
+      - seo_inspect.py
+      - gsc_compare.py
+      - gsc_ai_compare.py
+      - state_manager.py
+      - measurement_review.py
+      - experiment.py
+    vibio-audit:
+      - seo_inspect.py
+    vibio-fix:
+      - seo_inspect.py
+    vibio-link:
+      - seo_inspect.py
+    vibio-review:
+      - seo_inspect.py
+      - gsc_compare.py
+      - gsc_ai_compare.py
+      - state_manager.py
+      - measurement_review.py
+      - experiment.py
+    vibio-keyword:
+      - gsc_compare.py
+    vibio-plan:
+      - state_manager.py
+      - experiment.py
+    vibio-memory:
+      - state_manager.py
+      - experiment.py
+
+schema_policy:
+  canonical_root: schemas
+  generated_directory: schemas
+  generated_marker: .vibio-schemas.json
+  bundles:
+    vibio:
+      - seo_inspect.report.schema.json
+      - gsc_compare.report.schema.json
+      - gsc_ai_compare.report.schema.json
+      - measurement_review.report.schema.json
+      - experiment.plan.schema.json
+      - experiment.report.schema.json
+    vibio-audit:
+      - seo_inspect.report.schema.json
+    vibio-fix:
+      - seo_inspect.report.schema.json
+    vibio-link:
+      - seo_inspect.report.schema.json
+    vibio-review:
+      - seo_inspect.report.schema.json
+      - gsc_compare.report.schema.json
+      - gsc_ai_compare.report.schema.json
+      - measurement_review.report.schema.json
+      - experiment.plan.schema.json
+      - experiment.report.schema.json
+    vibio-keyword:
+      - gsc_compare.report.schema.json
+    vibio-plan:
+      - experiment.plan.schema.json
+      - experiment.report.schema.json
+    vibio-memory:
+      - experiment.plan.schema.json
+      - experiment.report.schema.json
 
 external_capabilities:
   - name: seo

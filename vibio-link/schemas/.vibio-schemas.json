@@ -1,0 +1,8 @@
+{
+  "canonical_root": "../../schemas",
+  "files": {
+    "seo_inspect.report.schema.json": "837d7f4a3351c76d3f1bf49165160d1a0e1c123344a49ee81262fa12474ceed2"
+  },
+  "generated_by": "scripts/build_skills.py",
+  "skill": "vibio-link"
+}

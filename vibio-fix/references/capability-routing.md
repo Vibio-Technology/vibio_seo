@@ -9,7 +9,7 @@
 | 网站抓取 | Firecrawl 或抓取工具导出 | 通过 sitemap 发现页面，再进行范围明确的 curl/浏览器/本地抓取 | 从一个页面推断已覆盖全站 |
 | Search Console | `seo-google` 或直接访问/导出的 GSC 数据 | 索取导出；检查可索引性和渲染产物 | 无数据时声称索引、点击、查询或排名位置表现 |
 | 分析平台/CRM | GA4、BigQuery、CRM 导出 | 定义埋点方案和决策字段 | 声称实现查询级收入归因 |
-| 渲染验证 | 本地构建 + 渲染后 HTML/浏览器 | 检查源码，并明确标记为未经渲染验证 | 未经检查就声称标签或内容渲染正确 |
+| 渲染验证 | 外部浏览器 DOM + HTTP 源码；按 `javascript-rendering.md` 配对 | 静态构建/HTTP 源码，并明确客户端状态未经 JavaScript 渲染验证 | 把 curl/urllib/构建目录冒充浏览器，或未经检查就声称客户端标签、正文、链接正确 |
 | 结构化数据 | Rich Results Test、Schema Markup Validator、解析器 | 解析 JSON-LD，并与最新官方功能文档对照 | 把存在 Schema 当作排名证明 |
 | 外链 | DataForSEO/Ahrefs/Semrush/数据导出 | 搜索、引荐日志、人工核验的来源页面 | 虚构权威指标或有害链接结论 |
 | 性能 | CrUX/PageSpeed/Lighthouse | 实测请求/渲染耗时 | 将实验室评分当作真实用户现场性能 |

@@ -72,8 +72,10 @@
 Google Search 会忽略 `llms.txt`；不要为了 Google 可见性添加应用、代理或 CDN 路由。只有明确目标平台有文档支持，且实验价值足以覆盖维护成本时，才考虑可选文件。
 
 ## 验证
-抓取线上店铺 URL 并检查渲染 HTML；发布前通过主题预览 URL 验证：
+抓取线上店铺 URL 并检查 HTTP 响应源码；发布前通过主题预览 URL 验证。以下 `curl` 不执行 JavaScript，不能证明客户端应用或脚本改写后的 DOM：
 ```bash
 curl -sL https://shop.example.com/ | grep -oiE 'property="og:site_name"[^>]*|"@type":"(Organization|WebSite|Product)"|rel="canonical"[^>]*'
 ```
 未发布主题的改动不会出现在正式 URL。完成预览或发布后的产物验证后，SERP 变化仍需等待重新抓取，不能把部署成功称为排名生效。
+
+若主题 app extension 或客户端脚本会改 metadata、canonical、JSON-LD、正文或链接，按 `../javascript-rendering.md` 另采集浏览器 DOM，并检查源码与 DOM 冲突、匿名权限、失败 network 请求和 console 异常。

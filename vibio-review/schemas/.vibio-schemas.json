@@ -1,0 +1,13 @@
+{
+  "canonical_root": "../../schemas",
+  "files": {
+    "experiment.plan.schema.json": "7b2896dd6918930c25989a280b39097a8436e78c67c05100d2b7a69e793b0ca7",
+    "experiment.report.schema.json": "4c9a78f10a5628e324186e96cd7bb4249894c4d26dc7b855c0c636a337e36bf0",
+    "gsc_ai_compare.report.schema.json": "3983d1ce7f079891dc3076f33ef5ea856f8c832f869231b3f72733287f5c9e1f",
+    "gsc_compare.report.schema.json": "6ce85a06bea3a3b4e5f35015d49e8e290a718debfcb139d6ec76ff5f76482f06",
+    "measurement_review.report.schema.json": "af5947d9eb199b7a6882625dbe122c280581762d54121023f85bc2cb75f5fed2",
+    "seo_inspect.report.schema.json": "837d7f4a3351c76d3f1bf49165160d1a0e1c123344a49ee81262fa12474ceed2"
+  },
+  "generated_by": "scripts/build_skills.py",
+  "skill": "vibio-review"
+}

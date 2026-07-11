@@ -1,0 +1,9 @@
+{
+  "canonical_root": "../../schemas",
+  "files": {
+    "experiment.plan.schema.json": "7b2896dd6918930c25989a280b39097a8436e78c67c05100d2b7a69e793b0ca7",
+    "experiment.report.schema.json": "4c9a78f10a5628e324186e96cd7bb4249894c4d26dc7b855c0c636a337e36bf0"
+  },
+  "generated_by": "scripts/build_skills.py",
+  "skill": "vibio-plan"
+}

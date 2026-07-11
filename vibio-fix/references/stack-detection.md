@@ -25,7 +25,7 @@ FIX 或代码级 AUDIT 开始前，先识别技术栈、渲染层、部署形态
 | SvelteKit | `svelte.config.*`、`src/routes/**/+page.*` | 按 SvelteKit SSR/head/adapter 验证 |
 | Remix/React Router | `app/routes`、`entry.server.*`、相关 package | 按 route meta/server render 验证 |
 | Gatsby | `gatsby-config.*`、`gatsby-node.*` | 检查 SSR/static HTML 与插件重复输出 |
-| Vite/React SPA | `vite.config.*`、client routes、无 SSR | 重点验证 prerender/SSR、真实状态码与初始 HTML |
+| Vite/React SPA | `vite.config.*`、client routes、无 SSR | 按 `javascript-rendering.md` 验证 HTTP、browser DOM、soft-404、History API 与失败回退 |
 | Plain/static HTML | `index.html`，无框架配置 | `static-astro.md`，直接检查输出 |
 
 没有专用 adapter 时，仍按目标规范执行；不能把它硬套成 Next.js。
@@ -93,6 +93,7 @@ Edit mode:
 Selected adapter:
 Confidence and evidence:
 Unverified assumptions:
+Evidence plan: http_source | static_build | browser_dom | source-vs-rendered
 ```
 
 AUDIT 交给 FIX 时必须带上这份结果，避免下一阶段重新猜栈。

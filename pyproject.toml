@@ -1,11 +1,12 @@
 [project]
 name = "vibio-seo-skill-pack"
-version = "5.0.0.dev0"
+version = "5.0.0"
 description = "Validation and evaluation tooling for the Vibio SEO skill pack"
 requires-python = ">=3.10"
 dependencies = [
   "PyYAML>=6.0.1,<7",
   "jsonschema>=4.23,<5",
+  "tzdata>=2025.2; platform_system == 'Windows'",
 ]
 
 [project.optional-dependencies]

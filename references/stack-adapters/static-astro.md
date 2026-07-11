@@ -49,10 +49,10 @@
 Google Search 会忽略 `llms.txt`；不要把创建该文件当作改善 Google 排名或 AI 可见性的修复手段。只有当另一个明确针对的平台已有支持文档且实验获得批准时，才可选用该文件，并应从同一内容源生成，避免内容漂移。
 
 ## 验证
-完成构建后，在输出目录中检索结果，无需启动服务器：
+完成构建后，在输出目录中检索结果，无需启动服务器；这只能记为 `static_build`，不能证明生产 HTTP 或浏览器 JavaScript：
 ```bash
 # Astro：npm run build → dist/；Hugo：hugo → public/；Jekyll：jekyll build → _site/
 grep -roiE 'property="og:site_name"[^>]*|"@type":"(Organization|WebSite)"|rel="canonical"[^>]*' <output-dir>/index.html
 # 解析代表性页面最终生效的 meta robots 指令，并检查线上 X-Robots-Tag 响应头。
 ```
-不要因为 JSON、脚本、注释或文档中任意出现了 `noindex` 字符串，就判定页面不可索引。随后部署并重新抓取线上 URL，确认托管平台实际提供的是本次构建结果。SERP 变化仍需等待搜索引擎重新抓取。
+不要因为 JSON、脚本、注释或文档中任意出现了 `noindex` 字符串，就判定页面不可索引。随后部署并重新抓取线上 URL，确认托管平台实际提供的是本次构建结果；存在客户端 hydration/路由时再按 `../javascript-rendering.md` 采集浏览器 DOM。SERP 变化仍需等待搜索引擎重新抓取。

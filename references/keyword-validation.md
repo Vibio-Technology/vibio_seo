@@ -55,6 +55,23 @@
 
 Google Trends 是抽样、归一化的相对数据；Topic 和 Search term 应根据研究问题选择，不强制只用 Topic。低量 B2B 词可能没有可显示曲线，此时不能由空图推出无需求。
 
+#### Performance Max 降级规则
+
+PMax 横跨多个 Google 渠道并自动分配投放，不是关键词级需求测试。渠道表现报告只能描述系列在 Search、Search partners、Display、YouTube、Discover、Maps、Gmail 等渠道的交付与归因结果；它不能把整个系列的效果归给一个查询，也不能证明自然需求或排名机会：
+
+https://support.google.com/google-ads/answer/16260130
+
+PMax 的 Final URL expansion 默认开启，可根据搜索意图替换同域落地页；text customization 也默认开启，可依据落地页、域名和已有资产生成动态 headline、description 和其他资产。因此，若没有固定/核验实际落地 URL、实际资产、渠道、地区和搜索词，就不得用 PMax 转化验证“这个词对应这个 SEO 页面/文案”：
+
+- https://support.google.com/google-ads/answer/14337539
+- https://support.google.com/google-ads/answer/10724897
+
+Search terms insights 会把搜索词自动分组为意图类别/子类别，纳入因隐私未在搜索词报告披露的查询，并把部分低量或不可识别词归入 other/uncategorized。类别标签是系统生成的主题代表，不一定是买家输入的原词；其 search volume 汇总所有定向国家且只含 Google Search，不能从多国家系列推出某个 locale 的精确需求：
+
+https://support.google.com/google-ads/answer/11386930
+
+关键词证据优先级为：受控标准 Search campaign 的可见实际搜索词与线索质量 > 已核验渠道/落地页的 PMax 可见实际搜索词 > PMax Search terms insights 类别。只有类别信号时最多标为 `conditional`，并保留 `pmax-aggregated`、渠道、Final URL expansion、text customization、定向国家和隐私缺口。关闭部分自动化设置只能减少混杂，不能把 PMax 变成受控关键词实验。
+
 ### Gate 4：搜索者身份与排除意图
 
 检查查询本身和 SERP，而不是见到一个否定词就一票否决：
@@ -135,11 +152,12 @@ https://developers.google.com/search/docs/fundamentals/ai-optimization-guide
 |---|---|---|---|
 | 1 | GSC | 自有站实际曝光/点击的部分查询 | 完整市场需求、匿名查询明细 |
 | 2 | RFQ/CRM/站内搜索 | 真实买家语言和商业价值 | 整体搜索量 |
-| 3 | Ads search terms / Keyword Planner | 付费环境下的查询与规划量 | 自然 KD、自然 CTR 或必然 SEO 转化 |
-| 4 | 目标地区 SERP | 当前意图、页型和竞争证据 | 精确需求量 |
-| 5 | Autocomplete / 相关问题 | 表达和任务发现 | 精确频次、完整查询集 |
-| 6 | Trends | 相对趋势和地区对比（有足够数据时） | 绝对搜索量 |
-| 7 | 第三方免费数据 | 供应商口径内的辅助比较 | Google 官方指标 |
+| 3 | 受控 Search Ads search terms / Keyword Planner | 付费环境下的可见查询与规划量 | 隐私隐藏查询、自然 KD、自然 CTR 或必然 SEO 转化 |
+| 4 | PMax 可见搜索词 / Search terms insights | 自动投放环境下的部分实际查询或聚合意图类别 | 查询全集、固定页面/文案因果、单一国家需求或自然搜索效果 |
+| 5 | 目标地区 SERP | 当前意图、页型和竞争证据 | 精确需求量 |
+| 6 | Autocomplete / 相关问题 | 表达和任务发现 | 精确频次、完整查询集 |
+| 7 | Trends | 相对趋势和地区对比（有足够数据时） | 绝对搜索量 |
+| 8 | 第三方免费数据 | 供应商口径内的辅助比较 | Google 官方指标 |
 
 `allintitle:` 结果数、引号结果数和 `site:` 结果数不作为竞争或需求量指标；这些计数不稳定且并非为此用途设计。
 

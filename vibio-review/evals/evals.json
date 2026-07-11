@@ -36,9 +36,11 @@
     {
       "id": 2,
       "name": "月度搜索与业务结果复盘",
-      "prompt": "给这个项目做个月度 SEO 复盘。",
-      "expected_output": "应读取项目基线、关键词/内容 tracker 和 changelog，以相同口径比较本月与合理基线窗口：先验证产物与索引，再看按页面、国家、设备、品牌/非品牌或意图集群切分的曝光、点击、CTR 和位置，最后看落地页或意图集群级有效访问、询盘和收入。GSC 不提供查询到 GA4/CRM 转化的确定性连接；查询级收入只能是明确标注假设的模型。对每项改动给七状态证据判定和下一动作。所有数值必须附导出来源与日期。",
-      "files": [],
+      "prompt": "使用附件 gsc-page-daily.csv 做 2026 年 6 月相对 5 月的 SEO 复盘。property 是 sc-domain:example-industrial.test，search type 是 web，时区 Europe/Berlin，过滤 country=DE。请实际运行 Skill 自带 GSC 工具，按页面和设备解释变化；没有 GA4/CRM、实验对照或变更日志时，不要声称 SEO 导致增长。",
+      "expected_output": "应运行 scripts/gsc_compare.py，记录来源 SHA-256、property、search type、时区、过滤与同粒度窗口；CTR 必须按 clicks/impressions 重算，position 按 impressions 加权，不能相信 fixture 中故意错误的 CTR 列。报告应揭示总点击增长但 CTR 下降、产品页与德语页表现分化，并明确只能给 directional/inconclusive 描述，不能判 incremental-positive，也不能把 GSC 页面数据连接到不存在的 GA4/CRM 用户或收入。",
+      "files": [
+        "evals/fixtures/gsc-page-daily.csv"
+      ],
       "expectations": [
         "使用可比窗口并分层评估产物、搜索和业务结果",
         "归因粒度限制在落地页或意图集群",

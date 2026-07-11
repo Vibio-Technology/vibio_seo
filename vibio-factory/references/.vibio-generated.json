@@ -1,10 +1,11 @@
 {
   "canonical_root": "../../references",
   "files": {
-    "capability-routing.md": "0ea79e0dcbb29f36de2f7c2b1c9d9220d9e3b43a0452787e8e195eec2f0433d6",
+    "capability-routing.md": "f2d2a127d94dddd5ffb63553a4eec34c10927575422733f7a0b3d11976821586",
     "evidence-policy.md": "1595b2941d9e2c7d58b746403f650316faa90bab49b9546eacee65831b3b5137",
-    "google-search-docs.md": "91d0eb4abe352ff95a8f509fc369386fc12d839b9afe531f0eb74ab2115fa77c",
-    "paid-search-intelligence.md": "fd74a76a36e631485ea7b9de4b8039fb57998b9b6a29192c8cc083b627ae17e3"
+    "google-search-docs.md": "19a2bad9b2aa14979a2987f9074a9e37d4cd338691cb491fb84b2d70130e5c39",
+    "javascript-rendering.md": "9e993430e0fb3d2b4bfd778a915343821a76190a34a60a317243d4654b693097",
+    "paid-search-intelligence.md": "a67e5e8c15dab0a040314c4b5b99fd1448dbdf7dfdd5b840e584e120c2eceaae"
   },
   "generated_by": "scripts/build_skills.py",
   "skill": "vibio-factory"

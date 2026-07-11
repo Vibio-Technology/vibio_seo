@@ -1,0 +1,8 @@
+{
+  "canonical_root": "../../schemas",
+  "files": {
+    "gsc_compare.report.schema.json": "6ce85a06bea3a3b4e5f35015d49e8e290a718debfcb139d6ec76ff5f76482f06"
+  },
+  "generated_by": "scripts/build_skills.py",
+  "skill": "vibio-keyword"
+}

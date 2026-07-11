@@ -24,12 +24,15 @@ Google 列出三项最低技术要求：Googlebot 未被屏蔽、页面返回成
 
 - 可抓取链接：https://developers.google.com/search/docs/crawling-indexing/links-crawlable
 - JavaScript SEO：https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics
+- JavaScript 排查：https://developers.google.com/search/docs/crawling-indexing/javascript/fix-search-javascript
 - Robots meta：https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag
 - 规范化：https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls
 - 站点地图：https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview
 - 分面导航：https://developers.google.com/search/docs/crawling-indexing/crawling-managing-faceted-navigation
 
 优先审计意外设置的 `noindex`、被屏蔽的资源/内容、误导性状态码、渲染失败、重复 URL 系统、损坏的可抓取链接和 canonical 冲突。
+
+HTTP 响应源码、静态构建文件与浏览器执行 JavaScript 后的 DOM 是三种不同证据。普通 HTTP 客户端和 `urllib` 不执行 JavaScript；没有浏览器 DOM 时，客户端 metadata、正文、canonical 和链接只能标为未验证。初始源码不要设置 `noindex` 再依赖 JavaScript 移除；重要链接应使用带可解析 URL 的 `<a href>`。SPA 的 soft-404、History API、权限回退、canonical 与 console/network 验证见 `references/javascript-rendering.md`。
 
 自引用 canonical 是建议，并非普遍适用的硬性要求。错误的 canonical 可能导致目标页面无法被选为规范页面，其风险高于缺少自引用 canonical。
 

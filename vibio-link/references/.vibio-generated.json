@@ -3,6 +3,7 @@
   "files": {
     "backlink-playbook.md": "9253e4bcdbe8c31c6faef00e8d08f5a127545023d25131f0a726678bc6695417",
     "competitive-war-room.md": "6439bf02f073f15137a0fd1a51244cc782bc2f656dc4f084703ca4d8d6fbb2f2",
+    "faceted-navigation.md": "490dd66b2b101278c7a7110afff42be29d9384438777709d4f53643d770df5a3",
     "link-architecture.md": "cc5cf7f89c5798018e59ebc7a3ac128b32bbc92f2aaff2fcd6cf1c13e55c9208"
   },
   "generated_by": "scripts/build_skills.py",
