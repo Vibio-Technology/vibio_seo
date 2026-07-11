@@ -3,33 +3,213 @@
   "evals": [
     {
       "id": 1,
+      "name": "有来源的 B2B 技术文章",
       "prompt": "针对 carbon fiber for drone frames 这个词帮我写一篇能排上去的文章，要比同行写得更好，里面的数据帮我标来源。",
-      "expected_output": "Should read .vibio/ first (business model / B2B-or-not / target keyword family / existing content for internal links), lock the search intent and article format via seo-sxo before writing, route seo-competitor-pages to reverse-engineer the top 5-10 SERP pages into a coverage-vs-gap table, gather first-hand material from the user (3-5 insider questions), build a verified source table FIRST (WebFetch each data point, record clickable URL + figure + publication year + source tier, never invent), then write an answer-first GEO-friendly E-E-A-T draft whose 'better' means information gain (>=3 things competitors lack) not just longer, apply humanizer de-AI constraints while writing (keeping B2B technical structure like spec tables/bold params), run an adversarial second-pass edit, deliver the draft with front-matter + source list, and write back to .vibio/trackers/content.md. Should route b2b-seo for buyer-journey if project is B2B. Should NOT fabricate data or sources, should NOT just make it longer.",
-      "files": []
+      "expected_output": "应先确认目标国家、语言、搜索意图和合适页型，读取项目记忆并检查现有页面，再观察当前 SERP 的共同覆盖与缺口。写作前建立逐项来源表并收集企业的一手工程经验；每个重量、强度、温度、百分比等数值声明都要对应可访问来源及发布日期，无法核验就删除或标为待验证。成稿以完成无人机机架选材任务为中心，提供竞品没有的决策信息，不承诺排名，并给出发布时的上下文内链和写回记录。",
+      "files": [],
+      "expectations": [
+        "先验证目标市场意图和 SERP，再写正文",
+        "所有数值声明逐项绑定可访问来源",
+        "用一手经验和决策信息形成信息增益"
+      ],
+      "assertions": [
+        {
+          "id": "route-evidence-article",
+          "description": "成稿请求应路由到 vibio-content",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-content",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "numeric-claims-sourced",
+          "description": "fixture 中每个数值声明必须有 URL 来源",
+          "type": "numeric_claims_have_source",
+          "target": "output.claims",
+          "expected": {"require_url": true, "min_numeric_claims": 1},
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "content-fact-contract",
+          "description": "fixture 必须保留目标市场、来源表和一手信息关卡",
+          "type": "fact_set_equals",
+          "target": "output.facts",
+          "expected": [
+            "target_market_and_language_required",
+            "serp_intent_observed_before_drafting",
+            "first_party_expertise_requested",
+            "unsupported_numeric_claims_removed"
+          ],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 2,
+      "name": "竞品文章逆向与信息增益",
       "prompt": "我手头有竞品的几篇文章，你逆向一下写一篇更强的博客出来。",
-      "expected_output": "Should tear down each competitor page across intent/subtopics/depth/data-with-sources/unique-angle/structure/gaps, build a coverage-vs-gap table to find collective blind spots (subtopics all competitors miss = highest value), then assemble a winning outline = must-answer skeleton + gap reinforcement + first-hand injection. Should push for first-hand material since pure second-hand synthesis stays homogeneous and gets suppressed by helpful-content systems. Should mark [needs-evidence] spots for the source table. Should not simply rewrite the competitor content longer.",
-      "files": []
+      "expected_output": "应逐篇拆解搜索意图、读者任务、关键子题、证据质量、第一手经验、结构和未回答问题，再做跨页面覆盖矩阵。新稿保留必须回答的内容，但核心优势来自可验证的集体盲区和企业一手材料，而不是改写、拼接或单纯拉长竞品文章。无法验证的事实标为待取证，发布前再做事实、来源、意图匹配和原创贡献审查。",
+      "files": [],
+      "expectations": [
+        "对竞品做逐页拆解和跨页缺口分析",
+        "新稿必须增加可验证的信息贡献",
+        "不得把更长或同义改写当作更好"
+      ],
+      "assertions": [
+        {
+          "id": "route-competitor-rewrite",
+          "description": "竞品逆向成稿应路由到内容 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-content",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "requires-information-gain",
+          "description": "输出必须以覆盖矩阵、一手材料和原创贡献定义更强",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["覆盖矩阵", "一手材料", "集体盲区", "原创贡献"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "rejects-length-proxy",
+          "description": "不得将单纯加长或拼接作为竞争优势",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["只要.*更长.*(?:就|能)", "拼接.*即可", "改写.*即可"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 3,
+      "name": "去 AI 腔但保留专业结构",
       "prompt": "帮我写篇 SEO 文章，要去掉 AI 味，但别写得不专业。",
-      "expected_output": "Should apply the humanizer ruleset as a hard constraint during writing (kill inflated-meaning phrases, vague attribution, AI vocabulary, fake parallelism, marketing fluff, filler, over-hedging, generic endings) while explicitly exempting B2B technical structure: spec/parameter tables, bold thresholds and functional lists that carry real information are kept, since they are both readability essentials and the best structure for AI citation. The de-AI judgment is: delete formatting that loses no information, keep structure that carries content. Should run a second-pass review specifically for AI tells missed in the first pass. Should not flatten informative tables/lists into plain prose just to look less AI.",
-      "files": []
+      "expected_output": "应删除空泛开场、虚假权威、重复总结、无信息的排比和营销套话，同时保留真正帮助比较和决策的参数表、阈值、步骤、限制条件与来源。不能通过故意加错、口语噪声或打散专业结构来伪装成人类写作；第二遍审查要同时检查语言痕迹、事实准确性和信息密度。",
+      "files": [],
+      "expectations": [
+        "去除无信息语言模式",
+        "保留承载事实和决策价值的专业结构",
+        "不得用人为错误规避 AI 检测"
+      ],
+      "assertions": [
+        {
+          "id": "route-professional-draft",
+          "description": "专业 SEO 成稿请求应路由到内容 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-content",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "preserves-informative-structure",
+          "description": "输出必须明确保留参数和证据结构",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["参数表", "阈值", "限制条件", "事实准确性", "信息密度"],
+          "weight": 2,
+          "hard_gate": true
+        },
+        {
+          "id": "no-detector-gaming",
+          "description": "不得建议故意制造错误来规避检测",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["故意(?:加入|增加).*(?:错别字|语法错误)", "绕过.*AI.*检测"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 4,
+      "name": "大纲请求不误触发成稿",
       "prompt": "这个词的内容大纲帮我列一下字数。",
-      "expected_output": "Should recognize this is a content-brief request (word-count outline), which is the UPSTREAM of vibio-content, and route to seo-content-brief rather than writing a full draft. Should offer to come back and write the finished draft (vibio-content) once the brief exists.",
-      "files": []
+      "expected_output": "这是内容 brief，而不是成稿请求。应路由到 seo-content-brief，先根据目标市场 SERP、意图、必须回答的问题、证据需求和页面任务确定结构；字数只是观察当前结果后得到的范围，不应套固定长度。brief 完成后才进入 vibio-content 写作。",
+      "files": [],
+      "expectations": [
+        "将大纲识别为上游 content brief",
+        "不得直接生成完整文章",
+        "不套固定字数公式"
+      ],
+      "assertions": [
+        {
+          "id": "route-content-brief",
+          "description": "仅大纲请求应路由到 seo-content-brief",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "seo-content-brief",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "near-miss-not-content",
+          "description": "仅大纲请求不应触发 vibio-content 成稿",
+          "type": "route_not_equals",
+          "target": "routing.skill",
+          "expected": "vibio-content",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "brief-before-draft",
+          "description": "输出必须将 brief 放在成稿之前",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["seo-content-brief", "字数.*不是|不应套固定长度", "之后.*vibio-content|完成后.*写作"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 5,
+      "name": "成稿交付与发布内链闭环",
       "prompt": "稿子写好了，交付吧。",
-      "expected_output": "Delivery must include front-matter with title/description/target keyword/source list AND an internal-link list: outbound targets (pillar + money page + sibling pages with descriptive anchors, 2-5 contextual links per 1,000 words) plus the 2-3 pre-registered donor pages and insertion spots for publish-day backfill. Should warn that a new article without inbound internal links is an orphan page that halves the content's value, and route publishing (page build + backfill execution) to vibio-fix. Should write back to .vibio/trackers/content.md.",
-      "files": []
+      "expected_output": "交付前应完成事实和来源审查，并附上页面 title、description、目标意图、来源清单及建议 URL。内链交付要同时列出正文将链向的相关支柱页或商业页，以及发布当天应从哪些已有相关页面回链到新页；数量由页面关系和用户路径决定，不套每千字固定条数。发布执行交给可编辑栈的修复流程，并把状态写回 content tracker。",
+      "files": [],
+      "expectations": [
+        "交付包含 metadata、来源与发布信息",
+        "同时处理新页出链和已有页面回链",
+        "不使用无证据的固定内链数量"
+      ],
+      "assertions": [
+        {
+          "id": "route-draft-delivery",
+          "description": "已有稿件交付仍属于内容工作流",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-content",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "bidirectional-publish-links",
+          "description": "交付必须同时规划出链和回链",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["将链向", "回链到新页", "发布当天", "content tracker"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-fixed-link-count",
+          "description": "不得强制每千字固定内链条数",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["每(?:千字|1,?000 ?字).*[0-9]+(?:[-–到][0-9]+)?条"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     }
   ]
 }

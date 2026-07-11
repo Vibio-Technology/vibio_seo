@@ -1,142 +1,192 @@
-# Vibio SEO v4 — 统一搜索优化操作系统
+# Vibio SEO v5
 
-Vibio 的端到端搜索优化技能。不是用来"解释 SEO 是什么"的——它是一个完整的 SEO/GEO 操作系统：诊断瓶颈、自动识别技术栈、多栈修复、**关键词目标市场验证（五道闸门确保目标国家真实买家确实在搜）**、逆向 SERP 写作、5-Agent 盲审、**内链系统工程（发布回填协议/孤儿页救援/权重导流）**、**外链分级获取（链接资产/行业目录/数字 PR/品牌提及）**、闭环复盘、权威阶梯、预测排名、竞品战争、算法恢复、内容修剪、归因 ROI。同一个质量信号同时服务于传统搜索排名和 AI 搜索引用（Google AI Overviews / ChatGPT / Perplexity）。
+Vibio SEO 是一组证据驱动、可执行、可复盘的搜索优化 Skill。它面向真实网站、代码库和业务数据工作：先找当前资源焦点并暴露独立严重阻断，再选择最可能改变目标指标的行动；在用户授权范围内实施，验证渲染产物，并在搜索引擎重新抓取后复测结果。
 
-## v3 进化（历史，v1 → v3）
+默认使用中文沟通、分析和交付报告。面向目标市场的页面正文、metadata 与广告实验素材仍按该市场的真实语言制作，不能把中文或英文词表直接翻译成海外关键词。
 
-| 维度 | v1 | v3 |
-|------|-----|-----|
-| 工作模式 | 3 | 7 (PLAN/AUDIT/FIX/WRITE/KEYWORD/REVIEW/RECOVER) |
-| 修复栈 | Next.js 仅 | 5 栈 (Next.js/WordPress/Shopify/Static/URL-only) |
-| Reference 文件 | 5 个 / 760 行 | 36 个 / 4,433 行 |
-| 项目记忆 | 无 | .vibio/ 持久化，跨会话连续 |
-| 审查基准 | 民间 best practice | Google 官方文档，每条发现带规范 URL |
-| 内容质量 | 基础流水线 | 竞品拆解 → 证据表 → AI 优先写作 → 5-Agent 盲审 95 分闸门 |
-| SEO/GEO 统一 | 分离 | 一次优化，全域制胜 |
-| 闭环复盘 | 无 | 改动 → 等重抓窗口 → 阈值判定 → 决策 → 写回 |
-| 预测能力 | 无 | 排名概率/流量预估/时间线/收入预测 + 预测兑现调和 |
-| 竞品监控 | 无 | 竞品战争室 + AI 可见性情报 |
-| 算法恢复 | 无 | 5 原因诊断 + 分因恢复手册 |
-| ROI 归因 | 无 | B2B 队列归因含 18 个月滞后调整 |
-| 权威阶梯 | 无 | KD 分级关键词排序战略 |
-| 内容修剪 | 无 | 季度库存评分 + 合并/删除决策矩阵 |
-| PAA 缺口 | 无 | SERP 问题级缝隙提取，直入 WRITE 管线 |
-| 语义网络 | 无 | 实体节点 + 用户旅程 + 格式矩阵 + 内链拓扑 |
-| GEO 体系 | 无 | 统一审计/内容模板/竞品情报/平台策略 |
-| SEO 实验 | 无 | A/B 测试框架含统计显著性 |
+当前版本为 `5.0.0-dev`。
 
-## 八种工作模式
+## SEO 成果边界
 
-- **PLAN** — 90 天路线图、权威阶梯架构、周/月节奏
-- **AUDIT** — 全站审查 + 统一搜索审计（传统 + AI 可见性）→ 0-100 评分
-- **FIX** — 5 栈修复（代码编辑 / CMS 配置 / 可粘贴片段）
-- **WRITE** — 关键词验证 → SERP 逆向 → PAA 缺口 → 证据表 → AI 优先写作 → 5-Agent 盲审 95 分闸门 → 内链回填交付
-- **KEYWORD** — 买家真实语料 → 真实数据 → 意图 → **目标市场验证五道闸门（防直译陷阱）** → 级联阶段 → 页面映射 → 簇
-- **LINK** 🆕 — 内链审计/发布回填/孤儿页救援/Donor-Acceptor 权重导流 + 外链启动闸门/链接资产/分级战术/品牌提及 AI 引用 KPI
-- **REVIEW** — 读改动历史 → 重抓窗口 → 定量阈值判定 → 预测调和 → 决策
-- **RECOVER** — 流量下降 → 5 原因诊断 → 分因恢复 → 监控
+Vibio 的目标不是生成一份通用检查清单，而是持续改善以下可控环节：
 
-## v4 进化（相对 v3）
+- 抓取、渲染、索引资格与重复 URL 管理。
+- 目标市场的真实需求、搜索意图与页面映射。
+- 页面独特价值、事实可信度、专业经验和任务完成度。
+- 内部发现路径、正当外部权威与品牌需求。
+- 自然搜索落地页的有效流量、合格线索和销售管道测量。
 
-| 维度 | v3 | v4 |
-|------|-----|-----|
-| 工作模式 | 7 | 8（新增 LINK 内外链引擎） |
-| 关键词选择 | 数据 + 意图 + 可操作性 | + 目标市场验证五道闸门：母语性证据 / SERP 试金石 / 分国家量 / 搜索者身份排除 / 商业路径；零搜索量 B2B 词判定框架；买家用语挖掘工具箱（询盘原文/GSC/母语竞品/Autocomplete/Reddit/B2B 平台） |
-| 内链 | 散落各文件的一次性建议 | 统一操作手册：三层拓扑、锚库轮换、发布日回填协议（不发孤儿页）、Donor-Acceptor 季度导流、审计六检测项、links tracker |
-| 外链 | 一张空 tracker | 完整获取系统：启动闸门、链接资产先行、三级战术（工业目录/提及回收/竞品差距/数字 PR/专家引用平台）、真实转化率预期、锚分布与速率安全、disavow 现代定位 |
-| AI 引用信号 | 内容侧 GEO | + 链接侧 GEO：品牌提及（含无链）按 ~3x 于反向链接的 AI 引用相关性纳入 KPI；fan-out 意图簇选词 |
-| 内容装配 | title/meta 基础规则 | + 防重写细则（圆括号>方括号、长度阈值）、作者实体 schema、原创影像优先、季度刷新预排 |
+它能保证的是证据分级、明确决策、可验证产物、停止条件和复盘闭环，不能保证具体排名、流量增幅、AI 引用、收入或固定见效时间。构建成功只证明产物存在；收录、排名与业务结果必须在适合该站点和查询的观察窗口中，用第一方数据验证。
 
-## v4.1 进化（相对 v4）
+每项实质性任务都应交付：资源焦点与独立严重阻断的证据、已实施变更或决策、当前验证结果、后续指标与观察窗口、风险和缺失数据、接下来三项行动，以及已更新的 `.vibio/` 状态。
 
-| 维度 | 新增 |
-|------|------|
-| **实战反馈回路** | 第二层记忆 `~/.vibio-global/`：REVIEW/RECOVER 沉淀"会改变下次决策"的教训；同一教训 ≥3 次触发方法论修订提案（人工确认双闸门）——skill 随每个真实项目越用越准（`learning-loop.md`） |
-| **询盘转化** | 流量→询盘的最后一公里：五因诊断（有流量没询盘）、CTA 阶梯、RFQ 表单规范（3-5 字段+CAD 上传）、信任元素系统、分市场联系渠道（WhatsApp 区域配置）、门控决策（门控内容 AI 引用约 -94%）、GA4 询盘归因；现实基准 1.5-4%（`conversion-playbook.md`） |
-| **视频搜索** | YouTube 是 AI Overviews 最大引用域：外贸视频类型（工厂/QC/选型）、选题复用已验证词族、watch-page/VideoObject 规则、facade 懒加载红线、页面 transcript、LinkedIn 原生分发、90 天归因时间线（`video-seo.md`） |
-
-## 文件结构
+## 架构
 
 ```text
 vibio_seo/
-├── vibio/SKILL.md                        # 主入口：8 模式 + 15 条核心规则（含 SEO/GEO 统一原则）
-├── vibio-plan/ vibio-audit/ vibio-fix/   # 专项子 skill（各自含 SKILL.md + references 副本 + evals）
-├── vibio-keyword/ vibio-content/
-├── vibio-link/ 🆕 vibio-review/
-├── vibio-memory/ vibio-factory/
-├── README.md
-└── references/                           # 42 文件 / 5,300+ 行
-    ├── operating-system.md               # PLAN 引擎 + GEO 追踪 + 阈值 + 预测调和
-    ├── skill-arsenal.md                  # 27 专家工具地图
-    ├── delivery-template.md              # PLAN 交付结构
-    │
-    ├── seo-fix-principles.md             # 12+1 维度修复目标规格（含 AI 搜索就绪度）
-    ├── stack-detection.md                # 8 种栈自动检测
-    ├── google-search-docs.md             # Google 官方文档审查基准
-    ├── stack-adapters/                   # 5 栈修复配方
-    │   ├── nextjs.md
-    │   ├── wordpress.md
-    │   ├── shopify.md
-    │   ├── static-astro.md
-    │   └── url-only.md
-    │
-    ├── write-playbook.md                 # 11 阶段文章生产管线 + 5-Agent 盲审闸门
-    ├── competitor-teardown.md            # 竞品拆解 + 覆盖 vs 缺口矩阵
-    ├── sourcing-and-eeat.md              # 证据表 + EEAT 配方 + AI 可摘引 + 去 AI 规则 + 盲审计分依据
-    ├── adversarial-review.md             # 5 Agent 独立盲审，95 分闸门，5 轮迭代上限
-    ├── geo-content-patterns.md           # 7 种 AI 优先内容模板 + 跨平台差异速查
-    │
-    ├── geo-dominance.md                  # 统一 AI 搜索策略：llms.txt / 实体信号 / 平台差异
-    ├── geo-audit.md                      # 5 阶段 0-100 分统一搜索审计
-    ├── geo-competitive-intel.md          # GEO 竞品情报 + 攻击手册
-    │
-    ├── authority-cascade.md              # 🆕 权威阶梯：KD 分级排序战略
-    ├── semantic-networks.md              # 🆕 语义内容网络：超越 topic cluster
-    ├── content-pruning.md                # 🆕 内容修剪：季度库存评分 + 删除/合并决策
-    ├── paa-gap-analysis.md               # 🆕 PAA 缺口：SERP 问题级缝隙提取
-    │
-    ├── predictive-seo.md                 # 排名/流量/时间/收入预测 + 调和闭环
-    ├── competitive-war-room.md           # 竞品战争室（含 AI 可见性维度）
-    ├── recovery-playbook.md              # 算法恢复手册
-    ├── roi-attribution.md                # SEO→收入管道 + B2B 队列归因
-    ├── serp-feature-targeting.md         # SERP 特征攻占
-    ├── entity-strategy.md                # 知识图谱 + 主题权威
-    ├── migration-playbook.md             # 域名/平台迁移
-    ├── content-decay.md                  # 内容衰减检测 + 刷新阶梯
-    ├── multi-language-ops.md             # 多语言运营
-    ├── seo-experimentation.md            # A/B 测试 + 统计显著性
-    │
-    ├── keyword-validation.md             # 🆕 v4 目标市场关键词验证：五道闸门 + 买家用语挖掘 + 零量词判定
-    ├── link-architecture.md              # 🆕 v4 内链系统工程：拓扑/锚库/回填协议/审计/权重导流
-    ├── backlink-playbook.md              # 🆕 v4 外链获取：启动闸门/链接资产/分级战术/outreach/安全
-    ├── learning-loop.md                  # 🆕 v4.1 实战反馈回路：跨项目经验库 + 方法论校准双闸门
-    ├── conversion-playbook.md            # 🆕 v4.1 询盘转化：五因诊断/CTA 阶梯/RFQ 表单/信任系统/门控决策
-    ├── video-seo.md                      # 🆕 v4.1 视频搜索：外贸视频资产/YouTube/VideoObject/AI 引用
-    │
-    ├── state-templates.md                # .vibio/ 项目记忆模板（v4：+验证列/级联列/links tracker）
-    ├── keyword-engine.md                 # KEYWORD 引擎（v4：+验证闸门）
-    └── review-engine.md                  # REVIEW 引擎（含定量阈值）
+├── vibio.manifest.yaml       # Skill 注册表、引用策略、外部能力与 fallback
+├── vibio/SKILL.md            # vibio-seo 主路由器
+├── vibio-*/SKILL.md          # 专项 Skill
+├── references/               # 唯一人工维护的参考资料真源
+├── scripts/build_skills.py   # 生成各 Skill 的自包含 references
+├── scripts/validate_repo.py  # 仓库、依赖、引用和 eval 严格校验
+├── scripts/eval_runner.py    # 可重复的离线合同回归，不执行真实 Skill
+├── evals/schema/             # eval JSON Schema
+└── tests/                    # 校验器测试
 ```
 
-## 设计原则
+主路由器支持 `PLAN`、`AUDIT`、`FIX`、`WRITE`、`KEYWORD`、`LINK`、`REVIEW`、`RECOVER` 八种模式。`RECOVER` 由 `vibio-seo` 按恢复手册执行，当前没有单独的 `vibio-recover` 目录。
 
-- SEO 和 AI 搜索是同一个问题——一次优化，全域制胜
-- 先读 `.vibio/` 项目记忆，再干活；收工写回，不重启
-- 自动检测技术栈，不假设 Next.js
-- 先找主瓶颈，再排优先级
-- 默认动手修，改完在渲染产物里验证
-- 审查引用 Google 官方文档 URL
-- 能路由到 27 个专家工具就不手搓
-- **关键词不过目标市场验证不建页**——直译假词是最贵的选词错误
-- 内容不达 95 分盲审闸门不交付
-- **不发布孤儿页**——发布日回填 2-3 条入链是交付的一部分
-- 外链先过启动闸门（有资产才 outreach），品牌提及按 AI 引用 KPI 追踪
-- 预测必须调和——每月对比预测值和实际值
-- SERP 改动等 2-6 周重抓窗口再判见效
-- 复盘沉淀跨项目经验——同一教训 ≥3 次才提议改方法论，且必须人工确认
-- 对外动作（发信/注册/上传）agent 备料、人类执行
-- 不承诺排名、不承诺快速见效
+| Skill | 职责 |
+|---|---|
+| `vibio-seo` | 识别资源焦点与独立严重阻断，选择并继续执行模式，串联如 `AUDIT -> FIX -> REVIEW` 的完整闭环 |
+| `vibio-plan` | 在项目适合的决策窗口内制定依赖路线、产能安排、指标和停止条件 |
+| `vibio-audit` | 对代码、渲染 HTML 或 URL 做首次诊断，区分事实与假设并形成可验证发现 |
+| `vibio-fix` | 识别技术栈，修改代码、CMS 或配置，并在 HTTP 响应和渲染产物中验证 |
+| `vibio-keyword` | 从目标市场真实用语和需求证据出发，验证意图、受众和商业路径，完成词族到页面映射 |
+| `vibio-content` | 逆向真实 SERP，收集一手材料和来源，产出有非同质化价值的页面成稿并接受对抗审查 |
+| `vibio-link` | 修复内部发现与权重传递，通过真实资产、关系、PR 和定向外联获取正当编辑型链接 |
+| `vibio-review` | 读取准确变更历史，复测产物、抓取/索引、搜索可见性、有效流量和业务结果 |
+| `vibio-memory` | 定义项目根 `.vibio/` 的状态、tracker、changelog 与跨会话读写约定 |
+| `vibio-factory` | 创建或改进 Vibio 专项 Skill，维护触发、引用、评测和系列一致性 |
+
+## 证据政策
+
+所有高影响建议、数值论断和预算决策都遵循 [references/evidence-policy.md](references/evidence-policy.md)：
+
+1. E1：最新官方规则、资格要求或产品文档。
+2. E2：目标企业或网站的 GSC、分析平台、CRM、日志、Merchant Center 等第一方数据。
+3. E3：目标网站或市场中的受控实验。
+4. E4：当前 SERP/网站观察，或注明日期、样本、市场和方法的第三方研究。
+5. E5：待验证假设。
+
+E1 用于判断政策和资格，E2 用于确定项目优先级。E3-E5 不能伪装成普遍排名规则，只能形成边界明确的实验或建议。易变事项在执行前重新核验实时官方文档，并记录 `verified_on`、规范 URL、置信度和适用范围。
+
+不得虚构搜索量、KD、排名、外链、转化率或收入。不得把相关性研究改写成排名因果，也不得用无来源的固定 CTR、转化率、锚文本比例、品牌提及倍数或 AI 引用增幅。
+
+## 广告数据只服务 SEO
+
+付费搜索可以缩短 SEO 学习周期，但广告支出不是自然排名因素。只有当实验能回答一个明确 SEO 决策时才进入 Vibio 范围，例如：
+
+- 用 Keyword Planner、真实 search terms 和目标市场定向验证买家措辞与无效受众。
+- 比较页面承诺、标题表达或落地页对合格线索的影响。
+- 用 paid and organic report 观察覆盖重叠并形成蚕食或增量假设；因果结论另用预先设计的开关或 holdout 实验验证。
+- 将广告搜索词和有效线索反馈给关键词验证、页面映射与内容优先级。
+
+广告竞争程度和 CPC 不能称为 organic KD；付费流量表现也不能证明同一页面会获得自然排名。没有转化测量、目标市场控制、预先定义的决策规则和停止条件时，不建议为 SEO 启动投流。泛 Campaign 搭建、出价和预算优化不属于本项目范围。
+
+## 外部能力与降级
+
+`vibio.manifest.yaml` 中声明的 `seo-*` 与 `b2b-seo` 都是可选能力，不是运行前置条件。能力可用时使用其数据；不可用时必须执行对应 fallback，例如：
+
+- SERP 数据不可用：使用带目标市场和日期的人工样本，或请用户提供导出。
+- 抓取工具不可用：从 sitemap 发现 URL，再做范围明确的 `curl`、浏览器或本地抓取。
+- GSC/GA4/CRM 不可用：定义测量方案，并明确哪些结论当前无法得出。
+- 关键词工具不可用：使用第一方查询、RFQ/CRM、本地语言语料和免费 SERP 证据，但不编搜索量或难度。
+- 外链平台不可用：使用可获得的引用域导出和人工核验，不虚构权威指标或毒链结论。
+
+工作流不能只推荐某个外部提供商后停止。即使未安装任何外部能力，也要继续完成一个范围明确、诚实标注限制的版本。
+
+## 引用真源与构建
+
+顶层 `references/` 是唯一人工维护的参考资料真源。各 Skill 下的 `references/` 是构建产物，用于让每个 Skill 在独立安装后仍能解析本地引用：
+
+- `vibio/` 获得完整参考资料包。
+- 其他专项 Skill 只获得从其 `SKILL.md` 开始递归计算的引用闭包。
+- `.vibio-generated.json` 记录生成器、Skill 和每个文件的 SHA-256。
+- 不要直接编辑子 Skill 下的引用副本；修改顶层真源后重新构建。
+
+```bash
+python scripts/build_skills.py --clean
+```
+
+只重建一个专项 Skill：
+
+```bash
+python scripts/build_skills.py --clean --skill vibio-content
+```
+
+`--clean` 会删除不再属于该 Skill 引用闭包的旧副本。严格校验会检测缺失引用、生成副本漂移、未声明外部能力、过时禁用路径、frontmatter 以及 eval schema。
+
+## 开发与验证
+
+需要 Python 3.10 或更高版本。开发环境安装：
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
+```
+
+修改 `SKILL.md` 或顶层 `references/` 后，按以下顺序运行硬闸门：
+
+```bash
+python scripts/build_skills.py --clean
+python scripts/validate_repo.py --strict
+pytest -q
+python scripts/eval_runner.py --strict
+git diff --check
+```
+
+机器可读 eval 报告：
+
+```bash
+python scripts/eval_runner.py --strict --json
+```
+
+使用自定义离线候选输出复测：
+
+```bash
+python scripts/eval_runner.py --strict --responses path/to/responses.json
+```
+
+`validate_repo.py` 检查仓库结构和测试定义，`eval_runner.py` 对手写 fixture 执行 typed assertions；二者不能互相替代。离线合同回归通过只说明规则、样例与评分器没有回归，不代表真实 Skill 触发、模型行为或 SEO 结果已被证明。只有在构建、严格校验、单元测试和合同回归全部通过后，生成目录才具备发布前的工程完整性；真实质量仍需同提示运行、人工/盲评和站点实验验证。
 
 ## 安装
 
-把本目录复制到 `~/.claude/skills/vibio_seo`，重启 Claude Code 生效。
+先在仓库根目录执行构建和严格校验。然后把需要的 Skill 目录作为直接子目录安装到客户端的 skills 根目录。以 Codex 为例，个人目录通常是 `$CODEX_HOME/skills/`，未设置 `CODEX_HOME` 时是 `~/.codex/skills/`。
+
+最小安装只需 `vibio/`，其 Skill 名称是 `vibio-seo`，且构建后包含完整参考包。推荐同时安装全部专项 Skill，以获得更准确的直接触发：
+
+```bash
+skills_root="${CODEX_HOME:-$HOME/.codex}/skills"
+mkdir -p "$skills_root"
+cp -R vibio vibio-plan vibio-audit vibio-fix vibio-keyword \
+  vibio-content vibio-link vibio-review vibio-memory vibio-factory \
+  "$skills_root/"
+```
+
+其他支持 `SKILL.md` 的客户端使用其对应 skills 根目录。不要只复制仓库顶层 `references/`；应安装构建完成、已自包含引用的各 Skill 目录。
+
+## 使用
+
+可以直接用中文描述业务目标，由 `vibio-seo` 选择模式并继续执行：
+
+```text
+审计这个站为什么产品页一直没有自然曝光，能修的直接修，之后告诉我怎么复测。
+
+我们做德国工业采购市场。先用询盘、GSC 和可用的广告搜索词验证真实买家用语，再给出词族到页面映射。
+
+上个月改了 canonical、产品页正文和内链。请读取 .vibio 变更记录，判断现在是有效、回退还是还太早。
+```
+
+也可以明确调用专项 Skill，例如 `vibio-keyword`、`vibio-content` 或 `vibio-link`。所有模式在开工前读取项目根 `.vibio/`，收工后只写回会影响后续决策的状态。
+
+## Google 2026 基线纠错
+
+以下规则用于阻止常见但无效或已经过时的“SEO 优化”：
+
+| 误区 | v5 采用的规则 |
+|---|---|
+| Google AI Overviews / AI Mode 需要一套独立 GEO 技巧 | 它们建立在核心 Search 排名与质量系统之上；优先正常技术资格、原创价值、专业经验和用户体验 |
+| `llms.txt` 能提升 Google 搜索或 AI 可见性 | Google Search 会忽略它；仅在目标平台明确记录支持时作为低优先级可选集成 |
+| `Google-Extended` 控制内容是否出现在 Google Search 或 AI Overviews | 它不控制内容是否在 AI Overviews/AI Mode 中出现、被链接或用于 grounding，也不影响 Search 收录/排名；Google 同时将它列为限制相关模型训练用途的控制项 |
+| FAQPage / HowTo 能带来 Google 富媒体搜索结果 | Google 已于 2026-05-07 停止 FAQ rich result，HowTo 也已退役；只有内容本身帮助用户时才保留 FAQ 或步骤，不为 SERP 收益添加标记 |
+| title 必须 50-60 字符、description 必须 150-160 字符 | Google 没有这些固定限制；应准确、独特、与页面一致，并结合真实展示结果迭代 |
+| Schema 能保证排名、富结果或生成式 AI 展示 | 结构化数据提供机器可读线索，并可使页面获得受支持搜索功能的资格；它不保证功能展示、排名或生成式 AI 展示 |
+| Indexing API 可以提交普通页面 | Google Indexing API 只适用于受支持的 `JobPosting` 和直播 `BroadcastEvent` 页面 |
+| GSC 查询可以和 GA4 用户转化确定性连接 | 两套系统只能按共享聚合维度结合；查询级收入只能是明确标注的估算 |
+| GA4 仍原生提供 first-click、linear、position-based、time-decay 归因 | 这些模型已移除；实施前按 GA4 当前支持的模型和字段重新核验，不能沿用旧报表假设 |
+| CPC、广告竞争或广告预算能代表自然排名能力 | 它们只提供付费市场和需求情报，不能替代 organic KD，也不能购买自然排名 |
+
+易变规则以执行当天的 Google 官方文档为准，缓存参考资料仅用于导航。核心来源索引见 [references/google-search-docs.md](references/google-search-docs.md)、[references/geo-dominance.md](references/geo-dominance.md) 和 [references/paid-search-intelligence.md](references/paid-search-intelligence.md)。

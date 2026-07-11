@@ -3,27 +3,158 @@
   "evals": [
     {
       "id": 1,
+      "name": "品牌站点名称与摘要修复",
       "prompt": "我新建的 zysfiber.com 在 Google 搜索结果里标题下面显示的是域名，搜公司全名也不会高亮，老站却可以。帮我改。",
-      "expected_output": "Should diagnose the two distinct mechanisms from seo-fix-principles.md (WebSite/og:site_name as site-name source vs meta-description query highlighting), detect the stack first, then apply the brand-SERP fix via the matching adapter (WebSite JSON-LD with legalName + alternateName, og:site_name = legal name, full company name in homepage meta description), verify in rendered HTML, and explain the engine must re-crawl (submit in Search Console).",
-      "files": []
+      "expected_output": "应先查看实际搜索结果、首页渲染 HTML 和站点栈，区分站点名称展示与摘要文字匹配这两个机制。修复可对齐首页 WebSite 的 name/alternateName、Organization 的 legalName、og:site_name、可见品牌文字和首页描述，但必须说明这些只是 Google 可选信号，不能保证采用、加粗或排名。修改后验证渲染 HTML、结构化数据和唯一 canonical，再通过 Search Console 请求重新抓取或提交 sitemap，普通网页不得调用 Indexing API。",
+      "files": [],
+      "expectations": [
+        "区分站点名称与摘要匹配机制",
+        "修复实际渲染信号且不保证 Google 展示",
+        "普通页面不使用 Indexing API"
+      ],
+      "assertions": [
+        {
+          "id": "route-brand-fix",
+          "description": "明确要求修改品牌搜索展示应路由到修复",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-fix",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "site-name-signal-contract",
+          "description": "输出必须区分实体属性并声明搜索引擎可自行选择",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["WebSite.*name/alternateName", "Organization.*legalName", "不能保证", "渲染 HTML"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-general-indexing-api",
+          "description": "不得建议普通页面调用 Indexing API",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["(?:普通|所有|任意)(?:网页|页面).*调用 Indexing API", "Indexing API.*(?:普通|所有|任意)(?:网页|页面)"] ,
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 2,
+      "name": "WordPress 产品结构化数据",
       "prompt": "这是个 WordPress 外贸站，帮我把产品页的结构化数据和 OG 图补上。",
-      "expected_output": "Should detect WordPress and identify the SEO plugin (Yoast/Rank Math), then work through the plugin per wordpress.md: set Organization legal name + logo + default OG image in plugin settings, use WooCommerce for Product schema, set the full legal name for og:site_name. Should NOT hand-write tags the plugin will overwrite. Verify by fetching the live URL (after clearing cache) and grepping rendered HTML, not PHP source.",
-      "files": []
+      "expected_output": "应识别 WordPress、WooCommerce 与当前 SEO/Schema 插件，先读取插件实际输出和产品页可见字段，再通过现有插件或主题扩展补齐与页面内容一致的 Product、Offer、Organization 和 OG 数据，避免与插件重复输出。不得为不可见的评价、库存、价格或配送信息造数据；结构化数据只提供当前搜索功能资格，不是排名保证。清缓存并检查最终渲染 HTML、JSON-LD 语法和 Google 当前支持要求。",
+      "files": [],
+      "expectations": [
+        "复用现有 WordPress 插件输出避免冲突",
+        "Schema 字段必须与可见产品事实一致",
+        "说明结构化数据仅提供资格"
+      ],
+      "assertions": [
+        {
+          "id": "route-wordpress-fix",
+          "description": "明确的 CMS 标记修复应路由到 vibio-fix",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-fix",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "visible-data-and-rendered-verify",
+          "description": "输出必须禁止虚构产品字段并验证渲染结果",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["避免.*重复输出", "不得.*造数据", "只提供.*资格", "最终渲染 HTML"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 3,
+      "name": "Next.js 首屏询盘与滚动动画修复",
       "prompt": "这个 B2B 站（Next.js）的询盘表单要滚动才能看到，而且全站都是滚动渐显动画，帮我修。",
-      "expected_output": "Should detect Next.js and use stack-adapters/nextjs.md: lift the form/CTA above the fold (shrink hero padding, trim secondary copy, tighten form internals) and remove scroll-reveal animations (grep whileInView/ScrollTrigger/gsap/opacity-0, delete hooks and initial-hidden classes, keep genuine non-scroll interactions). Then run build/lint and grep the rendered HTML.",
-      "files": []
+      "expected_output": "应先用实际视口和关键模板复现问题，再在 Next.js 中让主要询盘动作在合理首屏范围内可见，移除会隐藏核心内容或依赖滚动才出现的 reveal 初始状态，同时保留有功能价值且尊重 prefers-reduced-motion 的交互。修改范围要来自代码搜索和组件依赖，完成后运行项目已有 build、lint/typecheck，并用桌面与移动端渲染截图和 HTML 检查确认表单可见、内容不重叠且无水合错误。",
+      "files": [],
+      "expectations": [
+        "先复现再修改首屏和动画",
+        "保留有功能价值且可访问的交互",
+        "通过项目命令与多视口渲染验证"
+      ],
+      "assertions": [
+        {
+          "id": "route-nextjs-fix",
+          "description": "已知交互问题并要求修改应路由到修复",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-fix",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "implementation-verification",
+          "description": "输出必须包含复现、可访问性和构建渲染验证",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["复现", "prefers-reduced-motion", "build", "移动端", "水合错误"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 4,
+      "name": "仅 URL 且无代码权限的 Wix 修复",
       "prompt": "https://example.com 这个站帮我看看 SEO 哪里能改，我用的是 Wix，改不了代码。",
-      "expected_output": "Should fetch the rendered page (via seo-page/seo-firecrawl or WebFetch), detect it's a hosted platform with no code access (url-only mode), diff against seo-fix-principles.md, and hand back per-finding fixes in the url-only.md format: what's wrong (quoted current value), target value/snippet, exactly where to paste it in Wix (SEO Basics / Custom code header), and how to verify after publishing. Should not pretend to edit code.",
-      "files": []
+      "expected_output": "应进入 url-only 编辑模式：先抓取并引用当前渲染值，再把每个高置信度问题写成“观察值、目标状态、Wix 中的具体入口、发布后验证方法”。不能声称修改了仓库或线上站；无法访问页面时必须把值标为 unknown 并请求最小截图或导出。对 Wix 不支持的变更要给平台内可行替代方案，并把立即产物验证与等待搜索引擎重新抓取分开。",
+      "files": [],
+      "expectations": [
+        "识别无代码权限并切换 url-only 模式",
+        "给出观察值、目标状态、CMS 入口与验证",
+        "绝不假装已经修改线上站"
+      ],
+      "assertions": [
+        {
+          "id": "route-url-only-fix",
+          "description": "有明确修改意图的 URL-only 请求应路由到修复",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-fix",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "url-only-mode",
+          "description": "fixture 的编辑模式必须精确为 url-only",
+          "type": "jsonpath_equals",
+          "target": "output.edit_mode",
+          "expected": "url-only",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-false-edit-claim",
+          "description": "fixture 必须声明未直接修改线上站",
+          "type": "jsonpath_equals",
+          "target": "output.changes_applied",
+          "expected": false,
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "url-only-delivery-fields",
+          "description": "每条 url-only 建议都必须有四个可执行字段",
+          "type": "fact_set_equals",
+          "target": "output.required_fields",
+          "expected": ["observed_value", "target_state", "cms_location", "verification"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     }
   ]
 }

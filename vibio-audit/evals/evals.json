@@ -3,33 +3,194 @@
   "evals": [
     {
       "id": 1,
+      "name": "代码库 B2B 全面审计",
       "prompt": "审查一下这个项目的 SEO。这是一个英文 B2B 制造业站点。",
-      "expected_output": "Should read the codebase SEO config first (metadata, JSON-LD, robots, sitemap, layout/template head), detect the stack via stack-detection.md, run the seo-fix-principles spec as a checklist and/or route to seo-schema + seo-technical in parallel, adversarially verify findings against real rendered output, prioritize as Critical/High/Medium/Low (indexability blockers first), and hand the fixable ones to vibio-fix WITH the detected stack. Should not produce generic best-practice prose.",
-      "files": []
-    },
-    {
-      "id": 4,
-      "prompt": "https://example.com 帮我看看这个网站 SEO 怎么样。",
-      "expected_output": "Should treat the bare URL as a primary entry path: fetch the rendered page via seo-page/seo-firecrawl/seo-technical (or WebFetch), extract the real state of title/meta/canonical/robots-meta/JSON-LD/OG/headings/sitemap/llms.txt, fingerprint the stack from response headers/markup, adversarially verify, return prioritized findings, and pass the detected stack + edit-mode down to vibio-fix.",
-      "files": []
+      "expected_output": "应先读取项目记忆、代码配置和渲染后 HTML，识别技术栈与代表性页面模板；再按可抓取与可索引、意图与页型、内容证据、结构化数据、性能和转化路径审计。每项发现都要给观察证据、官方规则、业务影响、置信度、修复与验证方式，并按真实影响排序。外部 seo-* 能力不可用时，必须用仓库、渲染 HTML、站点文件和官方资料降级完成，不得给泛化清单或虚构测量值。",
+      "files": [],
+      "expectations": [
+        "读取真实产物并识别技术栈，而不是输出通用建议",
+        "按证据、影响、置信度、修复和验证形成可执行发现",
+        "外部能力缺失时走本地降级路径"
+      ],
+      "assertions": [
+        {
+          "id": "route-audit",
+          "description": "代码库审计应路由到 vibio-audit",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-audit",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "requires-observed-evidence",
+          "description": "输出必须同时要求真实产物、证据和验证",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["(?:代码|渲染).*HTML", "观察证据", "置信度", "验证"],
+          "weight": 2,
+          "hard_gate": true
+        },
+        {
+          "id": "forbids-fabrication",
+          "description": "输出必须明确禁止虚构测量值",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["不得.*虚构"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 2,
-      "prompt": "这个页面内容看起来不错但就是排不上去，帮我看看为什么。",
-      "expected_output": "Should route diagnosis: seo-google (is it even indexed?) → seo-sxo (intent/page-type mismatch?) → seo-content (depth/E-E-A-T?). Should state what was checked in the real artifact, not guess. If it concludes intent/page-type mismatch, route the rewrite direction rather than calling it a technical bug.",
-      "files": []
+      "name": "仅 URL 的只读审计",
+      "prompt": "https://example.com 帮我看看这个网站 SEO 怎么样。",
+      "expected_output": "应把裸 URL 视为有效入口，先抓取首页和可发现的 robots.txt、sitemap 与代表性页面，检查实际状态码、canonical、robots meta、标题、描述、标题层级、结构化数据和渲染差异。若无法访问网络，要明确数据不可用并给出用户可导出的最小材料，绝不能声称已经抓取。llms.txt 不是 Google Search 的必要审计项；不得把缺少它列为 SEO 问题。",
+      "files": [],
+      "expectations": [
+        "只有 URL 也进入审计工作流",
+        "区分已抓取事实与网络不可用状态",
+        "不把 llms.txt 当作 Google 排名或收录要求"
+      ],
+      "assertions": [
+        {
+          "id": "route-bare-url",
+          "description": "裸 URL 加审查意图应路由到审计",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-audit",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "url-observation-contract",
+          "description": "URL 审计 fixture 必须保留可用性和抓取事实",
+          "type": "fact_set_equals",
+          "target": "output.facts",
+          "expected": [
+            "input_is_url_only",
+            "network_observation_required",
+            "unobserved_fields_remain_unknown",
+            "llms_txt_not_google_requirement"
+          ],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-fake-fetch",
+          "description": "fixture 必须明确未观察字段保持未知",
+          "type": "jsonpath_equals",
+          "target": "output.measurement.unobserved_value_policy",
+          "expected": "unknown",
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 3,
+      "name": "内容不错但没有排名",
+      "prompt": "这个页面内容看起来不错但就是排不上去，帮我看看为什么。",
+      "expected_output": "应先确认 URL 是否可抓取、可索引及 canonical 是否正确，再用目标国家和语言的当前 SERP 判断查询意图与页型是否匹配，随后检查信息增益、第一手证据、内链和竞争门槛。结论必须对应观察到的页面或导出数据；数据拿不到时列为待验证假设，不能凭感觉把原因归咎于技术、内容长度或所谓 AI 味。",
+      "files": [],
+      "expectations": [
+        "按索引资格、意图页型、内容差异化的因果顺序诊断",
+        "所有结论绑定观察证据或明确标为假设"
+      ],
+      "assertions": [
+        {
+          "id": "route-ranking-diagnosis",
+          "description": "未知原因的排名问题应先审计",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-audit",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "diagnostic-order",
+          "description": "预期输出必须覆盖索引、意图和信息增益",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["可抓取.*可索引", "意图.*页型", "信息增益", "待验证假设"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "线上全站审计与记忆闭环",
       "prompt": "给我的线上站做个全站 SEO 体检。",
-      "expected_output": "Should first have vibio-memory read .vibio/ (continue if exists), route to seo-audit (which fans out internally) or fire seo-technical + seo-schema + seo-content + seo-sitemap + seo-geo in parallel, judge findings against references/google-search-docs.md (citing official URLs), integrate into a prioritized list (Critical for technical-requirement/spam-policy matches), write findings back to .vibio/changelog.md via vibio-memory, and route fixable items to vibio-fix.",
-      "files": []
+      "expected_output": "应读取 .vibio/ 后对线上站做有边界的抓取抽样，覆盖索引资格、模板级 metadata/canonical、内部链接、sitemap、结构化数据、内容质量、国际化和业务转化。外部 seo-* 工具可用时调用，不可用时按 capability fallback 用本地抓取和导出数据完成。报告将观察事实与假设分开，引用当前官方来源，优先处理阻断收录或命中垃圾政策的高置信度问题，并把发现和复盘条件写回项目记忆。",
+      "files": [],
+      "expectations": [
+        "审计范围有边界并覆盖代表性模板",
+        "能力缺失不会中断，也不会导致数据捏造",
+        "审计结果写回项目状态"
+      ],
+      "assertions": [
+        {
+          "id": "route-site-audit",
+          "description": "全站体检应路由到审计",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-audit",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "fallback-and-memory",
+          "description": "输出必须同时包含降级路径和记忆闭环",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["不可用时.*fallback|不可用时.*本地", "观察事实与假设", "写回.*记忆"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 5,
+      "name": "AI 批量内容垃圾政策风险",
       "prompt": "这些页面是用 AI 批量生成的，这样做 SEO 有没有风险？帮我查一下。",
-      "expected_output": "Should consult references/google-search-docs.md §3 spam policies — specifically 'scaled content abuse' (2024 policy: mass-producing pages incl. via generative AI primarily to manipulate rankings) and §4 helpful-content / people-first test — cite the official spam-policies URL, WebFetch it to confirm current wording given it's a newer policy, assess whether the pages add genuine value vs are ranking-manipulation filler, and flag as Critical if matched. Should not give a generic 'AI content is fine/bad' answer.",
-      "files": []
+      "expected_output": "应根据 Google 当前垃圾政策评估是否属于 scaled content abuse：关键不是是否使用 AI，而是是否以操纵排名为主要目的、是否大规模制造低价值或无原创贡献页面。抽样核对页面的独特价值、事实来源、模板重复和搜索者任务完成度，引用 https://developers.google.com/search/docs/essentials/spam-policies ，把已观察证据和判断条件分开；不能回答成笼统的“AI 内容都可以”或“AI 内容都违规”。",
+      "files": [],
+      "expectations": [
+        "以行为和页面价值判断 scaled content abuse",
+        "引用 Google 官方垃圾政策",
+        "拒绝对 AI 内容做二元化结论"
+      ],
+      "assertions": [
+        {
+          "id": "route-ai-risk-audit",
+          "description": "批量页面风险调查应路由到审计",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-audit",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "policy-test-not-ai-test",
+          "description": "输出必须使用 scaled-content 行为测试并引官方来源",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["scaled content abuse", "操纵排名", "原创贡献", "https://developers\\.google\\.com/search/docs/essentials/spam-policies"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-binary-ai-verdict",
+          "description": "不得把 AI 使用本身判成一律合规或违规",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["AI 内容(?:全部|都)(?:可以|安全|违规|会被惩罚)", "只要.*AI.*(?:违规|排名)"] ,
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     }
   ]
 }

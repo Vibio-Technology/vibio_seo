@@ -1,202 +1,177 @@
-# Stack Adapter: Next.js (App Router)
+# Next.js SEO 落地适配器
 
-The **most complete** adapter — the landing-method layer for Next.js. The stack-agnostic target spec ("what correct looks like") lives in `../seo-fix-principles.md`; read the principle for *what* to achieve, then use the recipe below for *how* in Next.js.
+最近核验：2026-07-11。
 
-Verified, code-level fixes for Next.js App Router. Every recipe here was applied and verified (`npm run build` + `tsc --noEmit` + ESLint) on a real Vibio client project (a B2B carbon-fiber/fiberglass export site). Adapt the specifics; keep the principles.
+`seo-fix-principles.md` 决定“正确结果是什么”，本文只说明如何在 Next.js 落地。示例以 App Router 为主；Pages Router 项目需映射到 `_app`、`_document`、`next/head` 或对应数据获取方式，不能照抄文件路径。
 
-**Golden rule:** after any change, run the project's build, type-check, and lint, then confirm the rendered HTML/`<head>` actually contains the intended tags before reporting done. SERP-facing changes only show up after Google re-crawls — tell the user to request indexing in Search Console.
+## 1. 先确认项目形态
 
-## Fast codebase audit checklist
+检查：
 
-Run this before heavy crawls. It catches the high-frequency issues in minutes.
+- Next.js 版本、App/Pages Router 或混合模式。
+- 静态导出、Node server、Edge、Vercel 或自托管。
+- `next.config.*` 中 redirects、rewrites、headers、basePath、trailingSlash、i18n。
+- 内容来源和动态路由的枚举方式。
+- Metadata API、head helper、JSON-LD helper 是否已有单一事实源。
 
-1. **Metadata coverage** — does every `page.tsx` export `metadata` or `generateMetadata`? (Redirect-only pages are exempt.)
-   `for f in $(find app -name "page.tsx"); do grep -q "generateMetadata\|export const metadata" "$f" || echo "missing: $f"; done`
-2. **Canonical** — is `alternates.canonical` set per page (usually via a shared `createPageMetadata` helper)?
-3. **Structured data** — does the site emit `Organization` + `WebSite` site-wide, and `Product`/`Article`/`BreadcrumbList`/`FAQPage` where relevant? Validate with `seo-schema`.
-4. **OG/Twitter** — is there a real OG image with correct declared dimensions? Is `og:site_name` the brand/legal name?
-5. **robots + sitemap** — `app/robots.ts` and `app/sitemap.ts` present, sitemap referenced in robots, `/api` disallowed, host correct.
-6. **H1 / heading order** — exactly one `<h1>` per page; no h1→h3 jumps. (Headings often live in referenced PageContent components.)
-7. **Images** — all `next/image`/`<img>` have descriptive `alt`; no raw `<img>` where `next/image` should be used.
-8. **Internal links** — footer covers all top pages; key landing pages link to each other with descriptive anchors; no orphan pages.
-9. **llms.txt** — present for AI-search visibility?
-10. **CSP / headers** — does the CSP block anything the app needs (e.g. dev `unsafe-eval`)? Are security headers set?
+输出：`Stack / Router / Rendering / Edit mode / Adapter`。
 
----
+## 2. 元数据
 
-## Recipe: remove scroll-reveal animations (UX + accessibility)
-
-**When:** content fades/slides in on scroll (GSAP ScrollTrigger, framer-motion `whileInView`, AOS, etc.). Visitors are there to read information, not watch motion; scroll-reveal also delays content paint, hurts perceived performance, and can fail for reduced-motion users and some crawlers/screenshotters.
-
-**What to remove:**
-- GSAP: `gsap.fromTo(..., { opacity: 0, y }, { scrollTrigger: {...} })` plus the `opacity-0` / `clip-hidden-*` initial-state classes the elements start with.
-- framer-motion: `initial`/`whileInView`/`animate` opacity-translate combos and `variants` like `fadeUp`. Replace `<motion.div>` with `<div>` and drop the import.
-- Scroll-triggered number counters: render the final value directly instead of animating from 0.
-
-**Keep:** genuine interaction feedback that is *not* scroll-gated — hero carousel cross-fades, image-gallery swap fades, hover transitions. Removing those makes the UI feel broken.
-
-**Method:**
-1. Grep the surface: `grep -rln "whileInView\|framer-motion\|ScrollTrigger\|gsap\|opacity-0\|clip-hidden\|data-reveal" app components`.
-2. For each hit, delete the animation hook/wrapper and the initial-hidden class so the element is visible by default.
-3. If a component loses all client-side behavior, drop now-unused imports and consider removing `"use client"`.
-4. Verify nothing else referenced the removed `data-*` attributes; run build/lint.
-
-Net effect on the reference project: ~360 fewer lines, content visible immediately, no layout shift from reveal.
-
----
-
-## Recipe: above-the-fold form / CTA visibility
-
-**When:** a contact/inquiry page pushes the form and submit button below the fold; visitors must scroll to find "Send Inquiry". For a B2B site the inquiry form *is* the conversion — it must be visible on load.
-
-**Method:**
-1. Shrink the top hero padding (e.g. `pt-36` → `pt-28`) and the heading size (`text-4xl` → `text-3xl`).
-2. Cut secondary descriptive paragraphs in the header; keep one tight value line.
-3. Tighten form internals: container padding `p-8` → `p-6`, field gaps `mt-4` → `mt-3`, textarea `rows={5}` → `4`, button `mt-6` → `mt-5`.
-4. Goal: the whole form + submit button fits one viewport on a typical laptop without scrolling.
-
-Pair with: link the address in the contact card to Google Maps in English — `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}&hl=en` (the `hl=en` forces the English UI for international buyers).
-
----
-
-## Recipe: footer redesign + social/marketplace links
-
-**When:** a light-gray footer with thin contrast, or missing the channels B2B buyers actually use.
-
-**Method:**
-1. Dark theme for weight and contrast: `bg-neutral-900`, white headings, `text-neutral-400` links hover→white, `border-white/10` dividers.
-2. Make section group titles (e.g. "Carbon Fiber", "Glass Fiber") clickable links to the division landing pages — free internal links to core pages.
-3. Add the company column's missing pages (e.g. Services).
-4. Social/marketplace links as `aria-label`led icon anchors with `target="_blank" rel="noopener noreferrer"`. For export manufacturers, wire the channels that matter: WhatsApp, LinkedIn, the relevant B2B marketplace (e.g. Made-in-China company page), YouTube, plus email/phone. Use real SVG brand paths, not placeholders.
-
-These changes double as internal-linking improvements — they feed link equity to landing pages and help discovery.
-
----
-
-## Recipe: correct OG / social share image
-
-**When:** `og:image` points at a square logo (e.g. 2000×2000) but the metadata declares `1200×630`. Share cards then render a mislabeled square logo — unprofessional and dimension-mismatched.
-
-**Principles:**
-- OG images should be landscape, ~1.91:1 (1200×630 ideal). A representative photo (factory, product, R&D) beats a bare logo for click-through.
-- Declared `width`/`height` must match the actual file.
-- For per-page images that vary in size (product/article images), **omit** width/height and let platforms read them, rather than forcing one wrong size.
-
-**Method:**
-1. Pick a representative landscape image already in the project (e.g. a hero banner) or generate one with `seo-image-gen`.
-2. Centralize in the SEO config: `ogImage`, `ogImageWidth`, `ogImageHeight`.
-3. In the shared metadata helper, declare dimensions **only** when using the default image:
-   ```ts
-   const isDefaultImage = image === siteConfig.ogImage;
-   const ogImage = isDefaultImage
-     ? { url, width: siteConfig.ogImageWidth, height: siteConfig.ogImageHeight, alt }
-     : { url, alt };
-   ```
-4. Update any hardcoded `1200×630` in the root `layout.tsx` OG block to the config values.
-5. Keep the square logo for `Organization.logo` in JSON-LD — that one *should* be square.
-6. Verify: grep the prerendered HTML for `og:image` + `og:image:width`. Tell the user to re-scrape via the platform debuggers (Facebook Sharing Debugger, LinkedIn Post Inspector, Twitter Card Validator) since they cache.
-
----
-
-## Recipe: llms.txt for AI-search visibility (GEO)
-
-**When:** the site has no `llms.txt`. AI answer engines (ChatGPT, Perplexity, etc.) use it to understand site structure and surface citable content. High-leverage for B2B where buyers increasingly ask LLMs.
-
-**Method:** generate it dynamically from the same data sources as the sitemap so it never drifts. Next.js route handler at `app/llms.txt/route.ts`:
+在根 layout 设置 canonical host，用页面 `metadata` 或 `generateMetadata` 生成准确、独特的 title、description、canonical 和社交预览。
 
 ```ts
-import { absoluteUrl, siteConfig } from "@/lib/seo";
-import { contactInfo } from "@/lib/contact";
-import { allCarbonFiberCategories } from "@/data/carbon-fiber";
-// ...other data sources
-export const dynamic = "force-static";
+// app/layout.tsx
+import type { Metadata } from "next";
 
-export function GET() {
-  const body = `# ${siteConfig.name}
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
+  title: { default: "Brand", template: "%s | Brand" },
+};
+```
 
-> ${siteConfig.description} Operated by ${contactInfo.company}, a manufacturer ... since ${contactInfo.foundingDate}.
-
-## Carbon Fiber
-${allCarbonFiberCategories.map(c => `- [${c.name}](${absoluteUrl(`/carbon-fiber/products/${c.slug}`)}): ${c.description}`).join("\n")}
-
-## Company
-- [About](${absoluteUrl("/about")})
-- [Contact](${absoluteUrl("/contact")}): ${contactInfo.emails[0]}
-`;
-  return new Response(body, {
-    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600, s-maxage=86400" },
-  });
+```ts
+// app/products/[slug]/page.tsx
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const product = await getProduct((await params).slug);
+  if (!product) return {};
+  const path = `/products/${product.slug}`;
+  return {
+    title: product.metaTitle ?? product.name,
+    description: product.metaDescription ?? product.summary,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      url: path,
+      title: product.metaTitle ?? product.name,
+      description: product.metaDescription ?? product.summary,
+      images: [{ url: product.ogImage, alt: product.name }],
+    },
+  };
 }
 ```
 
-Follows the https://llmstxt.org format: H1 title, blockquote summary, sectioned link lists with short descriptions. Verify it prerenders as a static route and the body is correct. Then deepen with the `seo-geo` skill (citability, brand-mention signals).
+Google 没有固定 title/description 字符上限。以简洁、准确、设备实际展示和用户判断为准。
 
----
+## 3. 不存在页面与状态码
 
-## Recipe: brand name in the SERP (site name + search highlighting)
+动态实体不存在时调用 `notFound()`，确保得到真实 404，而不是带错误文案的 200 soft-404。
 
-This solves two distinct things people confuse. **Both require Google to re-crawl before they show.**
-
-**Problem A — the site-name line under the title shows the bare domain** (e.g. "zysfiber.com") instead of the company name.
-Google derives the SERP site name from `WebSite` structured data `name` + `og:site_name`. If neither states the full name, Google falls back to the domain.
-
-Fix:
-1. Add a `WebSite` JSON-LD on the homepage (site-wide layout) with the full legal name and the short brand as `alternateName`:
-   ```ts
-   export function websiteJsonLd() {
-     return { "@context": "https://schema.org", "@type": "WebSite",
-       name: siteConfig.legalName,            // "Jiangsu Zeyusen Carbon Fiber Technology Co., Ltd."
-       alternateName: siteConfig.name,        // "ZeYuSen Fiber"
-       url: absoluteUrl("/") };
-   }
-   ```
-2. Set `openGraph.siteName` to the legal name in both the root `layout.tsx` and the shared metadata helper.
-3. Add `alternateName` to the existing `Organization` JSON-LD too.
-4. Keep the `<title>` template short (`%s | ShortBrand`) — don't bloat every tab/title with the full legal name.
-
-**Problem B — searching the company name doesn't bold-match (highlight) on your result, but does on an older site.**
-The red/bold text in a SERP snippet is Google highlighting the searched query where it appears in the page's meta description / indexed copy. If the full company name never appears in your description, there's nothing to match.
-
-Fix: include the full legal name naturally in the homepage `meta description` (and ideally visible body copy):
-> "Jiangsu Zeyusen Carbon Fiber Technology Co., Ltd. manufactures carbon fiber mats, fiberglass fabrics, ... "
-
-Verify (A+B): grep the prerendered homepage HTML for `"@type":"WebSite"`, `og:site_name`, and the legal name inside `name="description"`. Then have the user submit the homepage for indexing in Search Console — new sites especially are slow to reflect this.
-
----
-
-## Recipe: CSP `unsafe-eval` for dev only
-
-**When:** dev console shows `eval() is not supported ... make sure 'unsafe-eval' is included` because a strict `Content-Security-Policy` `script-src` blocks what React/Turbopack need in development. Production doesn't need it and shouldn't have it.
-
-**Method** in `next.config.ts`:
 ```ts
-const isDev = process.env.NODE_ENV === "development";
-// in script-src:
-`script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://...`,
+import { notFound } from "next/navigation";
+
+const product = await getProduct(slug);
+if (!product) notFound();
 ```
-Restart the dev server (config changes don't hot-reload). Production CSP stays strict.
 
----
+永久迁移使用 `permanentRedirect()` 或 `next.config` 的 `permanent: true`；临时跳转使用正确临时状态。不要把所有旧 URL 重定向到首页。
 
-## Recipe: canonical host / www redirect & metadata hygiene
+## 4. Canonical host 与 URL 一致性
 
-- Enforce one canonical host. Redirect non-www → www (or vice versa) with a `permanent` redirect in `next.config.ts` `redirects()` keyed on the `host`. Pick the host that matches `NEXT_PUBLIC_SITE_URL` and the canonical tags.
-- `metadataBase` set to the canonical site URL so all relative OG/canonical URLs resolve absolutely.
-- Per-page `canonical` via a shared `createPageMetadata({ title, description, path, image? })` helper — keeps canonical/OG/Twitter consistent across the whole app.
-- `robots.ts`: allow `/`, disallow `/api/`, reference the sitemap, set `host`.
-- `sitemap.ts`: generate from the same data sources as pages (categories, products, blog, applications) so it never goes stale; set sensible `changeFrequency`/`priority`.
+- `metadataBase`、环境变量、canonical、sitemap、robots host 和 hreflang 使用同一正式 origin。
+- 通过 hosting/platform 或 `next.config` 把非首选 host、协议和路径变体重定向到首选 URL。
+- Rewrites 不等于 redirects；确认搜索引擎最终看到的 URL/状态。
+- 参数页、筛选页和分页策略需结合实际索引需求，不能一律 canonical 到第一页。
 
----
+## 5. Robots 与 sitemap
 
-## Verification ritual (every fix)
+```ts
+// app/robots.ts
+import type { MetadataRoute } from "next";
+
+export default function robots(): MetadataRoute.Robots {
+  const origin = process.env.NEXT_PUBLIC_SITE_URL!;
+  return {
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/api/", "/admin/"] }],
+    sitemap: `${origin}/sitemap.xml`,
+    host: origin,
+  };
+}
+```
+
+```ts
+// app/sitemap.ts
+import type { MetadataRoute } from "next";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const products = await getAllProducts();
+  return products.map((product) => ({
+    url: absoluteUrl(`/products/${product.slug}`),
+    lastModified: product.updatedAt,
+  }));
+}
+```
+
+Sitemap 应从页面真实数据源生成，只列 canonical、可索引 URL。`changeFrequency` 和 `priority` 不是排名杠杆，可省略；`lastModified` 必须真实。
+
+普通页面不要调用 Google Indexing API。
+
+## 6. JSON-LD
+
+只添加当前支持、与可见内容一致的类型。首页可按官方说明使用 Organization/WebSite；产品、文章、面包屑、视频等按页面类型和 Search Gallery 当前资格使用。不要为 Google 富结果添加已停用的 FAQPage/HowTo。
+
+```tsx
+function JsonLd({ data }: { data: object }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/</g, "\\u003c"),
+      }}
+    />
+  );
+}
+```
+
+不要把未经验证的用户文本直接拼进 script。构建后解析 JSON-LD，并用当前 Rich Results Test/Schema validator 检查。
+
+## 7. 渲染与内容可用性
+
+Google 能处理 JavaScript，但服务器/静态渲染通常让关键内容更稳定地被用户、抓取器和分享工具获取。
+
+- 产品名称、核心事实、正文、主导航和内部链接应在初始渲染结果中存在。
+- 不要把主内容永久初始为 `opacity: 0`，或只有滚动/点击后才注入。
+- Client component 只用于真实交互；能在 server component 获取和渲染的数据不要无理由推迟到客户端。
+- Streaming/Suspense fallback 不能导致抓取时只留下无意义 loading shell。
+- `generateStaticParams`、cache/revalidate 和动态数据策略要与内容更新频率一致。
+
+## 8. 国际化
+
+在 `alternates.languages` 输出每个真实、可索引的语言/地区 URL，并保证 reciprocity、canonical 和 locale 内容一致。按 Google 当前支持规则验证 hreflang：语言使用 ISO 639-1 两字母代码，地区使用 ISO 3166-1 Alpha-2，适用时脚本使用 ISO 15924；不要把任意 BCP 47 变体视为必然受支持。不要只翻译 metadata；正文、单位、标准、案例和转化路径也要本地化。
+
+## 9. 图片、视频与性能
+
+- 使用 `next/image` 时提供准确 alt、sizes 和适合的 priority/preload；不要把所有图片设为 priority。
+- LCP 图不要 lazy-load；下方媒体按需延迟。
+- OG 图片的声明尺寸与真实文件一致，URL 可公开访问。
+- 第三方脚本、字体和视频 embed 需以 CrUX/RUM 与转化影响排序。
+- 不因“SEO”删除所有动效；只修复导致主内容不可见、CLS、性能或无障碍问题的实现。
+
+## 10. AI Search 边界
+
+Google AI Overviews/AI Mode 仍依赖正常 Search 资格和质量系统。Next.js 不需要特殊 AI route、细碎 chunk 或 schema。
+
+Google Search 忽略 `llms.txt`。只有目标平台官方说明支持、且项目批准实验时，才可从 sitemap/内容源生成可选文件；不能把它列为 Google 修复项。
+
+`Google-Extended` 不控制内容是否在 AI Overviews/AI Mode 中出现、被链接或用于 grounding，也不影响 Google Search 收录/排名；它另用于限制相关模型训练用途。
+
+## 11. 验证
+
+按项目已有命令执行，不能假设一定使用 npm：
 
 ```bash
-npx tsc --noEmit          # types
-npx eslint <changed files> # lint
-npm run build              # full build + static generation
-# then confirm intent in output, e.g.:
-grep -oE 'property="og:site_name" content="[^"]*"' .next/server/app/index.html
+npm run lint
+npx tsc --noEmit
+npm run build
 ```
-Clean up temp files. Report exactly what passed and what couldn't be verified (e.g. live SERP changes pending Google re-crawl). Commit only when asked; if asked to commit without attribution, omit any AI co-author trailer.
 
+然后检查实际服务/构建产物：
 
+- 代表性页面状态码、重定向与 canonical。
+- 渲染 title、description、robots、hreflang、OG。
+- JSON-LD 可解析且与可见内容一致。
+- Sitemap/robots URL、内容与响应类型。
+- 404、重定向、参数和多语言边界。
+- 关键内容/内链在渲染结果中存在。
+
+报告分为：`build/static verification passed`、`served artifact passed`、`GSC/crawl/search effect pending`。只有文件存在不能证明运行时正确。

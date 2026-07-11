@@ -1,114 +1,149 @@
-# Delivery Template
+# SEO 执行计划交付模板
 
-Use this structure whenever vibio_seo outputs a PLAN deliverable. The structure is part of the skill — it keeps output operational, not a narrative.
+PLAN 使用本模板把诊断转成可执行任务。计划按 `now / next / later / reject` 管理依赖，不按固定周数、发布数量或“阶段必须完成”的节奏制造确定性。
 
-## Formatting rules
+## 一、写作规则
 
-- Concise but actionable. Short bullets with method details over theory paragraphs.
-- Sections in the order below.
-- State assumptions explicitly.
-- End with immediate next actions.
-- Read like an operator handing off a working plan, not a consultant padding a deck.
-  - Prefer: "Build 3 collection pages for X, Y, Z", "Refresh 5 pages ranking 11-20".
-  - Avoid: "Consider optimizing your content strategy", "Explore backlink opportunities".
+- 默认用中文沟通；页面正文和关键词按目标市场语言交付；
+- 先写结论和决策证据，再写方法；
+- 只列当前项目能执行或能验证的动作，不用“持续优化”“加强权威”等空泛措辞；
+- 区分观察、官方规则、第一方数据、实验和假设；未知就写未知；
+- 严重程度描述伤害，优先级综合业务影响、证据、投入、依赖和可逆性；
+- 每个任务必须包含证据、负责人、依赖、完成定义、指标和 fallback；
+- 数值目标只来自当前项目基线、官方限制或明确标注的预测假设；
+- 外部能力均为可选，不能把不存在的工具输出写进计划。
 
-## Default output
+## 二、默认交付结构
 
 ```md
-# [Project Name] SEO Execution Plan
+# [项目名称] SEO 执行计划
 
-## Project Snapshot
-- Site type:
-- Business model:
-- Primary conversion:
-- Target market:
-- Primary language:
-- Stack:
-- Current stage:
-- Weekly execution capacity:
+## 项目快照
+- 站点 / 范围：
+- 商业模式与主转化：
+- 目标买家：
+- 目标市场 / 语言：
+- 技术栈 / 编辑方式：
+- 可用数据：
+- 执行资源与审批：
+- 当前状态：
 
-## Diagnosis
-- Primary mode:
-- Secondary tag:
-- Main bottleneck:
-- Why this is the bottleneck:
-- 90-day objective:
+## 决策依据
+| 观察 | 证据等级 | 来源 / URL / 数据范围 | 核验日期 | 影响 | 置信度 |
+|---|---|---|---|---|---|
+| | | | | | |
 
-## Assumptions
-- ...
+## 诊断
+- 当前主瓶颈：
+- 为什么它优先：
+- 受影响范围：
+- 本规划窗口的结果：
+- 假设与未知：
+- 不在范围内：
 
-## Priority Order
-1. ...
-2. ...
-3. ...
+## Now
+> 已有证据支持、解除阻断或最接近业务结果的工作。
 
-## 90-Day Roadmap
+### [任务 ID] [具体动作]
+- Why / 证据：
+- 负责人：
+- 投入 / 审批：
+- 依赖：
+- 方法：
+- 完成定义：
+- 产物验证：
+- 结果指标：
+- 观察窗口 / 复核点：
+- 停止 / 回退条件：
+- Fallback：
 
-### Days 1-14
-- Task:
-  Purpose:
-  Method:
-  Done when:
+## Next
+> Now 的前置条件满足后启动；写明触发条件，不预填固定日期。
 
-### Days 15-30
-- Task:
-  Purpose:
-  Method:
-  Done when:
+### [任务 ID] [具体动作]
+- Why / 证据：
+- 负责人：
+- 投入 / 审批：
+- 依赖 / 启动条件：
+- 方法：
+- 完成定义：
+- 产物验证：
+- 结果指标：
+- 观察窗口 / 复核点：
+- 停止 / 回退条件：
+- Fallback：
 
-### Days 31-60
-- Task:
-  Purpose:
-  Method:
-  Done when:
+## Later
+> 有潜在价值，但证据、容量或依赖尚不支持当前投入。
 
-### Days 61-90
-- Task:
-  Purpose:
-  Method:
-  Done when:
+| 候选工作 | 当前证据 | 缺失证据 / 依赖 | 何时重评 | 负责人 | Fallback |
+|---|---|---|---|---|---|
+| | | | | | |
 
-## Weekly Cadence
-- Block 1: Focus / Time / Typical tasks
-- Block 2: Focus / Time / Typical tasks
-- Block 3: Focus / Time / Typical tasks
+## Reject / 暂不做
+| 项目 | 决策理由 | 证据 | 什么变化时可重开 |
+|---|---|---|---|
+| | | | |
 
-## Monthly Deep Work
-- Review focus:
-- Reports to inspect:
-- Decisions to make:
+## 测量与复盘
+- 实施指标：
+- 抓取 / 索引指标：
+- 搜索需求指标：
+- 业务质量指标：
+- 对照 / 可比基线：
+- 数据限制：
+- 继续 / 调整 / 合并 / 停止的判据：
 
-## Task SOPs For Current Phase
-- SOP: Use it for / Steps / Done when
+## 风险与依赖
+| 风险 / 依赖 | 影响 | 负责人 | 缓解或 fallback |
+|---|---|---|---|
+| | | | |
 
-## Specialist Skills To Run
-- Skill: what it will produce for this project (route per references/skill-arsenal.md)
-
-## Tracking System
-- Content tracker: Purpose / Fields
-- Keyword tracker: Purpose / Fields
-- Outreach tracker: Purpose / Fields
-- Technical log: Use only if
-
-## Risks And Constraints
-- ...
-
-## Next 3 Actions
-1. ...
-2. ...
-3. ...
+## 开工交接
+- 首个可执行任务：
+- 所需输入 / 权限：
+- 由谁确认完成：
+- 下一决策点：
 ```
 
-## Compression rule
+## 三、优先级定义
 
-If the user asks for a narrower deliverable, keep the logic but compress:
-- "just the next month" → diagnosis + next-30-days + weekly cadence + next 3 actions.
-- "what should I do this week" → diagnosis + this-week priority + micro-SOP + next 3 actions.
+- **Now**：已验证阻断、测量基础、已证实高价值页面或当前主瓶颈；
+- **Next**：依赖 Now 的结果，或需要补齐证据/资源后才能合理执行；
+- **Later**：机会存在但当前边际价值、可测性或容量不足；
+- **Reject**：与业务/意图不匹配、无法兑现、会制造重复，或主要依据是无来源规则。
 
-## Expansion rule
+优先级改变时，在 changelog 记录新证据与决策原因，不静默覆盖旧计划。
 
-If given a real codebase/page inventory/site context, expand with project-specific items: name specific page types, name likely missing assets, identify technical risks from the stack, tailor cadence to realistic capacity, and name which `skill-arsenal.md` specialists to fire.
+## 四、任务质量闸门
 
-## Continuation rule
+任务进入 `now` 前必须能回答：
 
-If the user is continuing an existing project, don't restart. First identify the current phase, what's done, and the next bottleneck; then output only the next operating slice in the same structure.
+- 具体观察是什么，证据等级和来源是什么？
+- 它如何连接当前主瓶颈或明确依赖？
+- 谁提供内容/开发/审批，谁对完成负责？
+- 完成后可人工验证的产物是什么？
+- 用什么搜索或业务指标判断继续，而不是只看“已发布”？
+- 数据成熟前如何避免过早结论？
+- 外部能力、权限、数据或人员不可用时如何 fallback？
+
+答不出来的任务降到 `next/later` 或先建立研究任务，不用虚构信息补齐。
+
+## 五、按请求压缩
+
+用户只要某一范围时保留同样字段：
+
+- “当前该做什么”：只输出诊断、Now、测量和开工交接；
+- “某个页面/问题”：只输出相关证据、任务卡、验证与 fallback；
+- “接着上次做”：读取 `.vibio/` 和 changelog，说明已完成内容及新证据，只交付下一段，不重新启动项目；
+- 真实代码库/页面库存可用时，任务要落到具体 URL、模板、文件或 owner，不只写页型。
+
+## 六、交付前检查
+
+- 没有排名、流量、CTR、转化或 AI 引用保证；
+- 没有固定 KD、内容数量、链接数量、周期或评分门槛；
+- 广告数据只用于查询、意图、信息表达、落地页和增量验证，不扩成广告代运营；
+- GSC 与分析/CRM 没有被写成确定性的 query-to-conversion 连接；
+- 结构化数据、内容格式和第三方分数没有被当成排名代理；
+- 每个 Now/Next 任务都有负责人、依赖、完成、指标和 fallback；
+- 计划符合真实容量，未知项明确标注且有获取证据的下一步。

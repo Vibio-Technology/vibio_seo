@@ -3,21 +3,117 @@
   "evals": [
     {
       "id": 1,
+      "name": "外贸新站 90 天执行计划",
       "prompt": "我们刚做了一个新的外贸独立站，想启动 SEO。不要讲概念，直接根据新站排一个 90 天执行计划：每周做什么、每月看什么、先做哪些页面，并说明该用哪些 SEO 工具。",
-      "expected_output": "Should classify as New site / Service-B2B, name the one dominant bottleneck, produce a dependency-sequenced 90-day roadmap with weekly + monthly cadence and tracking via delivery-template.md, name which specialist skills to run (b2b-seo, seo-content-brief, seo-cluster, seo-google), and end with the next 3 actions. No ranking promises.",
-      "files": []
+      "expected_output": "应先用已有材料确认业务转化、目标国家与语言、站点类型、测量可用性和一个主导约束，再按依赖关系排 90 天工作：测量与抓取资格、词页架构、商业与支柱页、差异化内容、内链分发、正当权威获取和复盘。每周任务要有负责人、完成定义和验证方法，每月按网站自身基线查看索引、曝光、有效流量与询盘。工具按任务选择且给出缺失时 fallback，不承诺排名、固定流量或固定询盘结果，最后给接下来三项行动。",
+      "files": [],
+      "expectations": [
+        "先定义主导约束再排依赖顺序",
+        "周任务和月复盘都有验收标准",
+        "工具缺失有降级且不承诺结果"
+      ],
+      "assertions": [
+        {
+          "id": "route-new-site-plan",
+          "description": "新站 90 天执行计划应路由到 vibio-plan",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-plan",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "dependency-plan-contract",
+          "description": "输出必须包含主导约束、依赖顺序、验收和三项行动",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["主导约束", "依赖关系", "负责人", "完成定义", "验证方法", "fallback", "接下来三项行动"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-outcome-promise",
+          "description": "计划不得承诺固定排名流量或询盘",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["保证.*排名", "保证.*流量", "保证.*询盘", "90 天.*(?:一定|必然)"] ,
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 2,
+      "name": "存量内容站 30-90 天计划",
       "prompt": "这个网站已经有很多博客了但流量起不来，给我接下来 30-90 天的优化计划，重点放在更新哪些页面、怎么排优先级、怎么复盘。",
-      "expected_output": "Should classify as Existing content site, focus on refreshes (positions 11-20), CTR repair, internal linking, cannibalization cleanup, and a monthly review loop. Should route to seo-google for GSC data and seo-content for E-E-A-T, not give generic new-site advice. Compress to diagnosis + next-30-90 days + cadence + next 3 actions.",
-      "files": []
+      "expected_output": "应识别这是存量内容站，不照搬新站发布日历。先用 GSC/分析导出、索引状态、内容清单和内部链接判断主导约束；数据不可用时明确所需导出和定性 fallback。页面优先级综合商业价值、可验证需求、当前可见性、内容差距、蚕食、内链和修改成本，形成刷新、合并、重定向、CTR 实验或暂不处理的队列。按月用对比窗口复盘产物、索引、曝光、有效访问和业务结果，查询级收入不得由 GSC 与 GA4 确定性拼接。",
+      "files": [],
+      "expectations": [
+        "以存量数据和页面组合诊断而非新站模板",
+        "优先级同时考虑价值、证据、差距和成本",
+        "复盘避免 GSC 查询到 GA4 收入的伪精确归因"
+      ],
+      "assertions": [
+        {
+          "id": "route-existing-site-plan",
+          "description": "存量内容优化计划应路由到 plan",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-plan",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "existing-content-decisions",
+          "description": "输出必须包含存量页面决策和月度复盘",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["刷新、合并、重定向", "CTR 实验", "修改成本", "对比窗口", "查询级收入不得"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-query-revenue-join",
+          "description": "不得宣称 GSC 和 GA4 可确定性得到查询收入",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["GSC.*GA4.*(?:精确|确定性).*(?:查询|关键词).*(?:收入|转化)", "关键词级收入.*准确"] ,
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 3,
+      "name": "两个月项目续排下一阶段",
       "prompt": "这个项目已经做了两个月 SEO 了，接下来该干嘛？",
-      "expected_output": "Should apply the continuation rule: not restart from scratch. First identify current phase, what's done, and the next bottleneck; then output only the next operating slice in the delivery-template structure, ending with next 3 actions.",
-      "files": []
+      "expected_output": "应先读取 .vibio/ 和最近两个月的实际交付与结果，确认当前阶段、完成项、未完成依赖、上次主导约束和数据观察窗口，不重新做通用 kickoff。只规划下一段最小执行切片：一个当前瓶颈、对应动作、负责人、完成定义、立即验证、后续效果指标与停止条件，并给接下来三项行动。没有历史记录时明确缺口，不能猜测两个月内做过什么。",
+      "files": [],
+      "expectations": [
+        "从已有项目状态继续而非重启",
+        "只规划下一段针对当前瓶颈的执行切片",
+        "没有历史时不猜测已做事项"
+      ],
+      "assertions": [
+        {
+          "id": "route-continuation-plan",
+          "description": "已有项目下一步规划应路由到 plan",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-plan",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "continuation-slice",
+          "description": "输出必须读取历史并交付最小执行切片",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["读取 \\.vibio", "不重新.*kickoff", "最小执行切片", "停止条件", "不能猜测"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     }
   ]
 }

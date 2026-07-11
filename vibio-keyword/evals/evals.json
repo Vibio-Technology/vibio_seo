@@ -3,33 +3,190 @@
   "evals": [
     {
       "id": 1,
+      "name": "外贸制造业词族研究",
       "prompt": "我们是做碳纤维和玻璃纤维的外贸厂，帮我看看产品该针对哪些关键词做 SEO 效果好。",
-      "expected_output": "Should read .vibio/ first, extract seed topics split into product / application-scenario / commercial-intent / informational buckets, expand candidates and route to seo-dataforseo for real volume/difficulty/intent (or state clearly if MCP unavailable and give a qualitative version, not invented numbers), classify by intent with b2b-seo buyer-journey lens biasing toward commercial + application terms, score each by relevance/can-answer/beatable-SERP/deserves-a-page, map keyword families to pages, group into 3-5 clusters, and write .vibio/trackers/keywords.md. Should not output a flat unsorted keyword list.",
-      "files": []
+      "expected_output": "应先确认目标国家、语言、产品能力、客户类型和询盘目标，从 RFQ/CRM、GSC、付费搜索词及客户原话提取种子表达，再用目标市场 SERP 验证母语性、搜索者身份、意图、页面类型和商业路径。关键词数据提供商可用时记录来源、国家、语言和日期；不可用时只输出定性证据与待测项，搜索量、难度、CPC、排名不得编造。最终把通过验证的意图族映射到页面，标出关键词蚕食和优先依据，而不是平铺词表。",
+      "files": [],
+      "expectations": [
+        "明确目标国家和语言并从第一方买家用语出发",
+        "提供商不可用时降级但绝不编造指标",
+        "形成经验证的词族到页面映射"
+      ],
+      "assertions": [
+        {
+          "id": "route-product-keywords",
+          "description": "产品关键词研究应路由到 vibio-keyword",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-keyword",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "keyword-fallback-policy",
+          "description": "fixture 必须声明数据缺失时各指标为未知",
+          "type": "jsonpath_equals",
+          "target": "output.unavailable_provider_policy",
+          "expected": {
+            "search_volume": "unknown",
+            "keyword_difficulty": "unknown",
+            "cpc": "unknown",
+            "ranking": "unknown"
+          },
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "keyword-required-dimensions",
+          "description": "fixture 必须保留关键词验证的关键维度",
+          "type": "fact_set_equals",
+          "target": "output.validation_dimensions",
+          "expected": ["target_country", "target_language", "native_wording", "searcher_identity", "intent", "revenue_path", "page_mapping"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 2,
+      "name": "询盘导向的高意图词",
       "prompt": "帮我找一批高意图的关键词，重点是能带来询盘的那种。",
-      "expected_output": "Should prioritize commercial/transactional intent (manufacturer/supplier/wholesale/custom + specific application-selection terms) over informational traffic, score by actionability, map to commercial pages, and explain why high-intent B2B terms matter more than broad informational volume for an inquiry-driven site. Should route to b2b-seo and seo-dataforseo.",
-      "files": []
+      "expected_output": "应先定义询盘对应的买家、产品、国家和采购阶段，再从真实 search terms、RFQ 和客户问法找候选。高意图不能只靠 manufacturer、supplier 等修饰词猜测，要逐词查看当前 SERP 的搜索者身份、页面类型和商业动作。将通过验证的采购、规格、应用选择与问题解决词族映射到合适商业页，并用 CRM 或落地页级业务结果复盘；无数据时标为假设，不虚构转化率。",
+      "files": [],
+      "expectations": [
+        "高意图判断基于目标 SERP 和商业动作",
+        "关键词映射到能承接询盘的页面",
+        "没有业务数据时不虚构转化率"
+      ],
+      "assertions": [
+        {
+          "id": "route-high-intent",
+          "description": "高意图词研究应路由到关键词 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-keyword",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "intent-evidence-contract",
+          "description": "输出必须要求真实用语、SERP 身份和业务复盘",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["search terms.*RFQ", "搜索者身份", "商业动作", "落地页级业务结果", "不虚构转化率"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 3,
+      "name": "新站不盲攻行业大词",
       "prompt": "我新站权重很低，是不是该直接做 carbon fiber 这个大词？",
-      "expected_output": "Should push back honestly: a low-authority new site should not open with a high-difficulty head term. Apply the beatable-SERP actionability check, recommend long-tail / specific application + commercial-intent terms first, explain the dependency (earn relevance and links before competing for head terms), and offer to build the staged keyword map. Should cite the new-site branching logic.",
-      "files": []
+      "expected_output": "不能只凭所谓站点权重直接同意或拒绝。应查看目标国家的 carbon fiber SERP、结果页型、强势实体、查询歧义和网站是否有资格提供更好答案，再判断机会成本。通常先选择与真实产品能力和询盘更接近、SERP 可承接的细分应用或规格词族，同时建设支柱页和原创证据；把 head term 作为分阶段目标，并用实际曝光、收录、链接和询盘证据决定何时扩大，而不是套固定难度阈值。",
+      "files": [],
+      "expectations": [
+        "基于当前 SERP 和网站能力判断而非单一权重",
+        "优先验证商业相关的细分意图族",
+        "不使用固定难度阈值"
+      ],
+      "assertions": [
+        {
+          "id": "route-head-term",
+          "description": "是否做大词属于关键词决策",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-keyword",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "staged-head-term-test",
+          "description": "输出必须基于 SERP、能力和实际反馈分阶段决策",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["目标国家.*SERP", "真实产品能力", "分阶段目标", "实际曝光.*收录.*链接.*询盘", "不是套固定难度阈值"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 4,
+      "name": "拒绝中式英文与求职流量",
       "prompt": "老板定了几个词让我做：non-standard customization、carbon fiber technician jobs、carbon fiber fabric supplier。帮我看看这些词行不行。",
-      "expected_output": "Should run the five validation gates from references/keyword-validation.md instead of accepting the list: 'non-standard customization' should FAIL the native-language gate (translated Chinglish — real buyers say custom fabrication/custom machining; must not use other Chinese exporters' sites as evidence), 'carbon fiber technician jobs' should FAIL the searcher-identity gate (jobs = job seekers, not buyers), 'carbon fiber fabric supplier' should PASS as a commercial-intent term. Failed terms must be rejected with the logged reason and suggested replacements — not silently included in the page map. Should push back on authority ('老板定了') with evidence, not comply.",
-      "files": []
+      "expected_output": "应逐词通过目标市场母语性、SERP 受众、搜索者身份、需求证据和收入路径验证，不能因为老板指定就纳入。non-standard customization 若目标市场结果不支持，应拒绝并从客户或本地行业用语寻找 custom fabrication 等替代；carbon fiber technician jobs 的搜索者通常是求职者，应与询盘型站点隔离；carbon fiber fabric supplier 只有在目标国家 SERP 呈商业采购意图且产品确实供应时才通过。记录每个词的证据、结论和替代方案。",
+      "files": [],
+      "expectations": [
+        "以证据挑战权威指定词",
+        "识别中式英文和错误搜索者身份",
+        "候选词通过与否保留条件而非武断"
+      ],
+      "assertions": [
+        {
+          "id": "route-boss-keywords",
+          "description": "指定词验证应路由到关键词 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-keyword",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "candidate-decisions",
+          "description": "fixture 必须对三个候选词作条件明确的决策",
+          "type": "jsonpath_equals",
+          "target": "output.decisions",
+          "expected": {
+            "non-standard customization": "reject_unless_target_market_evidence",
+            "carbon fiber technician jobs": "reject_wrong_searcher",
+            "carbon fiber fabric supplier": "validate_commercial_serp_and_capability"
+          },
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "validation-gates",
+          "description": "fixture 必须包含五个独立验证关卡",
+          "type": "fact_set_equals",
+          "target": "output.gates",
+          "expected": ["native_wording", "serp_audience", "searcher_identity", "demand_evidence", "revenue_path"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 5,
+      "name": "零搜索量规格词判断",
       "prompt": "这个词 3k carbon fiber tube 30mm ASTM 工具里查出来搜索量是 0，是不是不用做了？",
-      "expected_output": "Should NOT drop the term just because tools show zero volume. Should apply the zero-volume judgment framework from keyword-validation.md: spec/standard/grade terms are systematically under-measured by clickstream panels; check GSC impressions, autocomplete/PAA presence, whether the SERP has dedicated commercial pages, and inquiry/RFQ evidence. Should explain aggregation logic (fold into a cluster page rather than a standalone page) and weight by commercial proximity (a zero-volume spec term tied to real RFQs can outvalue a high-volume generic term).",
-      "files": []
+      "expected_output": "不能因第三方工具显示 0 就直接丢弃，也不能反过来宣称一定有量。先确认短语是否符合真实规格与标准表达，再检查目标市场 SERP、GSC impressions、站内搜索、RFQ/CRM、付费 search terms 和客户问法。若存在真实采购需求但单词数据稀疏，可并入覆盖相同意图的规格或产品页，而不是为每个组合新建薄页；用页面或意图集群级曝光与询盘验证价值。",
+      "files": [],
+      "expectations": [
+        "将工具零量视为不确定证据而非不存在",
+        "结合第一方和目标市场证据验证",
+        "优先并入意图一致的页面避免薄页"
+      ],
+      "assertions": [
+        {
+          "id": "route-zero-volume",
+          "description": "零量词判断应路由到关键词 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-keyword",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "zero-volume-evidence",
+          "description": "输出必须把零量作为不确定信号并要求多源验证",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["不能因.*0.*直接丢弃", "不能.*宣称一定有量", "GSC impressions", "RFQ/CRM", "并入.*产品页", "意图集群级"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     }
   ]
 }

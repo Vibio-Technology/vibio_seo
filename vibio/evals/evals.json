@@ -1,0 +1,252 @@
+{
+  "skill_name": "vibio-seo",
+  "evals": [
+    {
+      "id": 1,
+      "name": "顶层恢复模式路由",
+      "prompt": "我们网站从 6 月 18 日开始自然流量暴跌，帮我诊断并恢复。",
+      "expected_output": "应由 vibio-seo 进入 RECOVER 模式，先读取项目记录并锁定下降日期、受影响的页面/查询/国家/设备分段和测量口径，再按技术回归、人工处置或垃圾政策、算法重新评估、竞争变化、需求变化、迁移错误和内容衰退分层验证。每次只改变一个因果层，修复后分别验证产物、重新抓取、搜索表现和业务结果，不承诺恢复幅度或时间。",
+      "files": [],
+      "expectations": [
+        "显著自然流量下降由顶层 Skill 进入 RECOVER",
+        "按下降日期和受影响分段建立因果诊断",
+        "不承诺恢复幅度或时间"
+      ],
+      "assertions": [
+        {
+          "id": "route-recover-skill",
+          "description": "流量暴跌恢复应由顶层 vibio-seo 处理",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-seo",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "route-recover-mode",
+          "description": "流量暴跌必须精确进入 RECOVER 模式",
+          "type": "route_equals",
+          "target": "routing.mode",
+          "expected": "RECOVER",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "recovery-diagnostic-contract",
+          "description": "输出必须按日期、分段和因果层诊断",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["下降日期", "页面/查询/国家/设备", "因果层", "重新抓取", "不承诺恢复"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "SEO 概念问答近似反例",
+      "prompt": "什么是 SEO？给实习生解释一下。",
+      "expected_output": "这是一次通用概念解释，不涉及真实网站、代码库、页面、数据或可执行搜索优化项目，因此不应触发 vibio-seo 的项目工作流；直接简洁解释即可。",
+      "files": [],
+      "expectations": [
+        "通用概念问答不误触发项目执行 Skill",
+        "不创建 .vibio 状态或启动审计"
+      ],
+      "assertions": [
+        {
+          "id": "route-concept-none",
+          "description": "纯 SEO 概念问答不应路由到任何 Vibio 工作流",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "NONE",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "near-miss-not-vibio",
+          "description": "概念问答不应触发 vibio-seo",
+          "type": "route_not_equals",
+          "target": "routing.skill",
+          "expected": "vibio-seo",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-project-mutations",
+          "description": "输出不得启动项目审计或写项目记忆",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["创建 \\.vibio", "开始审计", "读取项目代码"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "广告 Campaign 管理近似反例",
+      "prompt": "帮我给 Google Ads 新建 Campaign，分广告组、定预算和出价。",
+      "expected_output": "这是独立的广告 Campaign 搭建与投放管理，不属于 vibio-seo。应交给广告投放工作流；不得因为出现 Google、关键词或落地页字样就触发 SEO 项目执行。",
+      "files": [],
+      "expectations": [
+        "独立广告运营不触发 SEO Skill",
+        "广告和 SEO 的能力边界清晰"
+      ],
+      "assertions": [
+        {
+          "id": "route-ads-none",
+          "description": "纯广告 Campaign 管理不属于 Vibio SEO",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "NONE",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "near-miss-ads-not-seo",
+          "description": "广告投放请求不应误触发 vibio-seo",
+          "type": "route_not_equals",
+          "target": "routing.skill",
+          "expected": "vibio-seo",
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "付费搜索数据服务 SEO",
+      "prompt": "把 Google Ads 的搜索词报告用于 SEO，验证哪些买家用语值得做自然落地页。",
+      "expected_output": "应进入 KEYWORD 工作流，把付费 search terms 当作买家用语、意图与落地页假设的证据。必须保留目标国家、语言、匹配类型、广告曝光条件和转化定义，再用自然 SERP、GSC、CRM 与页面能力交叉验证；广告支出、CPC、竞争度或广告排名都不是自然排名因素，也不能直接当作 SEO 难度。输出词族到页面的测试映射和复盘指标，而不是接管广告出价。",
+      "files": [],
+      "expectations": [
+        "付费搜索词可作为 SEO 关键词情报",
+        "广告指标不会被当成自然排名因素",
+        "保持广告投放和 SEO 决策的边界"
+      ],
+      "assertions": [
+        {
+          "id": "route-paid-intel-keyword",
+          "description": "明确服务 SEO 的搜索词报告应路由到关键词 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-keyword",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "paid-intel-boundary",
+          "description": "输出必须声明付费数据用途和不可推断事项",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["search terms.*买家用语", "自然 SERP.*GSC.*CRM", "不是自然排名因素", "不能直接当作 SEO 难度", "不是接管广告出价"],
+          "weight": 4,
+          "hard_gate": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "外部 SEO 提供商缺失降级",
+      "prompt": "没有任何 seo-* 插件和 API，只有代码库与导出的 GSC CSV，也请完成 SEO 审查。",
+      "expected_output": "应继续进入 AUDIT：用代码库、构建后的页面或本地渲染 HTML、robots/sitemap/状态配置和用户提供的 GSC CSV 完成有边界审查。把无法观察的实时 SERP、抓取状态、外链、搜索量、GA4/CRM 转化标为 unavailable 或 unknown，并列出最小补充材料；绝不能生成貌似真实的 API 返回、排名、流量、外链、转化或收入数字。每项结论注明证据来源和置信度。",
+      "files": [],
+      "expectations": [
+        "缺少所有外部能力仍能用本地材料完成审计",
+        "不可观察数据明确标记 unavailable 或 unknown",
+        "不伪造 API、GSC、GA4、外链或广告数据"
+      ],
+      "assertions": [
+        {
+          "id": "route-fallback-audit",
+          "description": "明确审查请求即使无提供商也应路由到 audit",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-audit",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "fallback-evidence-ledger",
+          "description": "fixture 必须精确区分可用和不可用数据",
+          "type": "jsonpath_equals",
+          "target": "output.evidence",
+          "expected": {
+            "repository": "available",
+            "gsc_csv": "available",
+            "live_serp": "unavailable",
+            "backlinks": "unknown",
+            "search_volume": "unknown",
+            "ga4_conversions": "unknown",
+            "crm_revenue": "unknown",
+            "ad_data": "unknown"
+          },
+          "weight": 5,
+          "hard_gate": true
+        },
+        {
+          "id": "no-fabricated-provider-data",
+          "description": "fixture 必须声明禁止编造全部外部数据族",
+          "type": "fact_set_equals",
+          "target": "output.never_fabricate",
+          "expected": ["api_response", "gsc_metrics", "ga4_metrics", "ad_metrics", "rankings", "search_volume", "backlinks", "conversions", "revenue"],
+          "weight": 5,
+          "hard_gate": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "2026 Google 官方纠错事实集",
+      "prompt": "审查我们的 SEO 方案：要求上 llms.txt、给普通产品页调用 Indexing API、批量 FAQ/HowTo schema、固定 60 字标题和 160 字描述，还说 Google-Extended 会控制 AI Overviews。",
+      "expected_output": "应逐项纠错并引用当前 Google 官方文档：Google Search 不需要 llms.txt；Indexing API 仅支持带 JobPosting 的职位页和直播 BroadcastEvent 场景，不用于普通产品页；Google 已停止 FAQ rich results，HowTo rich results 也已退役，只有对用户有帮助时才保留这些内容；title 与 meta description 没有固定 60/160 字符排名规则，应围绕准确、独特和设备显示检查；Google-Extended 不影响 Google Search 收录、排名或 AI Overviews，而是用于部分生成式 AI 训练/grounding 控制。结构化数据只提供支持功能的资格，不保证排名。",
+      "files": [],
+      "expectations": [
+        "纠正六类常见 2026 SEO 错误",
+        "每个时效性事实都有 Google 官方来源",
+        "不把结构化数据或 AI 控制当排名保证"
+      ],
+      "assertions": [
+        {
+          "id": "route-myth-audit",
+          "description": "审查既有 SEO 方案应路由到 audit",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-audit",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "official-fact-set",
+          "description": "fixture 必须精确包含全部官方纠错结论",
+          "type": "fact_set_equals",
+          "target": "output.facts",
+          "expected": [
+            "llms_txt_not_required_by_google_search",
+            "indexing_api_only_jobposting_or_broadcastevent",
+            "faq_rich_results_retired",
+            "howto_rich_results_retired",
+            "no_fixed_title_or_description_character_limit",
+            "google_extended_does_not_control_search_or_ai_overviews",
+            "schema_is_eligibility_not_ranking_guarantee"
+          ],
+          "weight": 6,
+          "hard_gate": true
+        },
+        {
+          "id": "official-citation-coverage",
+          "description": "全部纠错事实必须由 Google 官方 URL 覆盖",
+          "type": "citation_coverage",
+          "target": "output.claims",
+          "expected": {
+            "claim_ids": ["llms-txt", "indexing-api", "faq-retired", "howto-retired", "title-meta-length", "google-extended", "schema-eligibility"],
+            "official_domains": ["developers.google.com", "support.google.com"],
+            "min_ratio": 1.0
+          },
+          "weight": 7,
+          "hard_gate": true
+        }
+      ]
+    }
+  ]
+}

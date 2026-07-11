@@ -3,21 +3,126 @@
   "evals": [
     {
       "id": 1,
+      "name": "续接已有 SEO 项目",
       "prompt": "继续上次这个站的 SEO，之前做到哪了？",
-      "expected_output": "Should read .vibio/project.md + relevant trackers + recent changelog entries from the project root, then state the current phase, what's done, the last diagnosed bottleneck, the known stack, and the next action in one summary — and continue from there rather than restarting kickoff. If no .vibio/ exists, should say it's a new project and proceed to kickoff (creating .vibio/ on exit).",
-      "files": []
+      "expected_output": "应从项目根读取 .vibio/project.md、相关 trackers 和最近 changelog，汇总当前阶段、已完成事项、上次主导约束、已知技术栈、尚未验证的假设和下一项行动，然后从该处继续而不是重新 kickoff。若 .vibio/ 不存在，应明确这是新项目状态，先从已有代码或站点材料建立最小快照，未知字段保持为空或 unknown，不编造历史。",
+      "files": [],
+      "expectations": [
+        "优先读取项目记忆并延续已有阶段",
+        "区分已知状态与未验证假设",
+        "无记忆时不虚构历史"
+      ],
+      "assertions": [
+        {
+          "id": "route-project-recall",
+          "description": "继续上次项目应路由到记忆 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-memory",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "continuation-fields",
+          "description": "输出必须包含续接项目所需状态字段",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["当前阶段", "已完成事项", "主导约束", "技术栈", "未验证的假设", "下一项行动"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-history-fabrication",
+          "description": "无记忆时必须保持未知状态",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["不编造历史", "unknown"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 2,
+      "name": "追加审计发现而不覆盖历史",
       "prompt": "把刚才这次审查发现的问题记下来。",
-      "expected_output": "Should append entries to .vibio/changelog.md (newest at top, append-only) with date, type=AUDIT finding, severity, what/where, verified state, and status; update project.md if the stack or phase changed. Should not overwrite the changelog or write outside the project root.",
-      "files": []
+      "expected_output": "应在项目根 .vibio/changelog.md 中追加本次 AUDIT 记录，保留全部已有记录；每项至少包含日期、类型、严重度、观察证据、位置、状态、来源或判断依据、下一验证条件。若技术栈、阶段或主导约束确实改变，再最小更新 project.md；不得覆盖历史、删除旧条目或写到项目根之外。",
+      "files": [],
+      "expectations": [
+        "changelog 追加且保留旧记录",
+        "记录发现的证据和后续验证条件",
+        "写入范围限制在项目根"
+      ],
+      "assertions": [
+        {
+          "id": "route-record-findings",
+          "description": "记录审计发现应路由到记忆 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-memory",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "changelog-append",
+          "description": "fixture changelog 必须保留旧记录并增加新记录",
+          "type": "changelog_preserves_and_adds",
+          "target": "output.changelog",
+          "expected": {"min_new": 1},
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "memory-path-confined",
+          "description": "所有写入路径必须限制在 fixture 项目根",
+          "type": "path_confined",
+          "target": "output.written_paths",
+          "expected": "/private/tmp/vibio-eval-project",
+          "weight": 4,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 3,
+      "name": "新项目最小记忆结构",
       "prompt": "这是个我们刚接的新站，建一下项目记忆。",
-      "expected_output": "Should create .vibio/ at the project root with project.md (from the snapshot/diagnosis template) and tracker skeletons (content.md, keywords.md), following references/state-templates.md field formats. Should fill known fields, leave unknowns blank, and suggest whether to commit or gitignore .vibio/.",
-      "files": []
+      "expected_output": "应在真实项目根创建 .vibio/，至少包含 project.md、changelog.md 和与当前工作相关的 trackers；从代码、站点和用户已给材料填写已知字段，未知数据写 unknown 或留待验证，不能猜测业务、流量、排名或技术栈。创建后检查文件存在、格式可读和写入边界，并根据仓库协作方式建议是否提交或忽略。",
+      "files": [],
+      "expectations": [
+        "在真实项目根创建最小记忆结构",
+        "只填已知状态且保留未知项",
+        "验证文件存在和写入边界"
+      ],
+      "assertions": [
+        {
+          "id": "route-create-memory",
+          "description": "建立项目记忆应路由到记忆 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-memory",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "memory-files",
+          "description": "fixture 必须包含最小记忆文件集",
+          "type": "fact_set_equals",
+          "target": "output.created_files",
+          "expected": [".vibio/project.md", ".vibio/changelog.md", ".vibio/trackers/content.md", ".vibio/trackers/keywords.md"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "unknown-fields-policy",
+          "description": "fixture 未知字段策略必须为 unknown",
+          "type": "jsonpath_equals",
+          "target": "output.unknown_fields",
+          "expected": "unknown",
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     }
   ]
 }

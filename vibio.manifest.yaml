@@ -1,0 +1,150 @@
+schema_version: 1
+pack:
+  name: vibio-seo
+  version: 5.0.0-dev
+  description: Evidence-led search optimization skill pack for technical SEO, content, links, measurement, and AI search.
+  baseline_commit: 99d4931d26c90c10f36748a5080d673d0c12dfef
+
+skills:
+  - path: vibio
+    name: vibio-seo
+    role: router
+  - path: vibio-plan
+    name: vibio-plan
+    role: plan
+  - path: vibio-audit
+    name: vibio-audit
+    role: audit
+  - path: vibio-fix
+    name: vibio-fix
+    role: fix
+  - path: vibio-keyword
+    name: vibio-keyword
+    role: keyword
+  - path: vibio-content
+    name: vibio-content
+    role: write
+  - path: vibio-link
+    name: vibio-link
+    role: link
+  - path: vibio-review
+    name: vibio-review
+    role: review
+  - path: vibio-memory
+    name: vibio-memory
+    role: memory
+  - path: vibio-factory
+    name: vibio-factory
+    role: factory
+
+reference_policy:
+  canonical_root: references
+  require_local_resolution: true
+  generated_copies: true
+  generated_marker: .vibio-generated.json
+  bundles:
+    vibio: all
+    vibio-plan: closure
+    vibio-audit: closure
+    vibio-fix: closure
+    vibio-keyword: closure
+    vibio-content: closure
+    vibio-link: closure
+    vibio-review: closure
+    vibio-memory: closure
+    vibio-factory: closure
+  forbidden_paths:
+    - nextjs-playbook.md
+  volatile_sources:
+    - google-search
+    - google-ads
+    - google-analytics
+    - search-console
+    - structured-data
+    - ai-search
+
+external_capabilities:
+  - name: seo
+    optional: true
+    fallback: Run the matching Vibio workflow using repository, rendered HTML, and official sources.
+  - name: seo-audit
+    optional: true
+    fallback: Run vibio-audit with a bounded crawl or source-level inspection.
+  - name: seo-plan
+    optional: true
+    fallback: Run vibio-plan from business artifacts and available search data.
+  - name: b2b-seo
+    optional: true
+    fallback: Apply the B2B decision rules in the Vibio references.
+  - name: seo-page
+    optional: true
+    fallback: Fetch rendered HTML and inspect the page directly.
+  - name: seo-content
+    optional: true
+    fallback: Apply the evidence, information-gain, and people-first content rubrics.
+  - name: seo-content-brief
+    optional: true
+    fallback: Build the brief from verified SERP and first-party evidence.
+  - name: seo-cluster
+    optional: true
+    fallback: Cluster by intent and observed SERP overlap without inventing metrics.
+  - name: seo-programmatic
+    optional: true
+    fallback: Apply scaled-content and index-bloat safeguards manually.
+  - name: seo-competitor-pages
+    optional: true
+    fallback: Use the competitor teardown and comparison-page workflow.
+  - name: seo-technical
+    optional: true
+    fallback: Inspect crawlability, indexability, status codes, rendering, and performance directly.
+  - name: seo-schema
+    optional: true
+    fallback: Validate JSON-LD against current Google feature documentation and Schema.org.
+  - name: seo-sitemap
+    optional: true
+    fallback: Parse and validate sitemap XML with local tools.
+  - name: seo-hreflang
+    optional: true
+    fallback: Validate language-region codes, reciprocity, canonicals, and indexability manually.
+  - name: seo-images
+    optional: true
+    fallback: Inspect image markup, dimensions, formats, loading, and alt text directly.
+  - name: seo-image-gen
+    optional: true
+    fallback: Deliver an image specification when generation is unavailable.
+  - name: seo-geo
+    optional: true
+    fallback: Use the current official AI-search guidance and platform-specific evidence ledger.
+  - name: seo-flow
+    optional: true
+    fallback: Use the core diagnose-evidence-act-measure loop.
+  - name: seo-sxo
+    optional: true
+    fallback: Compare the page type and promise against the live SERP intent.
+  - name: seo-google
+    optional: true
+    fallback: Use exported GSC/GA4 data, PageSpeed, CrUX, or clearly mark unavailable measurements.
+  - name: seo-dataforseo
+    optional: true
+    fallback: Use first-party query data and free SERP evidence; never fabricate volume or difficulty.
+  - name: seo-backlinks
+    optional: true
+    fallback: Use available referring-domain exports and manual link verification.
+  - name: seo-firecrawl
+    optional: true
+    fallback: Use sitemap discovery, curl, browser fetches, and bounded local crawling.
+  - name: seo-local
+    optional: true
+    fallback: Inspect Business Profile, NAP, local pages, and local schema from available evidence.
+  - name: seo-maps
+    optional: true
+    fallback: Use manual map-result sampling and clearly label geographic limits.
+  - name: seo-ecommerce
+    optional: true
+    fallback: Apply product, merchant listing, feed, and faceted-navigation guidance manually.
+  - name: seo-drift
+    optional: true
+    fallback: Compare current rendered output against the saved Vibio baseline.
+  - name: seo-performance
+    optional: true
+    fallback: Use PageSpeed Insights, CrUX, Lighthouse, or measured request timings.

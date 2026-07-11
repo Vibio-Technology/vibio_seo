@@ -1,93 +1,145 @@
-# Operating System (PLAN mode engine)
+# SEO Operating System — PLAN 模式执行引擎
 
-The execution method for turning a site/business into a sequenced SEO plan. Distilled from Vibio's `seo-project-operator`. The output goes through `delivery-template.md`.
+本引擎把业务、站点证据和执行资源转成有依赖关系的路线图。规划窗口由用户决策、团队容量和数据成熟度决定；30/60/90 天只在项目确有该节奏时使用，且从不构成搜索结果承诺。
 
-## Phase 0 — Kickoff
+## 一、Kickoff：建立决策上下文
 
-Reach a usable diagnosis fast. Use inputs in this priority: (1) real artifacts — codebase, live pages, sitemap, content inventory, docs; (2) user business context; (3) reasonable inference (state assumptions). Ask a question only if the answer would materially change sequencing.
+按优先级读取：真实代码/页面/sitemap/内容库存/数据导出 → 业务资料 → 用户说明 → 明确标注的假设。只有答案会改变优先级或执行方式时才提问。
 
-Capture:
-- **Business:** model (ecommerce / B2B / service / SaaS / media / local), main offer, primary conversion (purchase / quote / demo / lead / WhatsApp / call), target geography, primary + secondary languages, customer type (consumer / buyer / distributor / procurement).
-- **Site:** status (new / existing-weak / content-heavy / migrating), stack, domain state (new vs aged), major page types, whether GSC + GA4 exist, robots/sitemap present, existing blog/resource center.
-- **Resources:** weekly execution capacity, who writes content, dev support available, whether outreach/PR is realistic.
+至少记录：
 
-## Phase 1 — Classify
+- **业务**：商业模式、核心产品/服务、合格客户、主转化、目标国家/语言、销售周期和不服务范围；
+- **站点**：新旧程度、主要页型、技术栈、迁移状态、GSC/GA4/CRM、国际化、抓取/索引基本状态；
+- **需求**：RFQ/CRM/站内搜索/GSC/paid search terms、目标市场 SERP 与可用搜索量来源；
+- **资源**：每周工时、开发/写作/设计/产品专家、审批、翻译、PR/关系资源；
+- **测量**：当前基线、数据缺口、可用的领先与业务指标。
 
-Pick **one** primary class:
-- `New site` — little/no indexation, low authority, thin content
-- `Existing weak site` — exists but targeting/content system poor
-- `Existing content site` — enough pages to optimize/refresh/consolidate
-- `Ecommerce / catalog site`
-- `Service / B2B site`
+外部 `seo-*` 能力都视为可选。调用前检查是否存在；缺失时按 `references/capability-routing.md` 和 manifest 的 fallback 执行，绝不能虚构 API 输出。
 
-Add one secondary tag: `Technical debt`, `Content debt`, `Authority gap`, `Measurement gap`, `International`.
+## 二、选择主瓶颈
 
-## Phase 2 — Diagnose the dominant bottleneck
+一次路线图设置一个当前资源焦点，其余进入依赖队列；独立的访问、索引、安全、人工处置或重大转化阻断必须并行暴露和处置：
 
-Choose ONE, not five. Sequence everything around it.
-- **Technical baseline** — GSC missing, sitemap missing/broken, robots blocks important areas, key pages not indexed, severe mobile speed, hard-to-crawl architecture.
-- **Keyword / architecture** — site exists but targeting is vague, pages don't map to intent, no keyword map, no cluster hierarchy.
-- **Content system** — too few useful pages, inconsistent/empty blog, content doesn't match intent, thin commercial pages.
-- **Optimization / refresh** — pages rank but underperform, positions `11-20`, high impressions + weak CTR, cannibalization, stale content.
-- **Authority** — pages, technical, and intent are fine but the site can't break competitive SERPs; backlink profile clearly weaker than competitors.
-- **Measurement** — team can't tell what's working, no review rhythm, nothing tracked usefully.
+| 瓶颈 | 可验证信号 | 优先动作 |
+|---|---|---|
+| 技术资格 | 重要页被阻断、错误 canonical/状态、渲染失败 | 先恢复抓取、索引和稳定渲染 |
+| 测量 | 无法区分自然落地页、线索或改动历史 | 建基线、事件/CRM 与 changelog |
+| 市场/意图 | 目标词来自直译，SERP 人群/页型错配 | 目标市场验证与词页重映射 |
+| 商业页面 | 产品/服务/应用页无法完成买家任务 | 优先强化钱页、证据与转化路径 |
+| 内容覆盖 | 已验证任务缺必要解释、比较或支持页 | 建有信息增益的主题网络 |
+| 发现/架构 | 孤儿、点击路径混乱、重复与 cannibalization | 内链、合并、导航与模板修复 |
+| 权威/分发 | 页面和意图已到位，竞争证据显示引用差距 | 建资产、伙伴/PR 与编辑型链接 |
+| 优化/衰退 | 已有曝光页面表现变化或内容失效 | 按 cohort 复盘、刷新/合并/停止 |
 
-State the **90-day objective**: specific, completable, tied to pages/systems, never a ranking promise.
-- Good: "Build a clean technical baseline, define keyword architecture, publish the first 12 high-intent pages."
-- Bad: "Rank #1 for our main keyword."
+不要因为工具给了“健康分”就选择瓶颈。主瓶颈必须能引用真实 URL、数据或业务证据。
 
-## Phase 3 — 90-day roadmap
+## 三、定义规划窗口结果
 
-Sequence by dependency. Don't stack technical cleanup + keyword planning + full production + link building + analytics into one week.
+目标写成可完成、可验证、与业务相连的系统或产物：
 
-- **Week 1 — Technical baseline & measurement:** verify GSC, confirm GA4, inspect robots.txt + sitemap.xml, check indexation (`site:` + URL inspection on homepage + 3-5 core pages), PageSpeed + mobile baseline, flag noindex/canonical/redirect issues. Done = critical blockers identified and bucketed into `critical / important / later`.
-- **Week 2 — Keyword architecture & page mapping:** 10-15 seed topics → candidate set → classify by intent → commercial vs informational → map each family to an owning page (existing / new / merge / deprioritize) → define 3-5 clusters. Done = usable keyword map, each theme has an owner page, cannibalization visible.
-- **Weeks 3-4 — First priority pages:** improve homepage + primary service/collection pages, build first commercial landing pages + first supporting articles, fix titles/H1s/meta/internal links, ensure new pages are linked + indexable. Done = real target pages for top themes, internally connected, publish rhythm started.
-- **Month 2 — Depth & on-page:** next wave of supporting pages, tighten cluster + commercial↔informational links, improve impressions-but-weak-CTR pages and near-page-one pages, add/validate schema. Done = at least one cluster has real depth, intentional internal linking, early GSC patterns reviewable.
-- **Month 3 — Authority + review cadence:** run the full acquisition system per `backlink-playbook.md` — check the readiness gate, identify/build linkable assets, complete Tier 1 foundational links (industry directories / associations / certifications — these can start from day one), build a prospect list, start light weekly outreach with realistic conversion expectations, review ranking/impression/index data, decide refresh/expand/deprioritize. Done = outreach is operational, monthly review loop exists, next iteration is evidence-based.
+- 好：修复核心模板的索引阻断，并让所有目标国家产品页通过渲染与 canonical 验证。
+- 好：完成经目标市场验证的词页映射，上线一批由实际容量决定的高意图页，并建立自然落地页到合格线索的基线。
+- 坏：三个月排第一、自然流量翻倍、获得固定数量 AI 引用。
 
-Adapt output volume to capacity: lean `3-5h/wk` (month 1: baseline + map + 2-4 page updates), moderate `6-10h/wk` (month 1: baseline + architecture + 4-8 pages), strong `10+h/wk` (broader but still sequenced).
+为结果配四类指标：实施、抓取/索引、相关搜索需求、业务质量。只在已有第一方历史支持时设置数值目标；否则先做基线期，再确定目标。
 
-## Phase 4 — Operating cadence
+## 四、按依赖排路线图
 
-SEO is weekly execution + monthly review, never daily rank-checking. Default weekly budget `4-10h`, split into 3 blocks:
-- **Block 1 — Content (2-3h):** draft/publish 1-2 pages OR refresh 1-2 older pages, expand weak commercial sections, fix titles/H1s/FAQs/internal links. Not every week needs new content; refreshing often has higher leverage.
-- **Block 2 — Data & authority (1-2h):** scan GSC for drops/spikes, check newly indexed pages, review impressions/CTR on priority pages, send/follow up outreach. Action signals, not dashboard admiration. Thresholds: +50% impressions WoW for a page = investigate (new query or cannibalization?). −30% impressions sustained 2+ weeks = flag for review. CTR deviation >25% from position-expected = investigate title/meta/SERP-feature change.
-- **Block 3 — Technical & internal (30-60m):** confirm new pages indexed, add internal links from older pages to new ones, resolve GSC technical issues, validate schema/canonical on new key pages. Maintenance, not inventing complex work.
+路线图使用 `now / next / later / reject`，每项包含 `why / evidence / owner / effort / dependency / done / measure / fallback`。
 
-**Monthly deep review (2-3h):** compare month-over-month in GSC (biggest growth/decline pages, strong-impression-weak-CTR queries, positions `11-20`); check AI Overviews impressions/clicks (GSC → Search Appearance filter); spot-check brand mentions in ChatGPT/Perplexity for 5 priority queries; pick pages to refresh/merge/deprioritize; check whether organic landing pages feed the conversion path; reconcile any predictions made ≥3 months ago against actuals (per predictive-seo.md §9); choose next month's 2-5 priorities.
+### Now：解除阻断并建立基线
 
-**3-month health check:** if after 3 months, zero target keywords have entered top 50 AND organic impressions have not increased >10% from baseline → escalate to strategy review (not full reset, but deeper diagnosis: wrong keywords? weak authority? technical gap?). Don't wait 6 months before course-correcting.
+- 修复影响重要页面的抓取、索引、渲染、状态和 canonical 问题；
+- 验证 GSC，建立 GA4/CRM/转化和 `.vibio/` 改动记录；
+- 定义目标市场、核心页型和主转化；
+- 采样真实 SERP 与现有页面，确认当前主瓶颈。
 
-**6-month reset trigger:** revisit only when justified — 6 months of no movement on a core direction, repeated failure of a content type, major technical blockers, business/market change, or organic traffic that's irrelevant to commercial goals. Don't change direction just because the first 1-3 months are slow.
+### Next：完成最接近收入的页面系统
 
-## Phase 5 — Tracking
+- 用 RFQ、CRM、GSC、paid search terms 和目标地区 SERP 验证词族；
+- 将每个词族分配到已有/新建/合并/放弃的主页面；
+- 优先产品、服务、应用、规格、对比、案例和信任证据；
+- 发布时完成可抓取入口、相关内链、测量与 QA。
 
-Tracking preserves decision history and reveals the next move — not reporting theater. Maintain the core trackers below (add a GEO tracker only if AI search is a primary channel):
-- **Content tracker:** title, URL, page type, primary keyword family, intent, status (`planned/drafting/published/refresh needed/merged/redirected/retired`), publish date, last updated, owner, notes.
-- **Keyword tracker:** keep it lean (`20-60` meaningful terms). keyword, intent, validated (`pass/conditional` per `keyword-validation.md`), cascade phase (`1-4` per `authority-cascade.md`), owner page, priority, difficulty note, current vs last ranking, trend (`improving/flat/declining/not yet ranking`), notes. Review monthly.
-- **Outreach tracker** (once authority work starts; process per `backlink-playbook.md`): target site, contact/channel, type (directory/association/certification/trade-show/partner/guest-post/product-review/media-request/digital-PR/expert-quote/reclaim/broken-link/resource), promoted page, dates, status (`not started/drafted/pending-human-review/sent/follow-up due/in conversation/won/lost`), result (won link URL or unlinked mention).
-- **Links tracker** (create at first internal-link audit; per `link-architecture.md`): orphan pages, weak-linked priority pages, backfill queue for new pages, money-page inlink counts, last audit date.
-- **Technical issues log** (only if enough technical work): issue, affected pages/templates, severity (`critical/important/later`), source, owner, date found, status, resolution.
-- **GEO tracker** (create once site is live and AI-search is relevant): 10-20 priority queries checked monthly — AI Overviews citation (✓/✗), ChatGPT web search mention (✓/✗), Perplexity source appearance (✓/✗), llms.txt last updated, Knowledge Panel status, brand entity mentions. Track trend month-over-month. Use manual spot-checks + GSC AI Overviews filter when available.
+### Later：根据真实信号扩展
 
-## Task SOPs (pull only 2-4 per deliverable)
+- 从 GSC、销售问题和站内行为扩展支持内容；
+- 刷新或合并已出现衰退、错配和 cannibalization 的页面；
+- 对已验证机会投资原创数据、工具、视频、国际化或程序化系统；
+- 页面与资产准备好后，开展相关目录/协会/伙伴/媒体/数字 PR 与定向 outreach。
 
-Include one for the current bottleneck, one for the current production motion, one for maintenance, plus authority if ready:
-- **Technical baseline** — verify measurement, crawl access, discovery, indexation, page health; bucket issues.
-- **Keyword seed expansion & intent sorting** — 10-15 seeds → 50-300 candidates from real buyer language → label intent → validate against target-market search behavior (five gates per `keyword-validation.md`: native-language evidence, SERP litmus, per-country volume, identity filters, path to money) → score actionability (relevance, can the site answer it, beatable SERP, deserves a page).
-- **Keyword-to-page mapping** — assign one keyword family to one primary page; mark existing/new/merge/deprioritize; expose cannibalization.
-- **Commercial page build** — pick intent, define structure (H1, value prop, trust, proof, FAQ, CTA), add title/meta/internal links/schema. CTA ladder, RFQ form and trust elements per `conversion-playbook.md`.
-- **Support content build** — pick a clear-intent query, define which commercial page it supports, answer completely, link up to parent + siblings.
-- **Old content refresh** — select `11-20` / high-impression-low-CTR / declining pages, compare to top SERP, refresh surgically, re-submit for indexing.
-- **Internal linking pass** — link priority pages from relevant older pages with descriptive anchors; kill orphans; run the donor-acceptor equity pass. Full method: `link-architecture.md`.
-- **Authority launch** — check the readiness gate, choose linkable assets, complete Tier 1 foundational links, build a relevance-first prospect list, steady weekly outreach, log results. Full method: `backlink-playbook.md`.
+`references/authority-cascade.md` 负责机会级联；它不使用固定 KD 阈值或排名比例决定升级。
 
-## Branching by class
+## 五、容量规划
 
-- **New site:** technical setup first → long-tail targeting → first 10-20 quality pages → commercial foundation before broad blog ambition → delayed link building.
-- **Existing weak site:** fix targeting/hierarchy → rewrite weak core pages → create missing commercial pages → clean internal structure.
-- **Existing content site:** content audit → merge/redirect/rewrite → refresh `11-20` → CTR repair → internal-link upgrades.
-- **Ecommerce:** collection/category targeting → product/collection schema → crawl & faceted-nav control → review signals → category-supporting content.
-- **Service / B2B (Vibio default):** service & use-case pages → industry pages only with real differentiation → comparison/alternative/FAQ assets → proof-rich trust pages → buyer-education content → authority after page quality exists.
+不预设每周必须发几篇。对每个任务估算开发、专家访谈、研究、写作、设计、审批、翻译、上线和复盘的完整成本，再用真实团队容量排入窗口。
 
+当容量不足时，依次保留：
+
+1. 技术/测量阻断；
+2. 已验证的高商业价值页面；
+3. 发布 QA 与内链回填；
+4. 已有页面的高置信度优化；
+5. 新的泛信息内容和高成本外联。
+
+不要用“内容速度”替代内容价值，也不要为了凑数量发布相似页。
+
+## 六、运营节奏
+
+### 按团队交付节奏执行
+
+- 交付当前瓶颈任务；
+- 检查新部署/新页面是否按规格生效；
+- 清理内链回填和技术问题队列；
+- 记录实际工时、阻塞和新证据。
+
+### 数据成熟或出现待决策变化时复盘
+
+- 按页面、查询、国家、设备和品牌/非品牌观察 GSC；
+- 对齐 GA4/CRM 的自然落地页与合格业务结果，不做 query-to-conversion 确定性连接；
+- 对处理 cohort 与可比页面检查增量、回归和查询错配；
+- 重新采样重要 SERP，记录竞争与结果形态变化；
+- 决定继续、加码、调整、合并或停止。
+
+复盘频率由数据量和业务周期决定。低流量 B2B 站可能需要更长窗口；高流量站可以更快，但仍不能用日常排名波动做决策。方法见 `references/review-engine.md` 和 `references/seo-experimentation.md`。
+
+### AI 搜索观察
+
+Google AI Overviews/AI Mode 仍遵循基础 SEO 资格，不需要独立 GEO 配方。优先使用 Search Console 当前正式提供的报告口径；若未提供可单独分离的 AI 功能维度，就不能从普通 Web 数据反推出 AI 点击。对其他平台做带日期、地区和账号状态的人工任务抽样，只作方向性证据，不冒充完整排名追踪。
+
+`llms.txt` 不是 Google 搜索 KPI。`Google-Extended` 不控制内容是否在 AI Overviews/AI Mode 中出现、被链接或用于 grounding，也不影响 Search 收录/排名；它另用于限制相关模型训练用途。
+
+## 七、核心 tracker
+
+- **content**：URL、页型、目标任务/词族、市场、状态、发布日期、负责人、证据与下一复盘；
+- **keywords**：词族、意图、验证状态、主页面、`now/next/later/reject`、数据源、当前趋势；
+- **technical**：问题、影响 URL/模板、机制、证据、负责人、状态、验证；
+- **links**：孤儿/弱入口、回填队列、资产、prospect、人工审核与结果；
+- **experiments**：假设、处理/对照、主指标、护栏、窗口、结果与局限；
+- **changelog**：日期、改动、范围、证据、预期机制和复盘点。
+
+AI tracker 仅在该渠道对业务重要且有可重复采样方案时建立。所有 tracker 保留历史值，不能覆盖过去状态。
+
+## 八、按站点类型调整
+
+- **新站**：资格与测量 → 核心商业页 → 经验证的支持内容 → 根据真实需求扩展；
+- **已有弱站**：市场/意图与钱页 → 架构/重复 → 内容与权威；
+- **内容重站**：库存与 cohort → 合并/刷新/删除决策 → 内链与商业承接；
+- **电商/目录**：分类/产品意图 → 变体与筛选抓取治理 → feed/结构化数据资格 → 商品证据和支持内容；
+- **本地业务**：GBP/实体/NAP/服务地区资格 → 本地落地页与评价运营 → 本地搜索与线索；
+- **国际站**：每个市场独立研究 → URL/语言/地区架构 → hreflang/canonical → 本地化证据与测量；
+- **B2B/出口制造**：服务/产品/应用/规格/询价页 → 案例、认证、交付证据 → 买家教育 → 已验证资产的行业分发。
+
+## 九、交付闸门
+
+路线图交付前逐项确认：
+
+- 每个任务都连接到主瓶颈或明确依赖；
+- 每个优先级都有真实证据和业务理由；
+- 没有虚构搜索量、排名、CTR、转化率或 API 数据；
+- 外部能力不可用时写明 fallback；
+- 广告数据只服务查询、信息架构、落地页和转化学习，不扩成广告代运营；
+- 没有排名/流量保证，只有可验证产物与决策点；
+- 计划符合实际容量，并包含负责人、完成定义和复盘条件。
+
+输出格式使用 `references/delivery-template.md`。

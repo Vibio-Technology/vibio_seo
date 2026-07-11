@@ -1,0 +1,100 @@
+{
+  "skill_name": "vibio-factory",
+  "evals": [
+    {
+      "id": 1,
+      "name": "创建新的 Vibio 专项 Skill",
+      "prompt": "把我们重复做的 SEO 内容衰退诊断流程封装成一个新的 vibio skill。",
+      "expected_output": "应路由到 vibio-factory，先判断内容衰退诊断是否应并入现有 REVIEW/RECOVER 工作流，只有形成独立且稳定的操作模式才新建 vibio-* 目录。创建或修改时必须包含合法 frontmatter、自包含 SKILL.md、本地 reference 闭包、manifest 登记、至少三条含正反路由与行为硬闸门的 eval，并运行构建、严格校验和离线合同回归。不得复制出漂移的 reference 真源，也不得只靠 description 里堆关键词提高触发。",
+      "files": [],
+      "expectations": [
+        "Vibio 元技能创建请求精确触发 factory",
+        "先判断并入现有模式还是新增模式",
+        "创建物通过构建、严格校验和离线合同回归"
+      ],
+      "assertions": [
+        {
+          "id": "route-vibio-factory",
+          "description": "创建 vibio SEO skill 应路由到 factory",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-factory",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "factory-quality-gates",
+          "description": "输出必须包含归属判断、自包含构建和三类验证",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["并入现有", "自包含 SKILL.md", "reference 闭包", "manifest", "正反路由", "严格校验", "离线合同回归"],
+          "weight": 4,
+          "hard_gate": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "优化现有 Vibio Skill",
+      "prompt": "优化 vibio-audit 这个 skill 的触发边界和评测，不要新建一个。",
+      "expected_output": "应路由到 vibio-factory 并只修改现有 vibio-audit 的触发描述、工作流或 eval。先收集误触发和漏触发样本，加入 should-route 与 near-miss 用例，再检查与 vibio-review、vibio-fix、vibio-plan 的边界；保留 manifest 名称和 reference 真源策略。手写分类器只能用于设计内边界自检；真实触发评估必须实际运行 Skill 选择机制，使用训练/隐藏集、多次重复、混淆矩阵、macro F1 与方差。不得因为一句“优化”就执行网站 SEO 审计。",
+      "files": [],
+      "expectations": [
+        "现有 Vibio Skill 优化仍触发 factory",
+        "通过正例和近似反例校准边界",
+        "不会误执行具体网站审计"
+      ],
+      "assertions": [
+        {
+          "id": "route-vibio-optimization",
+          "description": "优化现有 vibio skill 应路由到 factory",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-factory",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "trigger-evaluation-loop",
+          "description": "输出必须包含正例、近似反例、兄弟边界和真实触发评估边界",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["should-route", "near-miss", "vibio-review.*vibio-fix.*vibio-plan", "真实触发", "macro F1", "方差"],
+          "weight": 4,
+          "hard_gate": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "通用非 SEO Skill 近似反例",
+      "prompt": "把每天整理客服工单的流程做成一个 skill。",
+      "expected_output": "这是通用客服流程 Skill，与 Vibio SEO 架构无关，不应触发 vibio-factory；应使用通用 skill-creator。",
+      "files": [],
+      "expectations": [
+        "非 SEO、非 Vibio 的技能创建不误触发 factory",
+        "路由到通用 skill-creator"
+      ],
+      "assertions": [
+        {
+          "id": "route-generic-skill",
+          "description": "通用客服 Skill 应路由到通用 skill-creator",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "skill-creator",
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "near-miss-not-factory",
+          "description": "通用流程不应触发 vibio-factory",
+          "type": "route_not_equals",
+          "target": "routing.skill",
+          "expected": "vibio-factory",
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,78 +1,120 @@
 ---
 name: vibio-review
-description: |
-  当用户说「上次改的 SEO 见效了吗」「复盘一下这个月的 SEO」「之前的改动有没有效果」「排名/流量有变化吗」「做个月度 SEO 复盘」，或一次修复/审查过去了一段时间想看结果时，应使用本 skill。
-  闭环复盘引擎：读 .vibio/changelog 的改动历史 → 判断重抓窗口够不够 → 用 seo-google（GSC 排名/索引/CTR/曝光）+ seo-drift（基线回归）复测 → 判定每项改动见效没 → 决定下一步（刷新/扩展/降级/回滚）→ 写回记忆。接上 AUDIT→FIX 之后那段缺失的「等待→复测→决策」闭环。
-  不应触发：还没做过任何改动的新项目（用 vibio-plan）、要的是首次诊断/找问题（用 vibio-audit）、要的是直接改（用 vibio-fix）。区分 vibio-audit：没有改动历史、只是想知道现状哪里有问题 → audit；有过往改动（`.vibio/` 里有记录）、想知道改完见效没 → 本 skill。
-  Use when the user asks whether past SEO changes worked, wants a monthly SEO review, or asks about ranking/traffic movement after a fix. Reads the change history, re-measures via seo-google + seo-drift, judges impact, decides next steps, writes back.
+description: >-
+  当用户问“之前的 SEO 改动见效了吗”“复盘排名/流量/询盘”“月度 SEO review”“did these SEO changes work”“compare SEO before and after”时使用。本 Skill 从确切变更、日期与基线出发，先确认产物未回归，再结合 GSC、分析平台和 CRM 的适当粒度判断实施失败、尚不可观察、方向性改善、增量改善、未检测到变化、负向/回归或证据不足，并给出下一步。默认中文；seo-google、seo-drift 等能力可选，缺失时按 manifest fallback。不用于首次审计、直接修复或无历史基线的排名承诺。
+compatibility: 最佳输入是变更日志、渲染基线、GSC/分析/CRM 导出和预先约定的指标。缺失数据时仍可做产物复核，但必须降低结论强度。
 ---
 
-# Vibio SEO — REVIEW 引擎（闭环复盘）
+# Vibio SEO REVIEW
 
-AUDIT→FIX 之后总是断在「改完了，然后呢」。本 skill 补上那一环：**改动 → 等足够时间 → 复测见效没 → 决定下一步**。它让 vibio 真正成为「运转中的操作系统」，而不是一次性咨询。
+默认用中文复盘；目标市场中的 query、页面和实验素材保留原语言。
 
-核心约束：**复盘要基于真实数据 + 改动历史，不靠感觉；见效要给搜索引擎留足重抓时间；结论引到官方指标。**
+REVIEW 回答的是“什么证据足以改变下一步”，不是把同期变化强行归因给 SEO。必须把产物是否持续存在、搜索系统是否响应、用户行为和业务结果分层判断。
 
----
+## 必读资料
 
-## 执行流程
+- `references/evidence-policy.md`：证据等级、数值与测量边界。
+- `references/roi-attribution.md`：GSC、分析平台和 CRM 的可连接粒度。
+- `references/seo-experimentation.md`：对照、观察窗口、混杂因素和停止规则。
+- `references/google-search-docs.md`：指标与 Google 产品行为；易变事项复盘前核验实时文档。
+- `references/capability-routing.md`：数据能力不可用时的降级方案。
+- `references/state-templates.md`：项目状态和变更日志格式。
 
-1. **读改动历史。** 用 `Read` 直接读项目根 `.vibio/`（格式约定见 `vibio-memory`）：`changelog.md`（改了什么、何时改、是否标记「面向 SERP 待重抓」）+ `project.md`（主瓶颈、阶段）+ `trackers/keywords.md`（上次排名快照）。没有 `.vibio/` 就说明没有可复盘的基线——引导先跑 `vibio-audit`/`vibio-fix` 建立记忆，或退化成一次普通审查。
+## 工作流
 
-2. **判断重抓窗口够不够。** 面向 SERP 的改动（标题/描述、schema、canonical、内链、内容）通常要 **2-6 周** 才在 Google 稳定反映，新站更慢。对每条改动看「改动日期 → 今天」的间隔：
-   - 太近（< ~2 周）→ 老实说「还太早，数据噪声大」，给出建议复盘日期，**不要**把没变化判成「无效」。
-   - 够了 → 进入复测。
-   技术修复（修好 noindex、修 500）见效更快；纯展示类（OG 图）不影响排名只影响点击。
+### 1. 重建决策记录
 
-3. **复测真实数据。** 路由专家，独立并行：
-   - `seo-google` — GSC 看每个目标页/词的**曝光、点击、CTR、平均排名**的前后变化；索引状态变化（之前没被索引的现在收录没）；GA4 看自然流量。这是见效与否的主证据。
-   - `seo-drift` — 对 SEO 关键元素做基线对比，确认改动**没有回归**（比如重新部署把修好的 canonical 又冲掉了），也抓出意外漂移。
-   - 必要时 `seo-dataforseo` 补独立的 SERP 排名核对。
-   数据不可得（没接 GSC/无 MCP）就如实说，退而比对可抓取的渲染信号 + 用户能提供的截图。
+读取 `.vibio/project.md`、`changelog.md` 和相关 tracker；没有状态文件时，从 Git、部署记录、CMS 历史或用户材料重建最小基线。对每个待复盘改动确认：
 
-4. **逐项判定见效。** 把每条改动对到它的预期指标，判一个结论：
-   - **见效** — 指标按预期改善（排名升/CTR 升/收录了/流量涨）。
-   - **未见效** — 时间够了但没动静 → 进入根因(见下)。
-   - **回归** — drift 发现改动被冲掉 → 标记重修（转 `vibio-fix`）。
-   - **太早** — 窗口不够,定下次复盘日期。
-   判定依据 Google 官方指标含义（如 CTR 对应 SERP 展示、收录对应技术要求）——基准是 `vibio-audit` 的 `references/google-search-docs.md`，需要时让 audit 提供或自行 WebFetch 官方页核实，结论引到 URL。
+```text
+Change and affected pages:
+Implemented on:
+Artifact verification at launch:
+Expected mechanism:
+Primary outcome metric:
+Guardrails:
+Baseline / comparison unit:
+Observation window and stop rule:
+Known concurrent changes:
+```
 
-5. **决定下一步。** 不只报数字，要给动作：
-   - 排名卡在 11-20（第二页）→ 刷新内容/加深度/补内链（`seo-content` + 转 `vibio-fix`）。
-   - 曝光有了但 CTR 低 → 改标题/描述吸引点击（转 `vibio-fix`）。
-   - 完全没曝光/没收录 → 回到可索引性根因（`seo-google` 索引报告 + `seo-technical`）。
-   - 见效且稳定 → 这条收尾，资源挪向下一个瓶颈（转 `vibio-plan`）。
-   - 内容确实不行 → 合并/重写/降级。
+缺少变更日期、范围、基线或指标时，可以做状态审查，但不得给出确定的因果结论。
 
-6. **写回记忆。** 用 `Edit`/`Write` 直接操作 `.vibio/`：更新 `trackers/keywords.md` 的当前排名 + 趋势列；把本次复盘结论追加到 `changelog.md`（带日期、Type: REVIEW、每项见效判定、下一步）；必要时更新 `project.md` 的阶段/主瓶颈（一个瓶颈解决了就推进到下一个）。
+### 2. 检查能力与数据覆盖
 
-7. **沉淀经验（跨项目学习）。** 对每个判定问一遍：**这会改变下次同类决策吗？** 会 → 按主库 `references/learning-loop.md` 的条目格式写入 `~/.vibio-global/learnings.md`（匿名代号，不写客户可识别信息）。changelog 记"做了什么"，经验库只记"学到了什么"。同向教训 ≥3 次 → 在 `~/.vibio-global/calibration.md` 排队方法论修订提案并告知用户（需人工确认，不自动改 reference）。经验库不存在就创建；各兄弟 skill 开工时按域读它来校准预期。
+`seo-google`、`seo-drift`、`seo-dataforseo` 等仅在实际可用时调用：
 
----
+- GSC/GA4/CRM 可用：记录 property、过滤条件、日期、时区、覆盖率和匿名/隐藏数据限制。
+- 只有导出：验证字段定义和同口径窗口后分析。
+- 没有外部数据：比较当前 HTTP/渲染产物与保存基线，说明只能证明“变更仍存在/已回归”，不能判断流量或收入效果。
 
-## 节奏
+始终执行 manifest 中的 fallback，不生成缺失的排名、流量、索引或转化数据。
 
-对齐 operating-system.md 的复盘节奏：**月度**深度复盘是主循环；单次重大修复后 2-6 周做一次定向复测。不做日常焦虑型排名检查——每天看排名只会看到噪声。如果用户想固化节奏，可建议用定时任务每月提醒跑一次 review。
+### 3. 先验证产物
 
----
+在评估结果前确认变更仍然存在：状态码、canonical、robots、title/snippet 输入、渲染主内容、内链、hreflang、sitemap 和受支持的结构化数据。部署回归或标签未渲染时，优先判为 `implementation-failed` 或 `negative-or-regression`，不要拿搜索结果评价一个实际上未生效的 treatment。
 
-## 下一步路由（复盘完成后）
+### 4. 分层读取结果
 
-| 触发条件 | 推荐 |
-|---------|------|
-| 某项改动被回归冲掉，或需补强（CTR 低改标题、第二页加深度）| 「复盘发现这些项要再动手：跑 `vibio-fix`，改完照例写回 changelog。」 |
-| 一个瓶颈已解决，该推进路线图下一阶段 | 「这个瓶颈见效稳定了。跑 `vibio-plan` 把重心挪到下一个瓶颈、更新路线图。」 |
-| 数据暴露出新的、之前没诊断的问题 | 「复盘带出一个新问题（如某批页突然掉收录）。跑 `vibio-audit` 定位根因。」 |
-| 窗口还不够 | 「现在复盘太早，搜索引擎还没充分重抓。建议 <日期> 再来，我已把待复盘项记进 changelog。」 |
+按变更机制选择指标，不为所有改动套同一 KPI：
 
----
+1. **资格层**：抓取、Google 选择的 canonical、索引状态、受支持搜索展示资格。
+2. **可见性层**：GSC 的页面/query class/国家/设备维度展示、点击、CTR、平均排名与 search appearance。
+3. **站内层**：分析平台中的 organic landing sessions、任务完成和事件质量。
+4. **业务层**：按 landing page、市场、日期 cohort 或意图簇观察合格线索、商机、成交和淘汰原因。
+
+GSC 测量访问前，分析平台测量页面加载后的行为，两者不会完全一致。只能按 landing page、country、device、date 等共享聚合维度关联；不得把某条 GSC query 确定性连接到某个 GA4 用户、转化或收入。Query 级收入模型必须标注为估算并披露假设。
+
+### 5. 选择合理比较
+
+优先采用 `references/seo-experimentation.md` 中当前可行的最强设计：随机/匹配页面组、带对照的时间序列或可回滚测试。至少处理：
+
+- 品牌词与非品牌词、页面类型、国家/语言和设备 mix。
+- 季节性、促销、迁移、核心更新、竞争变化及同期内容/链接/模板改动。
+- 数据延迟、抓取频率、样本量、长销售周期和未成熟 cohort。
+
+观察窗口和最小有意义效果必须由项目自身基线、抓取情况、方差和业务周期确定。不存在通用的“2-6 周”、固定 impression 门槛、固定 CTR 曲线或统一 uplift 标准。数据不足时标记 `inconclusive`，不要用行业平均值填空。
+
+### 6. 给出判定
+
+| 判定 | 使用条件 |
+|---|---|
+| `implementation-failed` | 目标改动未进入或未保留在真实产物中 |
+| `not-yet-observable` | 预设窗口尚未成熟，或抓取/销售周期尚未覆盖 |
+| `directional-positive` | 相关指标改善，但样本或设计不足以支持因果 |
+| `incremental-positive` | 合格对照、分阶段 rollout 或可信中断时间序列与业务指标共同支持反事实增量 |
+| `no-detectable-change` | 在预设的充分窗口与检测能力内，没有达到最小有意义效果 |
+| `negative-or-regression` | 目标或预设 guardrail 明确恶化，且实施/干扰已检查 |
+| `inconclusive` | 覆盖不足、噪声过大、混杂无法排除或指标定义失效 |
+
+对每个判定写明 effect size/方向、不确定性、证据等级和适用范围。不要把平均排名的一次波动、单条 query 或单日截图升级为结论。
+
+### 7. 形成下一步
+
+```text
+Decision:
+Evidence and limitations:
+Keep / expand / revise / rollback / continue to maturity:
+Exact next action:
+Owner and dependency:
+Next metric, window and stop condition:
+```
+
+- 回归或产物失败：转 FIX。
+- 新的根因未知：转 AUDIT。
+- 主瓶颈已解决：转 PLAN，重排资源。
+- 数据不足：先修测量或继续到预设成熟点，不承诺“再等就会涨”。
+
+按 `references/state-templates.md` 追加 REVIEW 结论，保留数据范围、置信度和下一窗口；不要覆写历史。如果要跨项目沉淀经验，必须取得用户授权并按 `references/learning-loop.md` 匿名化，单个观察不得升级为普遍规则。
+
+## 付费搜索边界
+
+付费搜索词、paid & organic report 或受控落地页实验可以帮助判断买家用语、意图、信息表达和额外需求信号，但广告不会提升自然排名。Paid & organic report 只形成覆盖、蚕食或增量假设；只有合格对照设计才能估计因果增量。只把付费结果反馈到明确的 SEO 决策，不接管 Campaign、出价或预算运营。
 
 ## 不要做
 
-- 不在重抓窗口不够时就把改动判成「无效」——那是噪声，不是结果。
-- 不靠感觉/印象下结论，复盘必须基于 GSC/GA4 真实数据或可抓取信号。
-- 不只报数字不给动作——复盘的产出是「下一步做什么」。
-- 不承诺「再等等一定会涨」——诚实区分「时间不够」与「方法没用，需换路子」。
-- 不跳过 drift 检查就假设改动还在生效（重新部署常把修复冲掉）。
-- 复盘完不写回记忆——那等于又断了闭环。
-- 不把"按预期见效"的流水账写进经验库——只沉淀会改变下次决策的教训；单例观察不直接改 reference。
+- 不使用固定 CTR、转化率、排名位次、样本门槛或生效周期判成败。
+- 不把前后同期变化自动称为 SEO 导致。
+- 不把 Schema 存在或 AI 平台的一次引用当作排名效果证明。
+- 不做确定性的 GSC query 到 GA4/CRM conversion 连接。
+- 不在数据能力缺失时伪造 provider 输出。

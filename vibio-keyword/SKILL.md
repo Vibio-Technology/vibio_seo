@@ -1,86 +1,104 @@
 ---
 name: vibio-keyword
 description: |
-  当用户说「我的产品该做哪些关键词」「帮我做关键词研究 / 关键词调研」「这个业务该针对什么词做 SEO」「找一批高意图关键词」「这个词老外真的会搜吗 / 验证一下这些关键词」「目标市场用什么词搜我们产品」「关键词该怎么分组 / 哪些值得做」「竞品在做哪些词」「帮我搭关键词架构」时，应使用本 skill。
-  企业产品/业务 → 扩展种子词（买家真实语料优先）→ 路由 seo-dataforseo 拉真实搜索量/难度/意图 → 按搜索意图分类 → **过目标市场验证五道闸门（母语性/SERP 试金石/目标国量/身份排除/商业路径，防直译陷阱）** → 按可操作性打分 + 标级联阶段 → 关键词族映射到页面（已有/新建/合并/降级）→ 划 3-5 个主题簇 → 写进 .vibio/trackers/keywords.md。面向 B2B/外贸默认走 b2b-seo 的买家旅程视角。
-  不应触发：要的是整体 90 天计划（用 vibio-plan，它会在关键词阶段调用本 skill 的方法）、审查现有页面问题（用 vibio-audit）、直接改代码（用 vibio-fix）、单页内容大纲（用 seo-content-brief）。
-  Use when the user wants keyword research / keyword strategy for a product or business: which keywords to target, whether target-market buyers actually search them, how to group them by intent, what's worth doing. Expands seeds from real buyer language, pulls real volume/difficulty via seo-dataforseo, validates every candidate against target-market search behavior (native-language evidence, SERP litmus test, per-country volume, searcher-identity filters), sorts by intent, maps to pages, writes the keyword tracker.
+  当用户问产品该做哪些关键词、目标市场买家是否真的这样搜、哪些词值得做、如何分组或映射页面、竞品覆盖什么查询时使用。流程从 RFQ/CRM/GSC/付费 search terms 等真实买家语言出发，结合目标国家与语言的 SERP 和口径明确的需求数据，验证母语表达、受众/页型、地区需求、搜索者身份与商业路径，再完成词族到页面映射、cannibalization 检查和任务簇，写回 keyword tracker。Use for evidence-led target-market keyword research, validation, intent grouping, and page mapping.
+  不应触发：整体路线图（`vibio-plan`）、现有页面审计（`vibio-audit`）、代码修复（`vibio-fix`）或只要单页大纲（`seo-content-brief`）。
 ---
 
 # Vibio SEO — KEYWORD 引擎
 
-回答一个具体问题：**这个企业的产品/业务，该针对哪些关键词做 SEO 才有效果？** 不是拍脑袋列词，是从真实搜索数据 + 意图 + 可操作性出发，给出"主攻哪些词、怎么分组、各归到哪个页"的可落地关键词架构。
-
-核心约束：**关键词要绑定真实搜索数据和意图，通过目标市场验证（目标国家的真实买家确实这么搜），绑定到具体页面；不堆没人搜的词，不追打不过的大词，不做直译出来的假词。**
-
----
+本引擎交付的不是一串“有量的词”，而是**目标市场中经证据验证、各自有主页面和业务路径的查询族架构**。搜索量、KD 和意图标签都有工具口径与不确定性；不能把第三方估算叫 Google 的真实数据。
 
 ## 执行流程
 
-0. **读项目记忆。** 开工前用 `Read` 读项目根 `.vibio/`（格式见 `vibio-memory`）：已有 `trackers/keywords.md` 就在它基础上扩充/复核，别重头再来；`project.md` 里的业务模型、目标市场、栈也直接复用。
+### 0. 续接项目状态
 
-1. **理解业务，提种子词。** 从产品/业务、真实站点（有 URL/代码就读现有页面和现有 title）、用户描述里提 10-15 个种子主题。B2B 制造/外贸尤其要分清：
-   - **产品词**（buyers 搜的料/规格：carbon fiber fabric、fiberglass mat 3mm…）
-   - **应用/场景词**（按行业：carbon fiber for wind turbine blades…）
-   - **商业意图词**（manufacturer / supplier / wholesale / custom…）
-   - **信息词**（what is / vs / how to choose…买家教育）
+读取项目根 `.vibio/`；已有 `trackers/keywords.md` 就增量复核，复用 `project.md` 的业务、市场、语言与主转化。无记忆则创建最小项目上下文。具体文件操作使用当前环境可用的读写能力，不绑定某个客户端工具名。
 
-2. **扩展候选集。** 把 10-15 种子扩到 50-300 候选。扩展来源优先走买家真实语料（`references/keyword-validation.md` 第三节工具箱：询盘/RFQ 原文 > GSC 查询 > 母语竞品页 > Autocomplete/PAA > Reddit/论坛 > B2B 平台联想）。路由 `seo-dataforseo`（实时搜索量/难度/意图/相关词/趋势，需 MCP；分国家用 `location_code`）；不可用就**明确说明数据缺失**，退回免费数据降级链（GSC → Autocomplete → Trends → Keyword Planner 区间），别编数字。竞品在做的词路由 `seo-dataforseo` 的竞品分析或 `seo-competitor-pages`。
+### 1. 建种子任务
 
-3. **按搜索意图分类。** 每个词标意图：`商业/交易`（要买/找供应商）、`信息`（学习/对比）、`导航`（找特定品牌）。B2B 用 `b2b-seo` 的买家旅程视角分层（认知→评估→决策）。**Vibio 默认偏向商业意图 + 应用场景词**——外贸 B2B 的钱在"找供应商"和"特定应用选材"上，不在泛信息流量；且商业/规格词相对抗 AI Overview 零点击侵蚀。
+从产品目录、服务、现有页面、RFQ/CRM、销售异议和用户输入提取种子。B2B 常见任务包括产品/规格、应用、供应商/采购、标准/认证、选型/对比和售后排错。种子数量由业务范围决定，不为达到固定配额补词。
 
-4. **目标市场真实性验证（强制闸门）。** 全量候选过 `references/keyword-validation.md` 的五道闸门：①**母语性**（措辞在目标国母语来源里真实出现过——本土竞品/SERP/Autocomplete/论坛，防直译陷阱，不拿其他中国出口商站当证据）②**SERP 试金石**（目标国 locale 搜一遍，前 10 名的人群 = 你的客户；消费者博客/招聘站/词典主导即淘汰）③**量与趋势按目标国口径**（不看全球量；US/UK/AU 拼写与用词变体分别查）④**搜索者身份排除**（jobs/salary/DIY/how to make/free 等信号词命中即扣）⑤**商业路径**（搜的人到询盘还差几步）。每词标 `pass`/`conditional`/`fail`；fail 淘汰记录原因，conditional 只随长尾聚合投产。工具 0 量的规格/标准/牌号词走零搜索量判定框架（GSC 曝光/PAA 出现/SERP 有商业页/询盘原话，任一即采信），别直接扔。
+### 2. 扩展候选
 
-5. **按可操作性打分。** 每个通过验证的词问四件事（来自 operating-system 的 SOP）：
-   - **相关性** — 真和业务/产品相关吗？
-   - **能不能答** — 站点能为它提供真正有价值的页面吗？
-   - **SERP 打不打得过** — 难度 vs 站点当前权重，现实吗？（低权重新站别拿高难度大词开局）
-   - **值不值得单建页** — 够不够撑起一个独立页面？
-   留下"相关 + 能答 + 打得过 + 值得做"的，砍掉其余。同时标 `cascade_phase: 1-4`（KD 分级排序，见主库 `references/authority-cascade.md`），决定进 90 天路线图的哪一阶段。
+按 `references/keyword-validation.md` 的买家语言顺序扩展：一方 RFQ/CRM/站内搜索 → GSC → paid search terms → 目标市场原生来源 → SERP/Autocomplete/相关问题 → 第三方工具。
 
-6. **关键词→页面映射。** 一个关键词族对应**一个**主页面，标记：`已有页面`（优化它）/ `新建` / `合并`（多页抢同词→自相蚕食，合并）/ `降级`。暴露 cannibalization（站内多页竞争同一词，互相拖累）。
+`seo-dataforseo` 可用时，用目标国家、语言、设备和日期获取其供应商口径下的搜索量、趋势、SERP 与难度估算；`seo-google` 可用时优先用自有 GSC。能力不可用就走 reference 的降级链，并标明 `unverified` 或 `conditional`，绝不编数字。
 
-7. **划主题簇。** 把关键词族组织成 3-5 个 hub-and-spoke 主题簇（一个商业 hub 页 + 若干支撑信息页内链上去）。AI 搜索时代簇比单词更重要：覆盖主词 + fan-out 子问题面的页面被 AI 引用概率显著更高。深度做需要按真实 SERP 重叠分簇时，路由 `seo-cluster`。
+### 3. 判断意图和买家任务
 
-8. **写回记忆 + 交付。** 用 `Write`/`Edit` 把结果写进 `.vibio/trackers/keywords.md`（词/意图/**验证标记**/归属页/优先级/难度/**级联阶段**/当前排名/趋势，字段见 `vibio-memory` 的 state-templates），并在 `project.md` 标注关键词架构已就绪。输出给用户：主攻词表（按优先级）+ 意图分组 + 验证结论 + 页面映射 + 簇结构 + 下一步。
+为词族记录：目标角色、要完成的任务、商业/信息/导航/本地等意图、买家旅程位置及合理下一步。优先级由合格需求、企业可服务性、商业价值与信息增益决定，不由“抗零点击”或固定流量折扣决定。
 
----
+### 4. 目标市场验证
 
-## 该路由哪些专家
+全量候选执行 `references/keyword-validation.md` 五道闸门：
 
-- `references/keyword-validation.md` — **目标市场真实性验证协议**（五道闸门/买家用语挖掘工具箱/US-UK-AU 地区变体/零量词判定/免费数据降级链）——Step 2 和 Step 4 的执行依据，动手前先 Read
-- `seo-dataforseo` — **真实搜索量/难度/意图/趋势/竞品词**（回答"哪个词值得做"的硬数据来源；需 MCP；分国家查量用 `location_code`）
-- `seo-google` — GSC 查询挖掘（已被 Google 验证的真实查询，零量词的第一采信证据）
-- `seo-sxo` — SERP 页型深读（验证闸门②拿不准时的深度工具）
-- `b2b-seo` — B2B/外贸关键词研究 + 买家旅程内容分层（Vibio 默认）
-- `seo-cluster` — 按真实 SERP 重叠做主题簇（不是文本相似度）
-- `seo-competitor-pages` — 竞品在排的词、对比/替代页机会
-- `seo-content-brief` — 选定关键词后，单页的内容大纲（含字数）——这是 keyword 的下游，不在本 skill 内做
+1. 目标市场原生/买家表达是否支持；
+2. 目标地区 SERP 的人群、任务和页型是否匹配；
+3. 需求与趋势证据是否匹配国家/语言口径；
+4. 搜索者身份是否与客户相符；
+5. 是否有真实商业路径且企业能兑现承诺。
 
-数据类专家需要 MCP/API。不可用时如实说明，按 `references/keyword-validation.md` 第七节降级链给定性版本，别编搜索量。
+标 `pass / conditional / fail`。单条 PAA、商业结果或 RFQ 可以支持“保留待验证”，但不自动证明整体搜索需求。工具 0 量走零量框架，不直接淘汰，也不直接采信。
 
----
+### 5. 决定投资顺序
 
-## 下一步路由（关键词架构定了之后）
+对通过或条件通过的词族逐项记录：
 
-| 触发条件 | 推荐 |
-|---------|------|
-| 关键词和页面映射已定，要把它排进执行节奏 | 「关键词架构已就绪并写进 `.vibio/`。跑 `vibio-plan` 把它接进 90 天路线图（先做哪些页、什么节奏）。」 |
-| 某个目标词要开始写页面 | 「这个词要落地成页面，跑 `seo-content-brief` 出带字数的内容大纲，再交给写作/`vibio-fix` 落地。」 |
-| 发现现有页面有自相蚕食 | 「站内多页在抢同一个词。建议跑 `vibio-audit` 确认范围，再 `vibio-fix` 做合并/重定向。」 |
-| 没有 dataforseo 数据、用户想要真实量 | 「真实搜索量需要 DataForSEO MCP（或 GSC 已有数据用 `seo-google`）。现在给的是定性估计，接上数据源后能精确化。」 |
+- **商业价值**：对合格线索、订单或销售效率的作用；
+- **需求证据**：哪些一方/目标市场数据支持；
+- **意图与页型**：计划页面是否符合当前 SERP；
+- **信息增益**：企业能提供哪些独有规格、案例、数据、工具或经验；
+- **当前立足点**：已有页面、查询、内链、品牌或引用证据；
+- **成本/依赖/可测性**。
 
----
+按 `references/authority-cascade.md` 标 `now / next / later / reject`。第三方 KD 只是带工具、市场和日期的辅助竞争信号，不再用 `cascade_phase: 1-4`。
+
+### 6. 词族到页面映射
+
+一个买家任务/查询族指定一个主页面，标记：`existing / new / merge / expand / reject`。发现多个 URL 在相同查询与意图中轮换时，记录 cannibalization 证据并给合并、区分或 canonical/重定向的后续动作。
+
+同义词和轻微修饰词合入同页；只有任务、页型、产品能力或市场确有差异才拆 URL。
+
+### 7. 形成任务网络
+
+将共同完成买家任务的页面连接成商业页、规格/应用、选型/对比、案例/证据和支持内容网络。Query fan-out 只用于发现相关问题面，不作为批量建页词表。需要真实 SERP 重叠数据时可路由 `seo-cluster`；不可用时依据任务和有限 SERP 证据定性分组。
+
+### 8. 写回与交付
+
+更新 `.vibio/trackers/keywords.md`，至少包含词族、市场/语言、买家/任务、意图、验证、主页面、`now/next/later/reject`、数据来源、趋势和决策理由。保留历史，不覆盖旧快照。
+
+交付：优先查询族 + 验证证据 + 页面映射 + cannibalization + 任务网络 + 数据限制 + 下一步。
+
+## 专家能力与降级
+
+- `references/keyword-validation.md`：五道验证闸门与降级链；
+- `references/paid-search-intelligence.md`：用 Keyword Planner、search terms、paid & organic report 与合格线索学习服务 SEO；
+- `seo-dataforseo`：第三方口径的地区需求、SERP、趋势、竞品与难度数据；
+- `seo-google`：自有 GSC 查询/页面数据；
+- `seo-sxo`：深读 SERP 意图和页型；
+- `seo-cluster`：按可观察 SERP 重叠辅助分簇；
+- `seo-competitor-pages`：拆竞争页面的任务与缺口；
+- `seo-content-brief`：为已选页面做大纲；`vibio-content`：把验证后的页面任务写成证据充分的成稿。
+
+所有 `seo-*` 都是可选能力。缺失时按 manifest fallback 和 reference 的公开/一方证据流程执行，并声明限制。
+
+## 下一步路由
+
+| 条件 | 下一步 |
+|---|---|
+| 架构已定，需要排执行 | `vibio-plan` 按容量和依赖排路线图 |
+| 某个页面开始生产 | 需要大纲则 `seo-content-brief`，随后 `vibio-content` 写成稿，再由 `vibio-fix` 上线 |
+| 发现 cannibalization | `vibio-audit` 确认范围，`vibio-fix` 落地合并/区分/重定向 |
+| 数据源不足 | 交付缺口与最短验证实验，不承诺接上某工具就“精确” |
 
 ## 不要做
 
-- 不编造搜索量/难度数字——没有真实数据就标"估计"并说明来源。
-- 不跳过目标市场验证闸门——直译词、SERP 人群错配词、身份排除命中词，量再大也不进架构。
-- 不拿中文词直译当外语关键词，不拿其他中国出口商站点当用词证据（循环引用 Chinglish）。
-- 不看全球量做目标国决策——量按目标国家口径查；US/UK/AU 变体分别验证。
-- 不把工具 0 量的规格/标准词直接淘汰——先走零搜索量判定框架。
-- 不给一长串没分意图、没绑页面、没排优先级的"关键词清单"——那不是架构。
-- 不替低权重新站推荐高难度大词作为开局。
-- 不为单个长尾词建独立页（值不值得单建页是打分项之一）。
-- 不做单页内容大纲（那是 `seo-content-brief`），本 skill 只到"词→页映射 + 簇"为止。
-- 不跳过读 `.vibio/` 就重做一份已经存在的关键词表。
+- 不编搜索量、KD、排名周期或商业结果；所有数值保留来源、市场、日期和限制。
+- 不把全球量、Ads CPC/competition 或第三方 KD 当目标国自然需求/难度真值。
+- 不拿直译或其他出口商的循环措辞作为唯一证据。
+- 不把工具 0 量直接淘汰或采信。
+- 不用“打得过”“必胜”代替可观察的 SERP 缺口、站内立足点和信息增益。
+- 不给同义词、单个超长尾或 fan-out 变体机械建页。
+- 不交付没有验证、页面归属、优先级和证据限制的关键词清单。
+- 不跳过 `.vibio/` 重做已有架构，也不覆盖历史数据。

@@ -1,0 +1,417 @@
+{
+  "fixture_version": 2,
+  "fixture_kind": "authored_contract_examples",
+  "description": "Hand-authored static examples used only for deterministic offline contract regression checks.",
+  "provenance": {
+    "authoring_method": "manually_authored_and_reviewed",
+    "generated_by_skill": false,
+    "independent": false,
+    "created_at": "2026-07-11",
+    "purpose": "Verify that repository contracts and evidence-handling assertions continue to behave deterministically offline.",
+    "limitations": [
+      "The examples were authored alongside the assertions and are not independent test outputs.",
+      "No Skill or language model is executed and runtime Skill triggering is not tested.",
+      "Passing these contracts does not predict rankings, traffic, leads, revenue, or other SEO outcomes.",
+      "Public-source snapshots are dated excerpts and require periodic refresh against the live documents."
+    ]
+  },
+  "sources": {
+    "google-ai-optimization-guide": {
+      "source_type": "public_web",
+      "locator": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide?hl=en",
+      "title": "Succeeding in AI search experiences on Google",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "http_status": 200,
+        "excerpt": "LLMS.txt files and other special markup: You don't need to create new machine readable files, AI text files, markup, or Markdown to appear in Google Search (including its generative AI capabilities), as Google Search itself doesn't use them. Doing so will neither harm nor help your site's visibility or rankings in Google Search, as Google Search ignores them.",
+        "supports": {
+          "llms-txt": {
+            "claim": "Google Search does not use llms.txt files and ignores them",
+            "excerpt": "Google Search itself doesn't use them"
+          }
+        }
+      }
+    },
+    "google-indexing-api": {
+      "source_type": "public_web",
+      "locator": "https://developers.google.com/search/apis/indexing-api/v3/using-api",
+      "title": "Using the Indexing API",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "http_status": 200,
+        "excerpt": "The Indexing API can only be used to crawl pages with either JobPosting or BroadcastEvent embedded in a VideoObject.",
+        "supports": {
+          "indexing-api": {
+            "claim": "The Google Indexing API can only be used for pages with JobPosting or BroadcastEvent embedded in a VideoObject",
+            "excerpt": "can only be used to crawl pages with either JobPosting or BroadcastEvent embedded in a VideoObject"
+          }
+        }
+      }
+    },
+    "google-search-updates": {
+      "source_type": "public_web",
+      "locator": "https://developers.google.com/search/updates",
+      "title": "Google Search documentation updates",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "http_status": 200,
+        "excerpt": "FAQ: This feature will no longer appear in Google Search starting May 7, 2026. How-to: Removed the How-to structured data documentation, as this rich result is no longer shown in search results, on both desktop and mobile devices.",
+        "supports": {
+          "faq-retired": {
+            "claim": "The FAQ rich result no longer appears in Google Search as of May 7, 2026",
+            "excerpt": "This feature will no longer appear in Google Search starting May 7, 2026"
+          },
+          "howto-retired": {
+            "claim": "Google's How-to rich result is no longer shown in desktop or mobile search results",
+            "excerpt": "this rich result is no longer shown in search results, on both desktop and mobile devices"
+          }
+        }
+      }
+    },
+    "google-title-links": {
+      "source_type": "public_web",
+      "locator": "https://developers.google.com/search/docs/appearance/title-link",
+      "title": "Influencing title links in Google Search",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "http_status": 200,
+        "excerpt": "While there's no limit on how long a title element can be, the title link is truncated in Google Search results as needed, typically to fit the device width.",
+        "supports": {
+          "title-meta-length": {
+            "claim": "There is no limit on how long a title element can be",
+            "excerpt": "no limit on how long a title element can be"
+          }
+        }
+      }
+    },
+    "google-snippets": {
+      "source_type": "public_web",
+      "locator": "https://developers.google.com/search/docs/appearance/snippet",
+      "title": "Control your snippets in search results",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "http_status": 200,
+        "excerpt": "There's no limit on how long a meta description can be, but the snippet is truncated in Google Search results as needed, typically to fit the device width.",
+        "supports": {
+          "title-meta-length": {
+            "claim": "There is no limit on how long a meta description can be",
+            "excerpt": "no limit on how long a meta description can be"
+          }
+        }
+      }
+    },
+    "google-extended-doc": {
+      "source_type": "public_web",
+      "locator": "https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers#google-extended",
+      "title": "Google-Extended product token",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "http_status": 200,
+        "excerpt": "Google-Extended does not impact a site's inclusion in Google Search nor is it used as a ranking signal in Google Search.",
+        "supports": {
+          "google-extended": {
+            "claim": "Google-Extended does not affect a site's inclusion in Google Search and is not a Google Search ranking signal",
+            "excerpt": "does not impact a site's inclusion in Google Search nor is it used as a ranking signal in Google Search"
+          }
+        }
+      }
+    },
+    "google-structured-data-policies": {
+      "source_type": "public_web",
+      "locator": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+      "title": "General structured data guidelines",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "http_status": 200,
+        "excerpt": "Structured data is eligible for appearance as a rich result; it doesn't affect how the page ranks in Google web search. Google does not guarantee that your structured data will show up in search results, even if your page is marked up correctly according to the Rich Results Test.",
+        "supports": {
+          "schema-eligibility": {
+            "claim": "Structured data can make a page eligible for a rich result but does not guarantee appearance or affect web ranking",
+            "excerpt": "Google does not guarantee that your structured data will show up in search results"
+          }
+        }
+      }
+    },
+    "fixture-material-datasheet": {
+      "source_type": "provided_data",
+      "locator": "fixture://vibio-content/material-datasheet-row",
+      "title": "Synthetic user-provided material datasheet row",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "excerpt": "Hand-authored input fixture: candidate material CF-01; density 1.8 g/cm3; value supplied only to test source handling.",
+        "supports": {
+          "fiber-density": {
+            "claim": "The example material datasheet records a candidate density of 1.8 g/cm3",
+            "excerpt": "candidate material CF-01; density 1.8 g/cm3"
+          }
+        }
+      }
+    },
+    "fixture-gsc-export": {
+      "source_type": "provided_data",
+      "locator": "fixture://vibio-review/gsc-monthly-export",
+      "title": "Synthetic GSC export row",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "excerpt": "Hand-authored GSC export fixture for the monthly review case: organic clicks = 842.",
+        "supports": {
+          "gsc-clicks": {
+            "claim": "The hand-authored GSC export fixture records 842 clicks",
+            "excerpt": "organic clicks = 842"
+          }
+        }
+      }
+    },
+    "fixture-crm-export": {
+      "source_type": "provided_data",
+      "locator": "fixture://vibio-review/crm-monthly-export",
+      "title": "Synthetic CRM export row",
+      "snapshot": {
+        "status": "captured",
+        "captured_at": "2026-07-11",
+        "excerpt": "Hand-authored CRM export fixture for the monthly review case: qualified leads = 12.",
+        "supports": {
+          "qualified-leads": {
+            "claim": "The hand-authored CRM export fixture records 12 qualified leads",
+            "excerpt": "qualified leads = 12"
+          }
+        }
+      }
+    }
+  },
+  "responses": {
+    "vibio-audit:1": "先读取项目记忆、代码配置和构建产物；抽查模板代码和渲染 HTML。每项发现记录观察证据、适用官方规则、业务影响、置信度、修复负责人及验证步骤。外部能力缺失时以本地文件和导出材料降级，未测指标保持 unknown，不得虚构流量或排名。",
+    "vibio-audit:2": {
+      "facts": [
+        "input_is_url_only",
+        "network_observation_required",
+        "unobserved_fields_remain_unknown",
+        "llms_txt_not_google_requirement"
+      ],
+      "measurement": {
+        "unobserved_value_policy": "unknown"
+      },
+      "next_observations": ["rendered_html", "robots_txt", "sitemap_xml", "status_codes"]
+    },
+    "vibio-audit:3": "诊断顺序是先验证可抓取与可索引资格，再观察目标 SERP 的意图与页型，然后检查信息增益、一手证据和内链。所有未观察到的原因都标成待验证假设，不凭内容长度下结论。",
+    "vibio-audit:4": "读取项目记忆并对代表性模板做有边界抽查。seo-* 不可用时使用本地构建、sitemap、robots 和导出数据 fallback；报告分开观察事实与假设，引用官方规则，最后写回项目记忆并登记后续复盘条件。",
+    "vibio-audit:5": "风险测试针对 scaled content abuse：查看是否主要为操纵排名、是否缺少原创贡献，并抽样核验页面价值。引用 https://developers.google.com/search/docs/essentials/spam-policies 。AI 的使用本身不决定合规性，结论按实际行为和页面证据给出。",
+
+    "vibio-content:1": {
+      "facts": [
+        "target_market_and_language_required",
+        "serp_intent_observed_before_drafting",
+        "first_party_expertise_requested",
+        "unsupported_numeric_claims_removed"
+      ],
+      "claims": [
+        {
+          "id": "fiber-density",
+          "text": "The example material datasheet records a candidate density of 1.8 g/cm3.",
+          "numeric": true,
+          "numeric_value": 1.8,
+          "source_id": "fixture-material-datasheet"
+        },
+        {
+          "id": "selection-process",
+          "text": "Frame selection must account for load case and manufacturing process.",
+          "numeric": false
+        }
+      ],
+      "delivery": ["source_table", "first_party_notes", "draft", "internal_link_plan"]
+    },
+    "vibio-content:2": "我会先制作逐页覆盖矩阵，找出竞品共同覆盖和集体盲区；随后向企业收集一手材料，将可验证的新证据写进稿件。优势由原创贡献和任务完成度定义，发布前复核事实、来源和意图。",
+    "vibio-content:3": "删掉空泛开场和重复总结，但保留参数表、阈值、限制条件、步骤和来源。第二遍同时复核语言痕迹、事实准确性与信息密度，不以破坏专业结构来伪装写作。",
+    "vibio-content:4": "先交给 seo-content-brief：观察目标市场 SERP、意图和必须回答的问题。字数只是观察后的范围，不应套固定长度；brief 完成后再进入 vibio-content 写作。",
+    "vibio-content:5": "交付包含 title、description、目标意图、来源和建议 URL。列出新文将链向的支柱与商业页面，也列出发布当天从现有相关页面回链到新页的位置；发布后验证渲染链接并更新 content tracker。",
+
+    "vibio-fix:1": "先区分站点名称与摘要匹配。核对 WebSite 的 name/alternateName、Organization 的 legalName、og:site_name 和可见品牌文字，但 Google 不能保证采用这些信号。修改后检查渲染 HTML、canonical 与 JSON-LD，再请求重新抓取；普通产品 URL 只用 sitemap 或 Search Console，不扩展 Indexing API。",
+    "vibio-fix:2": "识别 WooCommerce 与现有插件，基于页面可见字段补充 Product/Offer/OG，避免插件和主题重复输出。不得给评价、价格或库存造数据；Schema 只提供搜索功能资格。清缓存后检查最终渲染 HTML 和 JSON-LD。",
+    "vibio-fix:3": "先在桌面和移动视口复现首屏与 reveal 问题。调整组件并保留尊重 prefers-reduced-motion 的功能交互，运行 build、lint/typecheck；再以移动端截图、渲染 HTML 与控制台确认表单可见、无重叠和水合错误。",
+    "vibio-fix:4": {
+      "edit_mode": "url-only",
+      "changes_applied": false,
+      "required_fields": ["observed_value", "target_state", "cms_location", "verification"],
+      "unknown_policy": "If the page cannot be fetched, observed values remain unknown.",
+      "platform": "Wix"
+    },
+
+    "vibio-keyword:1": {
+      "unavailable_provider_policy": {
+        "search_volume": "unknown",
+        "keyword_difficulty": "unknown",
+        "cpc": "unknown",
+        "ranking": "unknown"
+      },
+      "validation_dimensions": [
+        "target_country",
+        "target_language",
+        "native_wording",
+        "searcher_identity",
+        "intent",
+        "revenue_path",
+        "page_mapping"
+      ],
+      "output_shape": "intent_family_to_page_map"
+    },
+    "vibio-keyword:2": "先从真实 search terms 和 RFQ 提取客户表达，再逐词观察 SERP 的搜索者身份、页面类型和商业动作。通过项映射到商业页，用落地页级业务结果复盘；缺失数据保持 unknown，不虚构转化率。",
+    "vibio-keyword:3": "先观察目标国家的 SERP 和查询歧义，再比对网站真实产品能力。细分商业意图先行，head term 作为分阶段目标；是否扩大根据实际曝光、收录、链接、询盘反馈决定，而不是套固定难度阈值。",
+    "vibio-keyword:4": {
+      "gates": ["native_wording", "serp_audience", "searcher_identity", "demand_evidence", "revenue_path"],
+      "decisions": {
+        "non-standard customization": "reject_unless_target_market_evidence",
+        "carbon fiber technician jobs": "reject_wrong_searcher",
+        "carbon fiber fabric supplier": "validate_commercial_serp_and_capability"
+      }
+    },
+    "vibio-keyword:5": "不能因工具显示 0 就直接丢弃，也不能反向宣称一定有量。核对目标 SERP、GSC impressions、RFQ/CRM、站内搜索和付费 search terms；意图一致时并入现有产品页，用页面或意图集群级曝光与询盘复盘。",
+
+    "vibio-link:1": {
+      "link_graph": {
+        "/guide/carbon-fiber": ["/guide/material-selection", "/products/carbon-fiber"],
+        "/products/carbon-fiber": ["/contact"],
+        "/guide/orphan": ["/products/carbon-fiber"]
+      },
+      "policy": "Anchors follow context and user navigation, not a preset distribution."
+    },
+    "vibio-link:2": "先做准备度检查：确认可抓取、真实商业关系、可引用的页面或数据资产，以及目标页承接能力。从协会、认证、展会和伙伴等正当来源开始；外联按编辑正当性、相关性和业务价值排序，拒绝付费操纵与批量垃圾触达，写入 outreach tracker。",
+    "vibio-link:3": "选同市场竞争页，找同时链接多个竞争者但未链接本站的域名，按来源类型逐条核验正当入口和可测试角度。先过资产准备度，再记录机会与结果；不把数量或提及映射成确定排名收益。",
+    "vibio-link:4": "发布当天从相关旧文挑选 donor；新文链向支柱页和商业页，支柱或旧文再回链到新文。每一项记录上下文、锚文本与上线验证，数量由真实关系和读者路径决定。",
+
+    "vibio-memory:1": "读取 project、trackers 与 changelog 后，报告当前阶段、已完成事项、上次主导约束、技术栈、未验证的假设和下一项行动。没有记忆时说明缺失，以 unknown 建最小状态，不编造历史。",
+    "vibio-memory:2": {
+      "changelog": {
+        "before": ["2026-06-01 FIX canonical deployed", "2026-05-20 AUDIT indexability"],
+        "after": ["2026-07-11 AUDIT orphan product page", "2026-06-01 FIX canonical deployed", "2026-05-20 AUDIT indexability"]
+      },
+      "written_paths": [".vibio/changelog.md", ".vibio/project.md"]
+    },
+    "vibio-memory:3": {
+      "created_files": [
+        ".vibio/project.md",
+        ".vibio/changelog.md",
+        ".vibio/trackers/content.md",
+        ".vibio/trackers/keywords.md"
+      ],
+      "unknown_fields": "unknown"
+    },
+
+    "vibio-plan:1": "先确定主导约束，再按依赖关系排测量、抓取资格、词页架构、商业页、内容、内链、权威与复盘。每周任务有负责人、完成定义和验证方法；工具缺失时写 fallback。最后列接下来三项行动，结果范围保持为待验证目标。",
+    "vibio-plan:2": "读取存量数据后把页面分为刷新、合并、重定向、CTR 实验或暂不处理；优先级综合商业价值、内容差距、蚕食、内链与修改成本。按对比窗口复盘搜索和业务结果，查询级收入不得由 GSC 与分析数据硬拼。",
+    "vibio-plan:3": "先读取 .vibio 和交付历史，不重新做 kickoff。围绕当前瓶颈定义最小执行切片、负责人、完成标准、验证指标与停止条件；历史缺失时明确说明，不能猜测两个月内做过什么。",
+
+    "vibio-review:1": "读取变更和日期，确认部署及是否重抓。Google 可选择不采用站点实体信号；OG 图影响分享预览，不应归因成自然排名提升。三周本身不等于生效，逐项用 implementation-failed、not-yet-observable、directional-positive、incremental-positive、no-detectable-change、negative-or-regression、inconclusive 判定。",
+    "vibio-review:2": {
+      "attribution": {
+        "business_outcome_grain": ["landing_page", "intent_cluster"],
+        "deterministic_query_to_revenue": false
+      },
+      "claims": [
+        {
+          "id": "gsc-clicks",
+          "text": "The hand-authored GSC export fixture records 842 clicks.",
+          "numeric": true,
+          "numeric_value": 842,
+          "source_id": "fixture-gsc-export"
+        },
+        {
+          "id": "qualified-leads",
+          "text": "The hand-authored CRM export fixture records 12 qualified leads.",
+          "numeric": true,
+          "numeric_value": 12,
+          "source_id": "fixture-crm-export"
+        }
+      ],
+      "decision_labels": ["implementation_failed", "not_yet_observable", "directional_positive", "incremental_positive", "no_detectable_change", "negative_or_regression", "inconclusive"]
+    },
+    "vibio-review:3": "先确认标题存在于最终渲染 HTML，并检查 Google 是否重新抓取。未重抓时结论是 not-yet-observable；一天波动要与正常波动和可比分段区分。复盘日期按数据稳定性设置，不承诺统一周期或结果。",
+
+    "vibio-seo:1": "读取项目历史，锁定下降日期并按页面/查询/国家/设备切分。逐个验证技术、政策、竞争、需求和内容等因果层；修复后验证产物、重新抓取、搜索和业务结果，不承诺恢复幅度或日期。",
+    "vibio-seo:2": "直接解释 SEO 的含义和主要构成，不触发项目工作流，也不读写站点状态。",
+    "vibio-seo:4": "将 Ads search terms 用作买家用语证据，以自然 SERP、GSC、CRM 交叉验证。CPC、广告竞争和支出不是自然排名因素，也不能直接当作 SEO 难度。输出页面假设与复盘指标，不是接管广告出价。",
+    "vibio-seo:5": {
+      "evidence": {
+        "repository": "available",
+        "gsc_csv": "available",
+        "live_serp": "unavailable",
+        "backlinks": "unknown",
+        "search_volume": "unknown",
+        "ga4_conversions": "unknown",
+        "crm_revenue": "unknown",
+        "ad_data": "unknown"
+      },
+      "never_fabricate": [
+        "api_response",
+        "gsc_metrics",
+        "ga4_metrics",
+        "ad_metrics",
+        "rankings",
+        "search_volume",
+        "backlinks",
+        "conversions",
+        "revenue"
+      ],
+      "fallback": ["repository_inspection", "rendered_html", "gsc_csv"]
+    },
+    "vibio-seo:6": {
+      "facts": [
+        "llms_txt_not_required_by_google_search",
+        "indexing_api_only_jobposting_or_broadcastevent",
+        "faq_rich_results_retired",
+        "howto_rich_results_retired",
+        "no_fixed_title_or_description_character_limit",
+        "google_extended_does_not_control_search_or_ai_overviews",
+        "schema_is_eligibility_not_ranking_guarantee"
+      ],
+      "claims": [
+        {
+          "id": "llms-txt",
+          "text": "Google Search does not use llms.txt files and ignores them.",
+          "source_id": "google-ai-optimization-guide"
+        },
+        {
+          "id": "indexing-api",
+          "text": "The Google Indexing API can only be used for pages with JobPosting or BroadcastEvent embedded in a VideoObject.",
+          "source_id": "google-indexing-api"
+        },
+        {
+          "id": "faq-retired",
+          "text": "The FAQ rich result no longer appears in Google Search as of May 7, 2026.",
+          "source_id": "google-search-updates"
+        },
+        {
+          "id": "howto-retired",
+          "text": "Google's How-to rich result is no longer shown in desktop or mobile search results.",
+          "source_id": "google-search-updates"
+        },
+        {
+          "id": "title-meta-length",
+          "text": "There is no limit on how long a title element can be, and there is no limit on how long a meta description can be; Google truncates their search presentation as needed.",
+          "source_ids": ["google-title-links", "google-snippets"]
+        },
+        {
+          "id": "google-extended",
+          "text": "Google-Extended does not affect a site's inclusion in Google Search and is not a Google Search ranking signal.",
+          "source_id": "google-extended-doc"
+        },
+        {
+          "id": "schema-eligibility",
+          "text": "Structured data can make a page eligible for a rich result but does not guarantee appearance or affect web ranking.",
+          "source_id": "google-structured-data-policies"
+        }
+      ]
+    },
+
+    "vibio-factory:1": "先判断内容衰退诊断应并入现有 REVIEW/RECOVER 还是成为新模式。若新建，交付自包含 SKILL.md、本地 reference 闭包、manifest 登记和含正反路由的 eval；最后运行构建、严格校验与离线合同回归，避免副本漂移。",
+    "vibio-factory:2": "只优化现有 vibio-audit。用 should-route 与 near-miss 样本校准边界，检查 vibio-review、vibio-fix、vibio-plan 的冲突；保持 manifest 和 reference 策略。手写分类器只作设计内边界自检；真实触发必须运行实际 Skill 选择机制，以训练/隐藏集、多次重复、混淆矩阵、macro F1 和方差评估。"
+  }
+}

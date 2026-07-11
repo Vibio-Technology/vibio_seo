@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibio.example/schemas/responses.schema.json",
+  "title": "Vibio authored offline contract fixture",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixture_version", "fixture_kind", "description", "provenance", "sources", "responses"],
+  "properties": {
+    "fixture_version": {"type": "integer", "minimum": 2},
+    "fixture_kind": {"const": "authored_contract_examples"},
+    "description": {"type": "string", "minLength": 20},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authoring_method", "generated_by_skill", "independent", "created_at", "purpose", "limitations"],
+      "properties": {
+        "authoring_method": {"const": "manually_authored_and_reviewed"},
+        "generated_by_skill": {"const": false},
+        "independent": {"const": false},
+        "created_at": {"type": "string", "format": "date"},
+        "purpose": {"type": "string", "minLength": 20},
+        "limitations": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 10}
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/source"}
+    },
+    "responses": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "oneOf": [
+          {"type": "string", "minLength": 1},
+          {"type": "object", "minProperties": 1},
+          {"type": "array", "minItems": 1}
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_type", "locator", "title", "snapshot"],
+      "properties": {
+        "source_type": {"enum": ["public_web", "provided_data"]},
+        "locator": {"type": "string", "minLength": 5},
+        "title": {"type": "string", "minLength": 3},
+        "snapshot": {"$ref": "#/$defs/snapshot"}
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "captured_at", "excerpt", "supports"],
+      "properties": {
+        "status": {"const": "captured"},
+        "captured_at": {"type": "string", "format": "date"},
+        "http_status": {"type": "integer", "minimum": 100, "maximum": 599},
+        "excerpt": {"type": "string", "minLength": 20},
+        "supports": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/support"}
+        }
+      }
+    },
+    "support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim", "excerpt"],
+      "properties": {
+        "claim": {"type": "string", "minLength": 5},
+        "excerpt": {"type": "string", "minLength": 10}
+      }
+    }
+  }
+}

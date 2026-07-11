@@ -3,21 +3,126 @@
   "evals": [
     {
       "id": 1,
+      "name": "品牌标记改动效果复测",
       "prompt": "三周前你帮我改了品牌 schema 和 OG 图，现在见效了吗？",
-      "expected_output": "Should have vibio-memory read .vibio/changelog.md to find the change date and items, confirm ~3 weeks is enough re-crawl window for the schema (brand site-name) but note OG image affects click-through not ranking, route to seo-google (GSC: is the brand name now the site-name line? impressions/CTR on brand queries?) and seo-drift (did the WebSite JSON-LD survive redeploys?), judge each change effective/not/regressed, give next steps, and write the review back to changelog.md. Should not guess from feeling.",
-      "files": []
+      "expected_output": "应读取 changelog 找到准确变更、URL 和日期，先确认部署仍存在并查看 Google 最近抓取与索引状态，再观察品牌查询的实际搜索结果和 Search Console 变化。品牌 Schema 只能提供相应理解/展示资格，Google 可选择不采用；OG 图主要影响支持 Open Graph 的分享预览，不应归因成自然排名提升。三周只是经过时间，不能代替是否重抓和可比基线。每项按 implementation-failed、not-yet-observable、directional-positive、incremental-positive、no-detectable-change、negative-or-regression 或 inconclusive 判定，并写回复盘。",
+      "files": [],
+      "expectations": [
+        "从真实改动记录和抓取状态开始复测",
+        "区分 Schema 搜索信号与 OG 社交预览作用",
+        "不以经过三周自动判定生效"
+      ],
+      "assertions": [
+        {
+          "id": "route-brand-review",
+          "description": "询问既有改动是否见效应路由到 review",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-review",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "separate-change-effects",
+          "description": "输出必须区分 Schema 与 OG 的可观察作用",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["Google 可选择不采用", "OG 图.*分享预览", "不应归因成自然排名提升", "是否重抓", "implementation-failed.*not-yet-observable.*directional-positive.*incremental-positive.*no-detectable-change.*negative-or-regression.*inconclusive"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 2,
+      "name": "月度搜索与业务结果复盘",
       "prompt": "给这个项目做个月度 SEO 复盘。",
-      "expected_output": "Should read .vibio/ (project.md + keyword tracker + changelog), re-measure via seo-google (month-over-month impressions/CTR/avg-position, biggest movers, positions 11-20, indexation changes) and seo-drift for regressions, judge against google-search-docs metric meanings, decide refresh/expand/CTR-repair/deprioritize per finding, update keyword tracker ranks+trend and append a REVIEW entry, then route follow-up work to vibio-fix or advance the bottleneck via vibio-plan. Monthly cadence, not daily rank-checking.",
-      "files": []
+      "expected_output": "应读取项目基线、关键词/内容 tracker 和 changelog，以相同口径比较本月与合理基线窗口：先验证产物与索引，再看按页面、国家、设备、品牌/非品牌或意图集群切分的曝光、点击、CTR 和位置，最后看落地页或意图集群级有效访问、询盘和收入。GSC 不提供查询到 GA4/CRM 转化的确定性连接；查询级收入只能是明确标注假设的模型。对每项改动给七状态证据判定和下一动作。所有数值必须附导出来源与日期。",
+      "files": [],
+      "expectations": [
+        "使用可比窗口并分层评估产物、搜索和业务结果",
+        "归因粒度限制在落地页或意图集群",
+        "每个数值带来源和日期"
+      ],
+      "assertions": [
+        {
+          "id": "route-monthly-review",
+          "description": "月度复盘应路由到 vibio-review",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-review",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "attribution-grain",
+          "description": "fixture 的业务归因粒度必须是落地页或意图集群",
+          "type": "jsonpath_equals",
+          "target": "output.attribution.business_outcome_grain",
+          "expected": ["landing_page", "intent_cluster"],
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "query-revenue-unavailable",
+          "description": "fixture 必须禁止确定性查询到收入连接",
+          "type": "jsonpath_equals",
+          "target": "output.attribution.deterministic_query_to_revenue",
+          "expected": false,
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "review-numeric-sources",
+          "description": "月度复盘 fixture 的数值声明必须带来源 URL",
+          "type": "numeric_claims_have_source",
+          "target": "output.claims",
+          "expected": {"require_url": true, "min_numeric_claims": 2},
+          "weight": 4,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 3,
+      "name": "标题刚改一天不可过早归因",
       "prompt": "我昨天刚改完标题，排名涨了没？",
-      "expected_output": "Should recognize the re-crawl window is far too short (~1 day), explain title/description changes typically take 2-6 weeks to reflect in Google and that any movement now is noise, NOT report 'no effect', record a follow-up review date in changelog, and avoid promising the change will definitely work. May confirm the change is correctly live in rendered HTML in the meantime.",
-      "files": []
+      "expected_output": "应先确认新标题是否已部署到最终渲染 HTML，并查看该 URL 是否已被 Google 重新抓取；若尚未重抓，搜索效果结论为 not-yet-observable，而不是“没有效果”。即使出现一天排名变化，也要与正常波动、查询和页面分段及可比窗口区分，不能归因给标题。后续复盘日期应根据实际抓取和数据稳定性设置，不宣称统一的 2-6 周生效周期，也不保证标题一定提升排名。",
+      "files": [],
+      "expectations": [
+        "先验证部署和实际重新抓取",
+        "未重抓时判定 not-yet-observable",
+        "不套固定生效周期或归因一天波动"
+      ],
+      "assertions": [
+        {
+          "id": "route-title-review",
+          "description": "询问昨天改动的排名效果应路由到 review",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-review",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "too-early-contract",
+          "description": "输出必须以重新抓取和稳定窗口决定复盘",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["最终渲染 HTML", "重新抓取", "not-yet-observable", "正常波动", "数据稳定性"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-fixed-effect-window",
+          "description": "不得把 2-6 周写成统一生效周期",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["通常.*2-6 周", "一定.*[0-9]+.*周", "保证.*提升排名"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     }
   ]
 }

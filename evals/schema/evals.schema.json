@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibio.example/schemas/evals.schema.json",
+  "title": "Vibio offline contract definitions",
+  "description": "Deterministic authored-contract checks. This schema does not describe live Skill executions or SEO outcome measurements.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill_name", "evals"],
+  "properties": {
+    "skill_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "evals": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"$ref": "#/$defs/eval"}
+    }
+  },
+  "$defs": {
+    "eval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "prompt", "expected_output", "files", "expectations", "assertions"],
+      "properties": {
+        "id": {"type": "integer", "minimum": 1},
+        "name": {"type": "string", "minLength": 3},
+        "prompt": {"type": "string", "minLength": 10},
+        "expected_output": {"type": "string", "minLength": 10},
+        "files": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "expectations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 5},
+          "uniqueItems": true
+        },
+        "assertions": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"$ref": "#/$defs/assertion"}
+        }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "type", "target", "expected", "weight", "hard_gate"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "description": {"type": "string", "minLength": 5},
+        "type": {
+          "enum": [
+            "route_equals",
+            "route_not_equals",
+            "file_exists",
+            "file_changed",
+            "file_unchanged",
+            "path_confined",
+            "jsonpath_equals",
+            "regex_all",
+            "regex_none",
+            "command_succeeds",
+            "citation_coverage",
+            "numeric_claims_have_source",
+            "fact_set_equals",
+            "changelog_preserves_and_adds",
+            "internal_link_graph_equals"
+          ]
+        },
+        "target": {"type": "string", "minLength": 1},
+        "expected": {},
+        "weight": {"type": "number", "exclusiveMinimum": 0},
+        "hard_gate": {"type": "boolean"}
+      }
+    }
+  }
+}

@@ -1,75 +1,108 @@
 ---
 name: vibio-memory
-description: |
-  Vibio 项目记忆的格式规范与读写约定。当用户说「这个项目之前做到哪了」「继续上次的 SEO」「上次审查/改了什么」「记录一下这次的发现」时可直接触发本 skill 来读写记忆；更多时候它是 vibio-plan / vibio-audit / vibio-fix / vibio-review 内联遵循的约定——那些 skill 自己用 Read/Write 操作项目根的 .vibio/，格式以本 skill 的 references/state-templates.md 为准。
-  .vibio/ 存：诊断结论、主瓶颈、90 天进度、内容/关键词/外链/内链四张追踪表、每次改动日志。让 vibio 系列从「每次重新认识项目的咨询师」变成「记得上次干了什么的操作系统」。
-  不应触发：用户要的是一次性问答、没有具体项目、纯概念解释。
-  Defines the .vibio/ memory format and read/write conventions. Sibling skills read/write .vibio/ directly (with Read/Write) following references/state-templates.md; can also be invoked directly to recall or record project state.
+description: >-
+  当用户说“继续上次的 SEO”“之前做到哪了”“记录这次发现/改动/复盘”“show SEO project history”，或其他 Vibio 模式需要读取、更新项目状态时使用。本 Skill 规定 `.vibio/` 的证据化记忆协议：保留项目事实、决策、变更、来源、验证、观察窗口和未知项，避免下一次从零开始。默认中文；不需要任何外部 seo-* 能力。不用于泛 SEO 问答、未经授权的跨项目数据汇总或把假设写成事实。
+compatibility: 需要目标项目根目录的文件读取权限；写回需要项目内写权限。不得把凭据、个人数据或客户可识别敏感信息写入记忆。
 ---
 
-# Vibio SEO — 项目记忆（格式规范 + 读写约定）
+# Vibio SEO MEMORY
 
-SEO 是长周期的事：要追踪决策历史、要复盘见效。没有持久状态，每次 PLAN 都从零 kickoff、每次 AUDIT 都重读、改完 FIX 就断线。本 skill 定义每个项目那份落盘记忆的**格式和读写规矩**。
+默认用中文维护状态；目标市场 query、页面标题、URL、事件名和来源原文保持原语言。
 
-**重要——执行方式**：skill 之间不能互相函数调用。所谓「让 vibio-memory 读写」其实是：**plan/audit/fix/review 自己用 `Read`/`Write`/`Edit` 工具直接操作项目根的 `.vibio/`**，按本 skill `references/state-templates.md` 的格式来。本 skill 是那套格式和约定的单一事实来源；用户也可直接触发它来"回忆/记录"。
+MEMORY 是项目决策记录，不是搜索效果数据库。它只保存足以让下一次行动延续的事实、证据、假设和待验证事项，不制造原数据中不存在的精度。
 
-**核心约定：任何 vibio 子 skill 开工前先读 `.vibio/`，收工后写回。**
+## 必读资料
 
-**第二层记忆**：`.vibio/` 之外还有跨项目经验库 `~/.vibio-global/`（learnings.md + calibration.md）——项目记忆答"这个项目做到哪了"，经验库答"哪些打法被实战验证/证伪"。格式与读写协议以主库 `references/learning-loop.md` 为准：REVIEW/RECOVER 沉淀教训，各 skill 开工按域读取，同一教训 ≥3 次才提议修订方法论（人工确认）。
+- `references/state-templates.md`：`.vibio/` 文件结构与字段模板。
+- `references/evidence-policy.md`：证据等级、来源、数值与不确定性。
+- `references/roi-attribution.md`：GSC、分析平台和 CRM 的粒度边界。
+- `references/learning-loop.md`：仅在用户明确启用跨项目匿名经验库时读取。
 
----
+模板负责结构，不负责证明领域结论；模板中的任何示例数字、标签或解释都必须服从当前证据政策和真实项目数据。
 
-## 存储位置
+## 存储边界
 
-被操作的**项目根目录**下的 `.vibio/`（不是 skill 目录、不是 home）。结构：
+默认状态位于被操作项目的根目录：
 
+```text
+.vibio/
+├── project.md
+├── changelog.md
+└── trackers/
+    ├── content.md
+    ├── keywords.md
+    ├── outreach.md
+    └── links.md
 ```
-<项目根>/.vibio/
-├── project.md            # 项目档案 + 当前状态（单一事实来源）
-├── trackers/
-│   ├── content.md        # 内容追踪表
-│   ├── keywords.md       # 关键词追踪表（含 Validated 验证列 + Cascade 级联列）
-│   ├── outreach.md       # 外链追踪表（权重工作启动后才建；流程见 backlink-playbook.md）
-│   └── links.md          # 内链健康快照（首次内链审计时才建；格式见 link-architecture.md）
-└── changelog.md          # 每次 AUDIT/FIX 的改动日志（追加，不覆写）
+
+只创建当前工作需要的文件；不要为了“完整”生成空 tracker。URL-only 任务先明确本地工作目录和目标 URL，再创建状态，不得写入 Skill 安装目录。
+
+## 读取协议
+
+1. 识别真实项目根，不能仅凭当前 shell 目录猜测。
+2. 先读 `project.md`，再按任务读取相关 tracker 和 `changelog.md` 最近条目。
+3. 提取当前阶段、主导约束、已验证事实、已实施变更、未完成依赖、待复盘窗口和已知数据缺口。
+4. 检查记录的来源、日期、市场、页面范围和指标定义是否仍适用。
+5. 用一句话向用户确认恢复点，然后只继续下一段工作，不重启整个流程。
+
+文件不存在不是错误：说明没有持久基线，从当前真实产物建立最小状态即可。记忆与当前渲染产物或第一方数据冲突时，以更新、更强的证据为准，并通过新日志纠正，不能静默改写历史。
+
+## 写入协议
+
+只写会改变后续决策的信息：
+
+- `project.md`：业务/市场/技术栈、主要合格转化、主导约束、当前阶段、目标和下一动作。
+- `changelog.md`：已观察发现、实际实施变更、产物验证、复盘结论和状态转移；保持 append-only、新条目在顶部。
+- `trackers/content.md`：真实页面/内容资产的所有权、状态和来源。
+- `trackers/keywords.md`：经目标市场证据验证的 query/意图族及所属页面；无数据时不填搜索量、难度或排名。
+- `trackers/links.md`：从抓取/导出验证的内部链接问题和回填动作。
+- `trackers/outreach.md`：经人工确认的目标、接触状态和结果；不虚构权威指标或链接价值。
+
+每条高影响记录至少保留：
+
+```text
+Observed fact or decision:
+Evidence level:
+Source / dataset and verified_on:
+Market / page scope:
+Confidence:
+Action or change:
+Artifact verification:
+Outcome metric and observation window:
+Owner / dependency:
+Unknowns / stop or rollback condition:
 ```
 
-只有 URL、没有本地项目时：在当前工作目录建 `.vibio/`，在 `project.md` 里记下目标 URL 和"无代码访问"。提醒用户把 `.vibio/` 加进 `.gitignore` 还是提交由他们定（提交便于团队共享决策历史，推荐提交）。
+状态值要区分：`observed`、`estimated`、`hypothesis`、`implemented`、`artifact-verified`、`outcome-pending`、`not-yet-observable`、`directional-positive`、`incremental-positive`、`no-detectable-change`、`negative-or-regression`、`inconclusive`。构建成功只能进入 `artifact-verified`，不能自动进入“已收录/已排名/已见效”。
 
----
+## 数据完整性
 
-## 读流程（任何子 skill 开工前，用 `Read` 工具直接读）
+- 记录日期范围、时区、property/view、过滤条件和数据覆盖限制。
+- GSC query 可用于搜索表现分析，但不能确定性连接到 GA4 用户、CRM 线索或收入。
+- 业务结果默认落在 landing page、市场、设备、日期 cohort 或意图簇等共享聚合维度。
+- 预测、行业观察和计划假设要与实测值分列，不能回写成已实现结果。
+- 不存 API key、cookie、访问令牌、未脱敏联系人、报价、合同、CRM 原始个人记录或其他秘密。
 
-1. 看项目根有没有 `.vibio/project.md`（`Read` 或 `Glob`）。
-2. **有** → 用 `Read` 读 `project.md` + 相关 tracker + `changelog.md` 末尾几条。据此判断：当前阶段、已完成项、上次的主瓶颈、已知的栈、待办。把这些带入当前任务，**不要重启**（呼应 operating-system.md 的延续规则：只输出下一段操作切片）。
-3. **没有** → 这是新项目，照常 kickoff，并在收工时用 `Write` **新建** `.vibio/`。
+## 各模式写回
 
-读完用一句话向用户确认定位：「读到记忆：这是 Shopify 站，上次（<日期>）诊断主瓶颈是内容系统，已发布 4 个商业页，待办是内链。继续。」
+| 模式 | 最小写回 |
+|---|---|
+| PLAN | 主导约束、目标、依赖路线、负责人和下一动作 |
+| AUDIT | 已验证发现、范围、来源、优先级与待修项 |
+| FIX | 变更位置、产物验证、待观察指标和回滚条件 |
+| KEYWORD/WRITE/LINK | 已验证映射或资产状态及来源 |
+| REVIEW | 比较窗口、证据强度、判定与下一决策 |
 
----
+如果只是概念问答或没有形成持久决策，不强制写回。
 
-## 写流程（任何子 skill 收工后，用 `Write`/`Edit` 直接写）
+## 跨项目经验
 
-只记会改变下一步决策的东西，不记流水账：
-- **vibio-plan** 写/更新 `project.md` 的诊断、主瓶颈、90 天目标、路线图阶段、节奏；用 `Write` 建 tracker 骨架。
-- **vibio-audit** 用 `Edit` 把发现追加到 `changelog.md`（带日期、优先级、是否已修），把新确认的栈/状态更新进 `project.md`。
-- **vibio-fix** 把每次改动追加到 `changelog.md`（改了什么、哪个文件/位置、验证结果、是否面向 SERP 待重抓）。
-- **vibio-review** 更新 `trackers/keywords.md` 的排名/趋势，把复盘结论追加到 `changelog.md`（Type: REVIEW）。
-
-写时机：完成一个有意义的动作就追加，别等会话结束。changelog 永远追加（用 `Edit` 在顶部插入，不覆写整文件）。
-
----
-
-## 文件格式
-
-参考 `references/state-templates.md` 里的标准模板（project.md / 四张 tracker / changelog 各一份），保持字段一致，方便下次机读。tracker 字段对齐 operating-system.md 的追踪系统定义（内容：标题/URL/页型/关键词族/意图/状态/发布日/更新日/负责人；关键词：词/意图/**验证标记 pass-conditional**/**级联阶段 1-4**/归属页/优先级/难度/当前vs上次排名/趋势；外链：目标站/渠道/类型（含 directory/digital-PR/expert-quote/reclaim 等）/推广页/日期/状态/结果（无链品牌提及也记）；内链：孤儿页/弱链接页/回填队列/钱页入链数）。
-
----
+`.vibio/` 是默认且唯一自动使用的状态层。只有用户明确同意跨项目积累经验时，才按 `references/learning-loop.md` 使用项目外经验库；写入前必须匿名化并删除域名、公司名、联系人、原始查询/收入明细等可识别信息。单例或相关性观察不能升级为通用规则，方法论修订仍需人工确认。
 
 ## 不要做
 
-- 不把记忆写到项目外（skill 目录、home）——除非是 URL-only 无本地项目。
-- 不覆写 `changelog.md`，只追加。
-- 不记不影响决策的流水账（"读了首页"这种）。
-- 读到记忆后不重启整个流程，只续上次的下一步。
-- 不在没确认项目根的情况下乱建 `.vibio/`。
+- 不覆写或删除 changelog 历史来“整理”结论。
+- 不把缺失数据补成零，也不把未知排名、CTR、转化率或收入写成实测值。
+- 不让旧记忆覆盖新的官方规则、真实渲染产物或第一方数据。
+- 不在未确认项目根与写入授权时创建 `.vibio/`。
+- 不自动把客户项目数据写入全局或其他项目。

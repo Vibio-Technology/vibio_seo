@@ -3,27 +3,171 @@
   "evals": [
     {
       "id": 1,
+      "name": "内链发现与商业页支持",
       "prompt": "我们博客发了 30 多篇文章，但好像互相都没链接，帮我看看内链怎么优化。",
-      "expected_output": "Should read .vibio/ first, then run the internal pass from references/link-architecture.md: detect orphan pages (crawl vs sitemap vs GSC cross-check, or grep source for code stacks), find weak-linked money pages and click depth >3 pages, check anchor cannibalization, run the donor-acceptor equity pass (high-impression pages link to weak commercial pages), clear the backfill queue, fix in priority order (orphan money pages first), write snapshot to .vibio/trackers/links.md and log changes. Should NOT jump to external link building.",
-      "files": []
+      "expected_output": "应先读取项目记忆、站点地图、实际链接图和可用 GSC/日志，再找孤立页、断链、点击深度过大、同主题页面互相蚕食及商业页缺少入口。优先把有真实相关性和业务价值的内容页连接到支柱页、产品/服务页及同层兄弟页，并从已有曝光或相关性强的页面回填；每条建议给来源、目标、锚文本语义和验证方法。不要把这个请求直接扩展成外链购买或固定锚文本比例。",
+      "files": [],
+      "expectations": [
+        "以内链发现和权重传递为首要范围",
+        "优先修复孤立商业页和可验证路径",
+        "不套固定锚文本比例"
+      ],
+      "assertions": [
+        {
+          "id": "route-internal-links",
+          "description": "博客互链问题应路由到链接 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-link",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "link-graph-exact",
+          "description": "fixture 的内链图必须与预期邻接关系一致",
+          "type": "internal_link_graph_equals",
+          "target": "output.link_graph",
+          "expected": {
+            "/guide/carbon-fiber": ["/products/carbon-fiber", "/guide/material-selection"],
+            "/products/carbon-fiber": ["/contact"],
+            "/guide/orphan": ["/products/carbon-fiber"]
+          },
+          "weight": 4,
+          "hard_gate": true
+        },
+        {
+          "id": "no-anchor-ratio",
+          "description": "不得用固定锚文本比例代替相关性判断",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["锚文本.*(?:必须|固定).*[0-9]+%", "固定.*锚文本.*比例"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 2,
+      "name": "新站外链准备度",
       "prompt": "帮我做外链建设，我们是做数控加工件出口的工厂，网站上线三个月。",
-      "expected_output": "Should apply the readiness gate from references/backlink-playbook.md: Tier 1 foundational links (Thomasnet, Kompass, Europages, trade associations, chamber of commerce, certification bodies, trade show exhibitor pages, customer/partner links) start immediately; but page-targeted outreach requires ≥1 linkable asset or ≥5 strong pages AND authority-cascade Phase 3+ targets. For a 3-month-old site, should honestly sequence: complete Tier 1 checklist now, build a linkable asset before outreach, set realistic expectations (2-5 quality referring domains/month, 2-6 month lag), track in .vibio/trackers/outreach.md. Should not promise rankings or recommend buying links.",
-      "files": []
+      "expected_output": "应先做外链准备度检查：站点是否可抓取、商业关系和基础目录是否真实、是否有值得引用的页面或数据资产、目标页面是否能承接引荐。可以从真实供应商/协会/商会/展会/认证与客户伙伴关系等正当来源建立基础存在感；定向编辑外联要等资产和证据准备好，再按相关性、编辑正当性、引荐与业务价值排序。不能购买链接、自动化群发、承诺排名或套用固定月增域名数字。所有触达和结果写入 outreach tracker。",
+      "files": [],
+      "expectations": [
+        "先过准备度关卡再做定向外联",
+        "优先真实商业关系和可引用资产",
+        "不购买链接或承诺固定结果"
+      ],
+      "assertions": [
+        {
+          "id": "route-link-building",
+          "description": "外链建设请求应路由到链接 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-link",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "readiness-gate",
+          "description": "输出必须有资产、关系、承接和正当性准备度",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["准备度", "可引用的页面或数据资产", "真实商业关系", "编辑正当性", "outreach tracker"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-link-buying",
+          "description": "不得建议购买或自动化群发链接",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["购买链接", "自动化.*群发", "固定.*月.*域名"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 3,
+      "name": "竞品链接差距与正当获取",
       "prompt": "竞品的外链比我们多好几倍，怎么追？",
-      "expected_output": "Should route to seo-backlinks / seo-dataforseo for competitor backlink gap analysis: pick 3-5 competitors, find domains linking to 2+ competitors but not us, segment by source type (directory → register directly, resource page → asset outreach, editorial → digital PR angle), prioritize domains linking to 3+ competitors. Should also mention brand mentions (even unlinked) as an AI-citation KPI roughly 3x stronger than backlinks, and check the readiness gate before starting outreach. Results tracked in outreach tracker.",
-      "files": []
+      "expected_output": "应先确认比较口径和时间范围，选取真正同意图、同市场的竞争页面，找出同时链接多个竞争者但尚未链接本站的域名，并按目录/协会、资源页、客户伙伴、编辑报道等来源类型逐条判断是否有正当入口。结果只说明发现到的链接与可测试的外联角度，不把链接数量或未链接提及套成排名或 AI 引用倍数；先检查页面和资产准备度，再记录机会与结果。",
+      "files": [],
+      "expectations": [
+        "明确比较口径并做竞争链接差距分析",
+        "按来源类型设计正当获取路径",
+        "不声称未链接提及有固定倍数价值"
+      ],
+      "assertions": [
+        {
+          "id": "route-link-gap",
+          "description": "竞品外链差距属于链接工作流",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-link",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "source-segmentation",
+          "description": "输出必须按来源类型给出可验证角度",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["同时链接多个竞争者", "来源类型", "正当入口", "记录机会与结果"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-mention-multiplier",
+          "description": "不得使用未链接提及固定倍数",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["未链接提及.*[0-9]+倍", "AI 引用.*[0-9]+倍", "三倍.*外链"],
+          "weight": 3,
+          "hard_gate": true
+        }
+      ]
     },
     {
       "id": 4,
+      "name": "发布日内链回填",
       "prompt": "刚发了一篇新文章，接下来链接方面要做什么？",
-      "expected_output": "Should execute the publish-time backfill protocol from link-architecture.md §五: add contextual links from 2-3 relevant existing pages (donors found via content tracker same-cluster pages, GSC top pages, or site:/grep search) to the new article same day; verify the new article links out to its pillar + 1 money page + siblings with descriptive anchors; update the pillar page to link to the new article; log to changelog. Should warn that an orphan page halves the value of the content.",
-      "files": []
+      "expected_output": "应执行发布日内链回填：从同主题且真实相关的已有页面中选择少量 donor，给新文加上指向支柱页、相关商业页和必要兄弟页的描述性链接，同时从支柱页或相关旧文回链到新文。每个链接记录来源页面、目标页面、上下文、锚文本和上线验证；数量由页面关系与读者路径决定，不用固定条数或“孤儿页价值减半”等未经验证的数字结论。",
+      "files": [],
+      "expectations": [
+        "同时检查新文出链和已有页回链",
+        "记录链接上下文与验证状态",
+        "不使用固定条数或夸大数字"
+      ],
+      "assertions": [
+        {
+          "id": "route-publish-backfill",
+          "description": "发布后链接动作应路由到链接 Skill",
+          "type": "route_equals",
+          "target": "routing.skill",
+          "expected": "vibio-link",
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "backfill-protocol",
+          "description": "输出必须包含 donor、支柱、商业页、回链和验证",
+          "type": "regex_all",
+          "target": "output",
+          "expected": ["donor", "支柱页", "商业页", "回链到新文", "上线验证"],
+          "weight": 3,
+          "hard_gate": true
+        },
+        {
+          "id": "no-orphan-multiplier",
+          "description": "不得声称孤儿页价值固定减半",
+          "type": "regex_none",
+          "target": "output",
+          "expected": ["孤儿页.*减半", "价值.*50%", "固定条数"],
+          "weight": 2,
+          "hard_gate": true
+        }
+      ]
     }
   ]
 }
