@@ -108,7 +108,7 @@ const faqs = [
   {
     question: "报告和项目会跨设备同步吗？",
     answer:
-      "不会。当前版本的项目草稿和最近运行记录保存在当前浏览器的本地存储中，不提供账号系统或云同步。报告可以复制，或导出为 Markdown 和 JSON。",
+      "不会。当前版本的项目草稿和最近运行记录保存在当前浏览器的本地存储中，不提供账号系统或云同步。报告可以复制，或导出为 Markdown、JSON 和独立 HTML。",
   },
   {
     question: "公开 URL 审计能看到什么？",
@@ -122,12 +122,49 @@ const faqs = [
   },
 ] as const;
 
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "#vibio-seo-app",
+      name: "Vibio SEO",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description: "把 SEO 从一堆建议，变成有证据、能执行、可复盘的工作流。",
+      featureList: [
+        "统一项目档案",
+        "八种 SEO 专项能力",
+        "自动 SEO 工作流",
+        "有界公开 URL 审计",
+        "Markdown、JSON 与 HTML 报告导出",
+      ],
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.answer,
+        },
+      })),
+    },
+  ],
+};
+
 export default function HomePage() {
   return (
     <div className={styles.siteShell}>
       <MarketingNav />
 
-      <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+      />
+
+      <main id="main-content">
         <section className={styles.hero} aria-labelledby="hero-title">
           <div className={`${styles.sectionInner} ${styles.heroGrid}`}>
             <div className={styles.heroCopy}>
@@ -250,7 +287,7 @@ export default function HomePage() {
               <figcaption>
                 <span><Check size={14} aria-hidden="true" />项目信息一次填写</span>
                 <span><Workflow size={14} aria-hidden="true" />单项与自动流程并存</span>
-                <span><Braces size={14} aria-hidden="true" />Markdown / JSON 导出</span>
+                <span><Braces size={14} aria-hidden="true" />Markdown / JSON / HTML 导出</span>
               </figcaption>
             </figure>
           </div>
@@ -379,7 +416,7 @@ export default function HomePage() {
               <ul className={styles.evidencePoints}>
                 <li><SearchCheck size={18} aria-hidden="true" />读取有界的 HTTP 源码、robots.txt 与 sitemap</li>
                 <li><FileCode2 size={18} aria-hidden="true" />支持 CSV、JSON、HTML、XML、Markdown 与 TXT 证据</li>
-                <li><Braces size={18} aria-hidden="true" />报告可复制，并导出 Markdown 和 JSON</li>
+                <li><Braces size={18} aria-hidden="true" />报告可复制，并导出 Markdown、JSON 和 HTML</li>
               </ul>
             </div>
 

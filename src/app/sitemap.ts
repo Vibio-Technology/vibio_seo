@@ -24,12 +24,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: new URL("/workspace", base).toString(),
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
       url: new URL("/privacy", base).toString(),
       lastModified,
       changeFrequency: "monthly",

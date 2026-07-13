@@ -25,7 +25,7 @@ export default function PrivacyPage() {
   return (
     <div className={`${styles.siteShell} ${styles.privacyPage}`}>
       <MarketingNav />
-      <main>
+      <main id="main-content">
         <header className={styles.privacyHero}>
           <div className={styles.sectionInner}>
             <span className={styles.sectionKicker}>PRIVACY &amp; DATA HANDLING</span>
@@ -144,7 +144,7 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <strong>导出报告</strong>
-                  <span>在报告页中复制 Markdown，或下载 Markdown 和 JSON 文件。</span>
+                  <span>在报告页中复制 Markdown，或下载 Markdown、JSON 和独立 HTML 文件。</span>
                 </li>
               </ol>
               <p>清除本地数据不会自动删除第三方模型服务商已经处理的请求。这部分需要按对应服务商的账号设置和政策处理。</p>

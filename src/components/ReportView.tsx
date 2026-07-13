@@ -1,8 +1,22 @@
-import { Check, Clipboard, Code2, Download, FileText, RotateCcw, SearchCheck, Workflow } from "lucide-react";
+import {
+  Check,
+  Clipboard,
+  Code2,
+  Download,
+  FileCode2,
+  FileText,
+  LayoutDashboard,
+  RotateCcw,
+  SearchCheck,
+  Workflow,
+} from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { parseAuditOverview } from "../audit-overview";
+import { buildStandaloneReportHtml } from "../report-export";
 import type { RunRecord } from "../types";
+import { AuditOverview } from "./AuditOverview";
 import { WorkflowProgress } from "./WorkflowProgress";
 
 interface ReportViewProps {
@@ -25,20 +39,27 @@ function safeFileName(value: string): string {
 }
 
 export function ReportView({ record, onReset }: ReportViewProps) {
-  type ReportTab = "report" | "workflow" | "evidence";
-  const [tab, setTab] = useState<ReportTab>("report");
+  type ReportTab = "overview" | "report" | "workflow" | "evidence";
+  const hasAuditOverview = parseAuditOverview(record.auditReport) !== null;
+  const defaultTab: ReportTab = hasAuditOverview ? "overview" : "report";
+  const [tab, setTab] = useState<ReportTab>(defaultTab);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const overviewRef = useRef<HTMLDivElement>(null);
+  const reportRef = useRef<HTMLElement>(null);
   const tabRefs = useRef<Partial<Record<ReportTab, HTMLButtonElement | null>>>({});
   const baseName = `${safeFileName(record.projectName)}-${record.mode}-${record.createdAt.slice(0, 10)}`;
-  const tabs: ReportTab[] = record.workflow
-    ? ["report", "workflow", "evidence"]
-    : ["report", "evidence"];
+  const tabs: ReportTab[] = [
+    ...(hasAuditOverview ? ["overview" as const] : []),
+    "report",
+    ...(record.workflow ? ["workflow" as const] : []),
+    "evidence",
+  ];
 
   useEffect(() => {
-    setTab("report");
+    setTab(hasAuditOverview ? "overview" : "report");
     titleRef.current?.focus({ preventScroll: true });
-  }, [record.id]);
+  }, [hasAuditOverview, record.id]);
 
   const selectTab = (next: ReportTab) => {
     setTab(next);
@@ -76,6 +97,15 @@ export function ReportView({ record, onReset }: ReportViewProps) {
     2,
   );
 
+  const exportHtml = () => {
+    const html = buildStandaloneReportHtml(
+      record,
+      overviewRef.current?.innerHTML ?? "",
+      reportRef.current?.innerHTML ?? "",
+    );
+    download(`${baseName}.html`, html, "text/html;charset=utf-8");
+  };
+
   return (
     <section className="report-view" aria-labelledby="report-title">
       <header className="report-header">
@@ -107,6 +137,16 @@ export function ReportView({ record, onReset }: ReportViewProps) {
             <Code2 size={17} />
             <span>JSON</span>
           </button>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={exportHtml}
+            aria-label="下载独立 HTML 报告"
+            title="下载独立 HTML 报告"
+          >
+            <FileCode2 size={17} />
+            <span>HTML</span>
+          </button>
           <button type="button" className="icon-button icon-button--primary" onClick={onReset}>
             <RotateCcw size={17} />
             <span>新建运行</span>
@@ -127,6 +167,22 @@ export function ReportView({ record, onReset }: ReportViewProps) {
         aria-label="报告视图"
         onKeyDown={handleTabKeyDown}
       >
+        {hasAuditOverview && (
+          <button
+            type="button"
+            role="tab"
+            id="report-tab-overview"
+            aria-controls="report-panel-overview"
+            aria-selected={tab === "overview"}
+            tabIndex={tab === "overview" ? 0 : -1}
+            ref={(element) => { tabRefs.current.overview = element; }}
+            className={tab === "overview" ? "is-active" : ""}
+            onClick={() => selectTab("overview")}
+          >
+            <LayoutDashboard size={16} />
+            审计概览
+          </button>
+        )}
         <button
           type="button"
           role="tab"
@@ -173,58 +229,76 @@ export function ReportView({ record, onReset }: ReportViewProps) {
         </button>
       </div>
 
-      {tab === "report" ? (
-        <article
-          className="markdown-report"
+      {hasAuditOverview && (
+        <div
+          className="audit-overview-panel"
           role="tabpanel"
-          id="report-panel-report"
-          aria-labelledby="report-tab-report"
+          id="report-panel-overview"
+          aria-labelledby="report-tab-overview"
           tabIndex={0}
+          hidden={tab !== "overview"}
+          ref={overviewRef}
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{record.report}</ReactMarkdown>
-        </article>
-      ) : tab === "workflow" && record.workflow ? (
+          <AuditOverview auditReport={record.auditReport} />
+        </div>
+      )}
+
+      <article
+        className="markdown-report"
+        role="tabpanel"
+        id="report-panel-report"
+        aria-labelledby="report-tab-report"
+        tabIndex={0}
+        hidden={tab !== "report"}
+        ref={reportRef}
+      >
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{record.report}</ReactMarkdown>
+      </article>
+
+      {record.workflow && (
         <div
           className="workflow-report"
           role="tabpanel"
           id="report-panel-workflow"
           aria-labelledby="report-tab-workflow"
           tabIndex={0}
+          hidden={tab !== "workflow"}
         >
           <WorkflowProgress steps={record.workflow.steps} compact />
         </div>
-      ) : (
-        <div
-          className="evidence-report"
-          role="tabpanel"
-          id="report-panel-evidence"
-          aria-labelledby="report-tab-evidence"
-          tabIndex={0}
-        >
-          <div className="evidence-manifest">
-            <h2>输入来源</h2>
-            {record.siteUrl && (
-              <div className="manifest-row">
-                <GlobeManifestIcon />
-                <div><strong>公开 URL</strong><span>{record.siteUrl}</span></div>
-              </div>
-            )}
-            {record.evidence.map((file) => (
-              <div className="manifest-row" key={file.name}>
-                <FileText size={16} />
-                <div><strong>{file.name}</strong><span>{Math.round(file.size / 1024)} KB · {file.type}</span></div>
-              </div>
-            ))}
-            {!record.siteUrl && record.evidence.length === 0 && <p>本次运行没有附加外部证据。</p>}
-          </div>
-          {record.auditReport && (
-            <details className="raw-evidence">
-              <summary>查看确定性审计 JSON</summary>
-              <pre>{JSON.stringify(record.auditReport, null, 2)}</pre>
-            </details>
-          )}
-        </div>
       )}
+
+      <div
+        className="evidence-report"
+        role="tabpanel"
+        id="report-panel-evidence"
+        aria-labelledby="report-tab-evidence"
+        tabIndex={0}
+        hidden={tab !== "evidence"}
+      >
+        <div className="evidence-manifest">
+          <h2>输入来源</h2>
+          {record.siteUrl && (
+            <div className="manifest-row">
+              <GlobeManifestIcon />
+              <div><strong>公开 URL</strong><span>{record.siteUrl}</span></div>
+            </div>
+          )}
+          {record.evidence.map((file) => (
+            <div className="manifest-row" key={file.name}>
+              <FileText size={16} />
+              <div><strong>{file.name}</strong><span>{Math.round(file.size / 1024)} KB · {file.type}</span></div>
+            </div>
+          ))}
+          {!record.siteUrl && record.evidence.length === 0 && <p>本次运行没有附加外部证据。</p>}
+        </div>
+        {record.auditReport && (
+          <details className="raw-evidence">
+            <summary>查看确定性审计 JSON</summary>
+            <pre>{JSON.stringify(record.auditReport, null, 2)}</pre>
+          </details>
+        )}
+      </div>
     </section>
   );
 }

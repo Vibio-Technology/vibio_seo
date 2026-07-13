@@ -160,6 +160,101 @@ function inspectionUnavailable(report: Record<string, unknown> | undefined): boo
   return report?.evidence_status === "unavailable";
 }
 
+const ANALYSIS_CONNECTION_ERROR =
+  "分析连接中断，服务端未确认是否完成。输入已保留；请先检查模型用量，再决定是否重新运行，重复提交可能再次计费。";
+const ANALYSIS_TIMEOUT_ERROR =
+  "模型在约 5 分钟的运行窗口内未完成。输入已保留；请重新运行，或改用响应更快的模型。";
+
+type AnalysisStreamOutcome =
+  | { result: AnalysisResponse }
+  | { error: { status: number; detail: string } };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function parseAnalysisStreamLine(
+  line: string,
+  accepted: boolean,
+): { accepted: boolean; outcome?: AnalysisStreamOutcome } {
+  const event = JSON.parse(line) as unknown;
+  if (!isRecord(event) || typeof event.type !== "string") {
+    throw new Error("invalid stream event");
+  }
+  if (event.type === "accepted") return { accepted: true };
+  if (event.type === "heartbeat" && accepted) return { accepted };
+  if (event.type === "complete" && accepted && isRecord(event.result)) {
+    const result = event.result;
+    if (
+      typeof result.report === "string" &&
+      typeof result.provider === "string" &&
+      typeof result.model === "string" &&
+      typeof result.created_at === "string"
+    ) {
+      return { accepted, outcome: { result: result as unknown as AnalysisResponse } };
+    }
+  }
+  if (
+    event.type === "error" &&
+    accepted &&
+    typeof event.status === "number" &&
+    typeof event.detail === "string"
+  ) {
+    return { accepted, outcome: { error: { status: event.status, detail: event.detail } } };
+  }
+  throw new Error("invalid stream event");
+}
+
+async function readAnalysisStream(response: Response): Promise<AnalysisStreamOutcome> {
+  if (!response.body) throw new Error(ANALYSIS_CONNECTION_ERROR);
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let accepted = false;
+
+  const readLines = (): AnalysisStreamOutcome | undefined => {
+    let newline = buffer.indexOf("\n");
+    while (newline >= 0) {
+      const line = buffer.slice(0, newline).trim();
+      buffer = buffer.slice(newline + 1);
+      if (line) {
+        const parsed = parseAnalysisStreamLine(line, accepted);
+        accepted = parsed.accepted;
+        if (parsed.outcome) return parsed.outcome;
+      }
+      newline = buffer.indexOf("\n");
+    }
+    return undefined;
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const outcome = readLines();
+      if (outcome) return outcome;
+    }
+    buffer += decoder.decode();
+    const outcome = readLines();
+    if (outcome) return outcome;
+    if (buffer.trim()) {
+      const parsed = parseAnalysisStreamLine(buffer.trim(), accepted);
+      if (parsed.outcome) return parsed.outcome;
+    }
+  } catch {
+    try {
+      await reader.cancel("invalid or interrupted analysis stream");
+    } catch {
+      // The connection may already be closed.
+    }
+    throw new Error(ANALYSIS_CONNECTION_ERROR);
+  } finally {
+    reader.releaseLock();
+  }
+  throw new Error(ANALYSIS_CONNECTION_ERROR);
+}
+
 function scrollPageTop(): void {
   window.requestAnimationFrame(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -170,6 +265,7 @@ async function inspectSite(
   project: ProjectInput,
   settings: ModelSettings,
   maxPages: number,
+  signal?: AbortSignal,
 ): Promise<Record<string, unknown>> {
   const response = await fetch("/api/inspect", {
     method: "POST",
@@ -182,6 +278,7 @@ async function inspectSite(
       max_pages: maxPages,
       production: false,
     }),
+    signal,
   });
   if (!response.ok) {
     return {
@@ -200,6 +297,7 @@ async function analyzeMode({
   evidence,
   auditReport,
   workflowContext,
+  signal,
 }: {
   mode: ModeId;
   project: ProjectInput;
@@ -207,10 +305,11 @@ async function analyzeMode({
   evidence: EvidenceFile[];
   auditReport?: Record<string, unknown>;
   workflowContext?: unknown;
+  signal?: AbortSignal;
 }): Promise<AnalysisResponse> {
   let response: Response;
   try {
-    response = await fetch("/api/analyze", {
+    response = await fetch("/api/analyze/stream", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -225,19 +324,24 @@ async function analyzeMode({
         audit_report: auditReport,
         ...(workflowContext === undefined ? {} : { workflow_context: workflowContext }),
       }),
+      signal,
     });
   } catch {
-    throw new Error("分析连接在等待模型返回时中断。输入已保留，请重新运行；单次最长等待约 5 分钟。");
+    throw new Error(ANALYSIS_CONNECTION_ERROR);
   }
   if (!response.ok) {
     const message = await readApiError(response);
     throw new Error(
       response.status === 504 && message === "请求失败（504）"
-        ? "模型在最长 5 分钟内未完成。输入已保留，请重新运行或改用 DeepSeek V4 Flash。"
+        ? ANALYSIS_TIMEOUT_ERROR
         : message,
     );
   }
-  return (await response.json()) as AnalysisResponse;
+  const outcome = await readAnalysisStream(response);
+  if ("error" in outcome) {
+    throw new Error(outcome.error.status === 504 ? ANALYSIS_TIMEOUT_ERROR : outcome.error.detail);
+  }
+  return outcome.result;
 }
 
 export function Workspace() {
@@ -259,6 +363,7 @@ export function Workspace() {
   const [editingProject, setEditingProject] = useState(false);
   const [projectEstablished, setProjectEstablished] = useState(false);
   const runLock = useRef(false);
+  const activeRunController = useRef<AbortController | null>(null);
   const workflowExecution = useRef<WorkflowExecution | null>(null);
 
   const mode = useMemo(
@@ -324,6 +429,10 @@ export function Workspace() {
     if (hydrated) saveModelSettings(settings);
   }, [hydrated, settings]);
 
+  useEffect(() => () => {
+    activeRunController.current?.abort("workspace unmounted");
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     void fetch("/api/providers", { signal: controller.signal })
@@ -371,6 +480,9 @@ export function Workspace() {
       return;
     }
 
+    const controller = new AbortController();
+    activeRunController.current = controller;
+
     workflowExecution.current = null;
     setWorkflowSteps([]);
     setExecutionKind("single");
@@ -387,7 +499,7 @@ export function Workspace() {
     try {
       if (shouldInspect) {
         setStage("collecting");
-        auditReport = await inspectSite(runProject, runSettings, runMaxPages);
+        auditReport = await inspectSite(runProject, runSettings, runMaxPages, controller.signal);
       }
 
       setStage("analyzing");
@@ -397,6 +509,7 @@ export function Workspace() {
         settings: runSettings,
         evidence: runEvidence,
         auditReport,
+        signal: controller.signal,
       });
       const createdAt = result.created_at || new Date().toISOString();
       const nextRecord: RunRecord = {
@@ -424,11 +537,13 @@ export function Workspace() {
       setApiConnected(true);
       scrollPageTop();
     } catch (runError) {
+      if (controller.signal.aborted) return;
       const message = runError instanceof Error ? runError.message : "运行失败，请稍后重试。";
       setError(message);
       setStage("error");
       scrollPageTop();
     } finally {
+      if (activeRunController.current === controller) activeRunController.current = null;
       runLock.current = false;
       setExecutionKind(null);
     }
@@ -457,6 +572,9 @@ export function Workspace() {
       runLock.current = false;
       return;
     }
+
+    const controller = new AbortController();
+    activeRunController.current = controller;
 
     const signature = currentWorkflowSignature;
     const existing = workflowExecution.current;
@@ -507,8 +625,10 @@ export function Workspace() {
               auditProject,
               runSettings,
               runMaxPages,
+              controller.signal,
             );
           } catch (inspectionError) {
+            if (controller.signal.aborted) throw inspectionError;
             execution.auditReport = {
               evidence_status: "unavailable",
               reason: inspectionError instanceof Error
@@ -553,6 +673,7 @@ export function Workspace() {
             evidence: runEvidence,
             auditReport: execution.auditReport,
             workflowContext: buildWorkflowContext(steps),
+            signal: controller.signal,
           });
           steps = steps.map((item, itemIndex) =>
             itemIndex === index
@@ -567,6 +688,7 @@ export function Workspace() {
           publishSteps(steps);
           setApiConnected(true);
         } catch (stepError) {
+          if (controller.signal.aborted) return;
           const message = stepError instanceof Error
             ? stepError.message
             : "该阶段运行失败。";
@@ -616,6 +738,7 @@ export function Workspace() {
       setApiConnected(true);
       scrollPageTop();
     } catch (workflowError) {
+      if (controller.signal.aborted) return;
       const message = workflowError instanceof Error
         ? workflowError.message
         : "自动流程无法完成。";
@@ -623,6 +746,7 @@ export function Workspace() {
       setStage("error");
       scrollPageTop();
     } finally {
+      if (activeRunController.current === controller) activeRunController.current = null;
       runLock.current = false;
       setExecutionKind(null);
     }
@@ -652,7 +776,13 @@ export function Workspace() {
             <span>{apiConnected === false ? "本地界面" : apiConnected ? "服务已连接" : "检查服务"}</span>
           </div>
           <span className="version-mark">V5.0</span>
-          <button type="button" className="icon-button" onClick={() => setHistoryOpen(true)}>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => setHistoryOpen(true)}
+            aria-label="运行记录"
+            title="运行记录"
+          >
             <History size={17} />
             <span>运行记录</span>
             {runs.length > 0 && <span className="button-count">{runs.length}</span>}
@@ -665,7 +795,7 @@ export function Workspace() {
           <ModeRail modes={MODES} activeMode={modeId} onChange={changeMode} disabled={running} />
         )}
 
-        <main className="main-workspace">
+        <main className="main-workspace" id="main-content">
           {!hydrated ? (
             <div className="workspace-loading" role="status" aria-label="正在读取项目">
               <span className="workspace-loading__mark" />

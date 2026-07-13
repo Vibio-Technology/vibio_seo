@@ -1,10 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 import type {
   ModeDraft,
   ModeId,
   ProjectInput,
   ProjectProfile,
+  RunRecord,
   WorkspaceDraftV2,
 } from "../src/types";
 
@@ -40,6 +42,10 @@ const providers = {
   ],
 };
 
+function analyzeStreamBody(...events: Array<Record<string, unknown>>): string {
+  return `${events.map((event) => JSON.stringify(event)).join("\n")}\n`;
+}
+
 const DEFAULT_PROFILE: ProjectProfile = {
   projectName: "Vibio 自动化测试",
   siteUrl: "https://example.com",
@@ -52,6 +58,66 @@ const DEFAULT_PROFILE: ProjectProfile = {
   capacity: "SEO 1 人，开发每周 2 天",
   allowNetworkEvidence: true,
   allowStateDraft: true,
+};
+
+const AUDIT_REPORT_FIXTURE: Record<string, unknown> = {
+  schema_version: "seo-inspect-report.v1",
+  analysis_kind: "bounded_seo_artifact_inspection",
+  scope: {
+    base_url: "https://example.com/",
+    evidence_mode: "network",
+    pages_parsed: 2,
+    fetches: 4,
+    sitemap_urls: 2,
+  },
+  findings: [
+    {
+      code: "canonical.mismatch",
+      severity: "high",
+      category: "url-signals",
+      observation: "产品页 canonical 指向首页",
+      evidence: ["HTML 中观察到首页 canonical"],
+      urls: ["https://example.com/product"],
+      impact_boundary: "仅证明当前响应中的规范信号冲突。",
+      verification: "修复后重新抓取并核对响应 HTML。",
+      confidence: "high",
+    },
+    {
+      code: "headings.missing_h1",
+      severity: "medium",
+      category: "content-structure",
+      observation: "首页没有 H1",
+      evidence: ["解析结果 h1_count=0"],
+      urls: ["https://example.com/"],
+    },
+  ],
+  pages: [
+    {
+      url: "https://example.com/",
+      status: 200,
+      content_type: "text/html",
+      titles: ["Example Domain"],
+      canonicals: ["https://example.com/"],
+      noindex: false,
+      h1_count: 0,
+      depth: 0,
+      inbound_links_in_scope: 1,
+      internal_link_count: 1,
+    },
+    {
+      url: "https://example.com/product",
+      status: 200,
+      content_type: "text/html",
+      titles: ["Product"],
+      canonicals: ["https://example.com/"],
+      noindex: false,
+      h1_count: 1,
+      depth: 1,
+      inbound_links_in_scope: 1,
+      internal_link_count: 0,
+    },
+  ],
+  limitations: ["未使用搜索引擎索引数据，不能证明页面已收录。"],
 };
 
 interface WorkspaceDraftOverrides {
@@ -156,6 +222,13 @@ async function injectWorkspace(
       sessionStorage.setItem("vibio:model:api-key", key);
     },
     { draftValue: draft, key: apiKey },
+  );
+}
+
+async function injectRun(page: Page, run: RunRecord): Promise<void> {
+  await page.addInitScript(
+    ({ key, value }) => localStorage.setItem(key, JSON.stringify([value])),
+    { key: RUNS_KEY, value: run },
   );
 }
 
@@ -373,24 +446,48 @@ test("automatic workflow uses each mode draft and resumes only with the same inp
   let keywordAttempts = 0;
 
   await injectWorkspace(page, workflowDraft);
-  await page.route("**/api/analyze", async (route) => {
+  await page.route("**/api/analyze/stream", async (route) => {
     const body = route.request().postDataJSON() as (typeof requestedBodies)[number];
     requestedBodies.push(body);
     if (body.mode === "keyword") {
       keywordAttempts += 1;
       if (keywordAttempts === 1) {
-        await route.fulfill({ status: 503, json: { detail: "模型服务临时限流。" } });
+        await route.fulfill({
+          contentType: "application/x-ndjson",
+          body: analyzeStreamBody(
+            {
+              type: "accepted",
+              provider: "deepseek",
+              model: "deepseek-v4-flash",
+              mode: body.mode.toUpperCase(),
+            },
+            { type: "error", status: 503, detail: "模型服务临时限流。" },
+          ),
+        });
         return;
       }
     }
     await route.fulfill({
-      json: {
-        provider: "deepseek",
-        model: "deepseek-v4-flash",
-        mode: body.mode.toUpperCase(),
-        report: `# ${body.mode.toUpperCase()} 阶段\n\n- 已完成`,
-        created_at: "2026-07-13T08:00:00Z",
-      },
+      contentType: "application/x-ndjson",
+      body: analyzeStreamBody(
+        {
+          type: "accepted",
+          provider: "deepseek",
+          model: "deepseek-v4-flash",
+          mode: body.mode.toUpperCase(),
+        },
+        { type: "heartbeat" },
+        {
+          type: "complete",
+          result: {
+            provider: "deepseek",
+            model: "deepseek-v4-flash",
+            mode: body.mode.toUpperCase(),
+            report: `# ${body.mode.toUpperCase()} 阶段\n\n- 已完成`,
+            created_at: "2026-07-13T08:00:00Z",
+          },
+        },
+      ),
     });
   });
 
@@ -464,16 +561,144 @@ test("analysis connection closure keeps inputs and shows a recoverable error", a
     modes: { audit: { objective: "保留这次审计输入" } },
   });
   await injectWorkspace(page, draft);
-  await page.route("**/api/analyze", async (route) => {
+  await page.route("**/api/analyze/stream", async (route) => {
     await route.abort("connectionclosed");
   });
   await page.goto("/workspace");
 
   await page.getByRole("button", { name: "运行审计" }).click();
 
-  await expect(page.locator(".error-banner")).toContainText("分析连接在等待模型返回时中断");
+  await expect(page.locator(".error-banner")).toContainText("分析连接中断，服务端未确认是否完成");
+  await expect(page.locator(".error-banner")).toContainText("重复提交可能再次计费");
   await expect(page.getByLabel("这次最想确认什么？")).toHaveValue("保留这次审计输入");
   await expect(page.getByRole("button", { name: "运行审计" })).toBeEnabled();
+});
+
+test("stream timeout keeps inputs and explains the five-minute boundary", async ({ page }) => {
+  const draft = createWorkspaceDraft({
+    profile: { allowNetworkEvidence: false },
+    modes: { audit: { objective: "保留超时审计输入" } },
+  });
+  await injectWorkspace(page, draft);
+  await page.route("**/api/analyze/stream", async (route) => {
+    await route.fulfill({
+      contentType: "application/x-ndjson",
+      body: analyzeStreamBody(
+        {
+          type: "accepted",
+          provider: "deepseek",
+          model: "deepseek-v4-pro",
+          mode: "AUDIT",
+        },
+        { type: "heartbeat" },
+        { type: "error", status: 504, detail: "DeepSeek 请求超时。" },
+      ),
+    });
+  });
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "运行审计" }).click();
+
+  await expect(page.locator(".error-banner")).toContainText("约 5 分钟的运行窗口内未完成");
+  await expect(page.getByLabel("这次最想确认什么？")).toHaveValue("保留超时审计输入");
+  await expect(page.getByRole("button", { name: "运行审计" })).toBeEnabled();
+});
+
+test("leaving the workspace aborts an in-flight model request", async ({ page }) => {
+  const draft = createWorkspaceDraft({
+    profile: { allowNetworkEvidence: false },
+    modes: { audit: { objective: "验证离开页面时取消请求" } },
+  });
+  await injectWorkspace(page, draft);
+  await page.addInitScript(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (!url.includes("/api/analyze/stream")) return originalFetch(input, init);
+      sessionStorage.setItem("vibio:test:analysis-started", "true");
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          sessionStorage.setItem("vibio:test:analysis-aborted", "true");
+          reject(new DOMException("Aborted", "AbortError"));
+        }, { once: true });
+      });
+    };
+  });
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "运行审计" }).click();
+  await expect.poll(() => page.evaluate(
+    () => sessionStorage.getItem("vibio:test:analysis-started"),
+  )).toBe("true");
+  await page.getByRole("link", { name: "返回 Vibio SEO 首页" }).click();
+
+  await expect(page).toHaveURL(/\/$/);
+  await expect.poll(() => page.evaluate(
+    () => sessionStorage.getItem("vibio:test:analysis-aborted"),
+  )).toBe("true");
+});
+
+test("deterministic audit opens as a structured overview and exports standalone HTML", async ({ page }) => {
+  const run: RunRecord = {
+    id: "structured-audit-run",
+    mode: "audit",
+    projectName: "结构化审计样例",
+    siteUrl: "https://example.com",
+    market: "德国",
+    language: "de-DE",
+    objective: "定位可核验的搜索阻断",
+    provider: "deepseek",
+    model: "deepseek-v4-pro",
+    report: "# 分析报告\n\n## 三项行动\n\n1. 修复 canonical。",
+    auditReport: AUDIT_REPORT_FIXTURE,
+    evidence: [],
+    createdAt: "2026-07-13T08:00:00Z",
+  };
+  await injectWorkspace(page);
+  await injectRun(page, run);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: /运行记录/ }).click();
+  await page.getByRole("button", { name: /结构化审计样例/ }).click();
+
+  const overviewTab = page.getByRole("tab", { name: "审计概览" });
+  await expect(overviewTab).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "审计概览" })).toBeVisible();
+  const canonicalFinding = page.locator(".audit-overview__observation", {
+    hasText: "产品页 canonical 指向首页",
+  });
+  await expect(canonicalFinding).toBeHidden();
+  await page.getByText("展开 1 条发现").first().click();
+  await expect(canonicalFinding).toBeVisible();
+  await expect(page.locator(".audit-overview__boundary", {
+    hasText: "未使用搜索引擎索引数据，不能证明页面已收录。",
+  })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: "/tmp/vibio-audit-overview-mobile.png" });
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expectNoHorizontalOverflow(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: "/tmp/vibio-audit-overview-desktop.png" });
+
+  await overviewTab.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("tab", { name: "分析报告" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "三项行动" })).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "下载独立 HTML 报告" }).click();
+  const downloaded = await downloadPromise;
+  expect(downloaded.suggestedFilename()).toBe("结构化审计样例-audit-2026-07-13.html");
+  const downloadPath = await downloaded.path();
+  expect(downloadPath).not.toBeNull();
+  const html = await readFile(downloadPath as string, "utf8");
+  expect(html).toContain("<!doctype html>");
+  expect(html).toContain("产品页 canonical 指向首页");
+  expect(html).toContain("修复 canonical");
+  expect(html).not.toContain("<script");
 });
 
 test("history drawer traps focus, closes with Escape, and restores the opener", async ({ page }) => {

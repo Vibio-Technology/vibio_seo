@@ -60,6 +60,29 @@ body {
   background: var(--paper);
 }
 
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 8px;
+  left: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--blue);
+  border-radius: 6px;
+  color: #ffffff;
+  background: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 120ms ease;
+}
+
+.skip-link:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  transform: translateY(0);
+}
+
 button,
 input,
 textarea,
@@ -1843,6 +1866,28 @@ details[open] > .advanced-summary::after {
 
 .workflow-report {
   padding: 23px 0;
+}
+
+.audit-overview-panel {
+  min-width: 0;
+  padding: 25px 0 34px;
+}
+
+.audit-overview,
+.audit-overview__pages-section,
+.audit-overview__pages {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.audit-overview__pages {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+[role="tabpanel"][hidden] {
+  display: none !important;
 }
 
 .evidence-manifest {

@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { POST, compactAuditReport, maxDuration as analyzeMaxDuration } from "../../app/api/analyze/route";
+import {
+  HEARTBEAT_INTERVAL_MS,
+  POST as STREAM_POST,
+} from "../../app/api/analyze/stream/route";
 import { MAX_KNOWLEDGE_BYTES, SUPPORTED_MODES, loadModeKnowledge } from "./knowledge";
 import {
   PROVIDERS,
@@ -34,6 +38,30 @@ function analyzeRequest(
     headers,
     body: JSON.stringify(body),
   });
+}
+
+function streamAnalyzeRequest(
+  body: Record<string, unknown>,
+  apiKey: string | null = "temporary-test-key",
+  signal?: AbortSignal,
+): Request {
+  const headers = new Headers({ "Content-Type": "application/json" });
+  if (apiKey !== null) headers.set("X-Vibio-Api-Key", apiKey);
+  return new Request("http://localhost/api/analyze/stream", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+async function readStreamEvents(response: Response): Promise<Array<Record<string, unknown>>> {
+  const text = await response.text();
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
 }
 
 const VALID_BODY = {
@@ -124,6 +152,7 @@ describe("provider catalog", () => {
 
   it("keeps the timeout active while reading a stalled provider body", async () => {
     expect(analyzeMaxDuration).toBe(300);
+    expect(analyzeMaxDuration * 1_000 - PROVIDER_TIMEOUT_MS).toBeGreaterThanOrEqual(25_000);
     vi.useFakeTimers();
     const slowFetch = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
       const signal = init?.signal;
@@ -338,5 +367,112 @@ describe("POST /api/analyze", () => {
     const response = await POST(analyzeRequest({ ...VALID_BODY, [secretField]: "value" }));
     expect(response.status).toBe(422);
     expect(JSON.stringify(await response.json())).not.toContain(secretField);
+  });
+});
+
+describe("POST /api/analyze/stream", () => {
+  it("emits accepted followed by the completed frontend contract", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      Response.json({ choices: [{ message: { content: "# 流式结果" } }] }),
+    ));
+
+    const response = await STREAM_POST(streamAnalyzeRequest(VALID_BODY));
+    const events = await readStreamEvents(response);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("application/x-ndjson");
+    expect(events.map((event) => event.type)).toEqual(["accepted", "complete"]);
+    expect(events[0]).toMatchObject({
+      provider: "openai",
+      model: "gpt-4.1-mini",
+      mode: "AUDIT",
+    });
+    expect(events[1].result).toMatchObject({
+      provider: "openai",
+      model: "gpt-4.1-mini",
+      mode: "AUDIT",
+      report: "# 流式结果",
+      markdown: "# 流式结果",
+    });
+    expect(JSON.stringify(events)).not.toContain("temporary-test-key");
+  });
+
+  it("emits a heartbeat every ten seconds while the provider is pending", async () => {
+    vi.useFakeTimers();
+    let providerSignal: AbortSignal | undefined;
+    vi.stubGlobal("fetch", vi.fn(async (_input: string | URL | Request, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        providerSignal = init?.signal ?? undefined;
+        providerSignal?.addEventListener("abort", () => {
+          reject(new DOMException("Aborted", "AbortError"));
+        }, { once: true });
+      }),
+    ));
+
+    const response = await STREAM_POST(streamAnalyzeRequest(VALID_BODY));
+    const reader = response.body?.getReader();
+    expect(reader).toBeDefined();
+    const decoder = new TextDecoder();
+    const accepted = await reader!.read();
+    expect(JSON.parse(decoder.decode(accepted.value).trim())).toMatchObject({ type: "accepted" });
+
+    let heartbeatSettled = false;
+    const heartbeat = reader!.read().then((result) => {
+      heartbeatSettled = true;
+      return result;
+    });
+    await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS - 1);
+    expect(heartbeatSettled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    const heartbeatResult = await heartbeat;
+    expect(JSON.parse(decoder.decode(heartbeatResult.value).trim())).toEqual({ type: "heartbeat" });
+
+    await reader!.cancel("test complete");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(providerSignal?.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("redacts provider errors before writing the terminal event", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      Response.json(
+        { error: { message: "invalid key temporary-test-key" } },
+        { status: 400 },
+      ),
+    ));
+
+    const response = await STREAM_POST(streamAnalyzeRequest(VALID_BODY));
+    const events = await readStreamEvents(response);
+
+    expect(events.map((event) => event.type)).toEqual(["accepted", "error"]);
+    expect(events[1]).toMatchObject({ status: 502 });
+    expect(events[1].detail).toContain("[redacted]");
+    expect(JSON.stringify(events)).not.toContain("temporary-test-key");
+  });
+
+  it("aborts the provider and closes the stream when the request disconnects", async () => {
+    const requestController = new AbortController();
+    let providerSignal: AbortSignal | undefined;
+    vi.stubGlobal("fetch", vi.fn(async (_input: string | URL | Request, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        providerSignal = init?.signal ?? undefined;
+        providerSignal?.addEventListener("abort", () => {
+          reject(new DOMException("Aborted", "AbortError"));
+        }, { once: true });
+      }),
+    ));
+
+    const response = await STREAM_POST(
+      streamAnalyzeRequest(VALID_BODY, "temporary-test-key", requestController.signal),
+    );
+    const reader = response.body?.getReader();
+    expect(reader).toBeDefined();
+    const accepted = await reader!.read();
+    expect(new TextDecoder().decode(accepted.value)).toContain('"type":"accepted"');
+
+    requestController.abort();
+    const closed = await reader!.read();
+    expect(closed.done).toBe(true);
+    expect(providerSignal?.aborted).toBe(true);
   });
 });

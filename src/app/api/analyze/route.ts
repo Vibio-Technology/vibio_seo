@@ -27,6 +27,30 @@ interface AnalyzeRequest {
   workflowContext: unknown | null;
 }
 
+export interface AnalysisResult {
+  provider: string;
+  model: string;
+  mode: string;
+  report: string;
+  markdown: string;
+  created_at: string;
+  knowledge_sources: string[];
+}
+
+export interface PreparedAnalysis {
+  apiKey: string;
+  providerId: string;
+  model: string;
+  mode: string;
+  messages: ChatMessage[];
+  knowledgeSources: string[];
+}
+
+export interface PublicAnalyzeError {
+  status: number;
+  detail: string;
+}
+
 const ALLOWED_FIELDS = new Set([
   "provider",
   "model",
@@ -257,13 +281,21 @@ function isoTimestamp(): string {
   return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
-export async function POST(request: Request): Promise<Response> {
+export function toPublicAnalyzeError(error: unknown): PublicAnalyzeError {
+  if (error instanceof PublicHttpError) return { status: error.status, detail: error.detail };
+  if (error instanceof PrivacyViolation) return { status: 400, detail: error.message };
+  if (error instanceof ProviderError) return { status: error.status, detail: error.detail };
+  if (error instanceof KnowledgeError) return { status: 400, detail: error.message };
+  return { status: 500, detail: "分析请求无法完成。" };
+}
+
+export async function prepareAnalyzeRequest(request: Request): Promise<PreparedAnalysis> {
   let parsed: AnalyzeRequest;
   try {
     parsed = parseAnalyzeRequest(await readBoundedJson(request));
   } catch (error) {
-    if (error instanceof PublicHttpError) return jsonError(error.status, error.detail);
-    return jsonError(400, "请求体无法处理。");
+    if (error instanceof PublicHttpError) throw error;
+    throw new PublicHttpError(400, "请求体无法处理。");
   }
 
   let apiKey: string;
@@ -271,43 +303,61 @@ export async function POST(request: Request): Promise<Response> {
     apiKey = validateApiKey(request.headers.get("X-Vibio-Api-Key"));
   } catch (error) {
     const detail = error instanceof PrivacyViolation ? error.message : "API 密钥格式无效。";
-    return jsonError(401, detail);
+    throw new PublicHttpError(401, detail);
   }
 
-  try {
-    const auditReport = compactAuditReport(parsed.auditReport);
-    validateAnalyzePayload(
-      parsed.project,
-      parsed.evidence,
-      auditReport,
-      parsed.workflowContext,
-    );
-    const provider = getProvider(parsed.provider);
-    const model = validateModelId(parsed.model);
-    const knowledge = loadModeKnowledge(parsed.mode);
-    const markdown = await chatCompletion({
-      providerId: provider.id,
-      apiKey,
-      model,
-      messages: analysisMessages({ ...parsed, auditReport }, knowledge.prompt),
-    });
+  const auditReport = compactAuditReport(parsed.auditReport);
+  validateAnalyzePayload(
+    parsed.project,
+    parsed.evidence,
+    auditReport,
+    parsed.workflowContext,
+  );
+  const provider = getProvider(parsed.provider);
+  const model = validateModelId(parsed.model);
+  const knowledge = loadModeKnowledge(parsed.mode);
+  return {
+    apiKey,
+    providerId: provider.id,
+    model,
+    mode: knowledge.mode,
+    messages: analysisMessages({ ...parsed, auditReport }, knowledge.prompt),
+    knowledgeSources: [knowledge.skillSource, ...knowledge.referenceSources],
+  };
+}
 
+export async function runPreparedAnalysis(
+  analysis: PreparedAnalysis,
+  signal?: AbortSignal,
+): Promise<AnalysisResult> {
+  const markdown = await chatCompletion({
+    providerId: analysis.providerId,
+    apiKey: analysis.apiKey,
+    model: analysis.model,
+    messages: analysis.messages,
+    signal,
+  });
+  return {
+    provider: analysis.providerId,
+    model: analysis.model,
+    mode: analysis.mode,
+    report: markdown,
+    markdown,
+    created_at: isoTimestamp(),
+    knowledge_sources: analysis.knowledgeSources,
+  };
+}
+
+export async function POST(request: Request): Promise<Response> {
+  try {
+    const analysis = await prepareAnalyzeRequest(request);
+    const result = await runPreparedAnalysis(analysis, request.signal);
     return Response.json(
-      {
-        provider: provider.id,
-        model,
-        mode: knowledge.mode,
-        report: markdown,
-        markdown,
-        created_at: isoTimestamp(),
-        knowledge_sources: [knowledge.skillSource, ...knowledge.referenceSources],
-      },
+      result,
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    if (error instanceof PrivacyViolation) return jsonError(400, error.message);
-    if (error instanceof ProviderError) return jsonError(error.status, error.detail);
-    if (error instanceof KnowledgeError) return jsonError(400, error.message);
-    return jsonError(500, "分析请求无法完成。");
+    const publicError = toPublicAnalyzeError(error);
+    return jsonError(publicError.status, publicError.detail);
   }
 }

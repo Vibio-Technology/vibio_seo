@@ -4,6 +4,9 @@ import { Workspace } from "@/components/Workspace";
 
 export const metadata: Metadata = {
   title: "Vibio SEO 工作台",
+  alternates: {
+    canonical: "/workspace",
+  },
   robots: {
     index: false,
     follow: false,

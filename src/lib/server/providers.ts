@@ -1,6 +1,6 @@
 import { MAX_PROVIDER_RESPONSE_BYTES } from "./privacy";
 
-export const PROVIDER_TIMEOUT_MS = 290_000;
+export const PROVIDER_TIMEOUT_MS = 275_000;
 
 export interface ChatMessage {
   role: "system" | "user";
@@ -258,13 +258,24 @@ export async function chatCompletion(options: {
   apiKey: string;
   model: string;
   messages: ReadonlyArray<ChatMessage>;
+  signal?: AbortSignal;
   fetchImpl?: typeof fetch;
 }): Promise<string> {
   const provider = getProvider(options.providerId);
   const model = validateModelId(options.model);
   const fetchImpl = options.fetchImpl ?? fetch;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+  let timedOut = false;
+  const abortFromCaller = () => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) {
+    abortFromCaller();
+  } else {
+    options.signal?.addEventListener("abort", abortFromCaller, { once: true });
+  }
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, PROVIDER_TIMEOUT_MS);
 
   try {
     const response = await fetchImpl(provider.endpoint, {
@@ -294,9 +305,11 @@ export async function chatCompletion(options: {
     return messageContent(parseJson(responseBytes, provider));
   } catch (error) {
     if (error instanceof ProviderError) throw error;
-    if (controller.signal.aborted) throw new ProviderError(`${provider.label} 请求超时。`, 504);
+    if (timedOut) throw new ProviderError(`${provider.label} 请求超时。`, 504);
+    if (options.signal?.aborted) throw new ProviderError(`${provider.label} 请求已取消。`, 499);
     throw new ProviderError(`无法连接 ${provider.label} 服务。`, 502);
   } finally {
     clearTimeout(timeout);
+    options.signal?.removeEventListener("abort", abortFromCaller);
   }
 }
