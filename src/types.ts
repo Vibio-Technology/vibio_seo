@@ -8,6 +8,8 @@ export type ModeId =
   | "review"
   | "recover";
 
+export type WorkspaceExecutionMode = "single" | "automation";
+
 export type RunStage =
   | "idle"
   | "validating"
@@ -153,7 +155,13 @@ export interface RunRecord {
   workflow?: WorkflowRunSummary;
 }
 
-export type WorkflowStepStatus = "pending" | "running" | "complete" | "skipped" | "error";
+export type WorkflowStepStatus =
+  | "pending"
+  | "running"
+  | "complete"
+  | "waiting"
+  | "skipped"
+  | "error";
 
 export interface WorkflowStep {
   mode: ModeId;
@@ -161,6 +169,7 @@ export interface WorkflowStep {
   report?: string;
   reason?: string;
   createdAt?: string;
+  inputModes?: ModeId[];
 }
 
 export type WorkflowStepState = WorkflowStep;
@@ -172,12 +181,35 @@ export interface WorkflowRunSummary {
   steps: WorkflowStep[];
 }
 
+export interface WorkflowExecutionSnapshot {
+  schemaVersion: 1;
+  signature: string;
+  coreSignature: string;
+  startedAt: string;
+  inspectionComplete: boolean;
+  maxPages: number;
+  auditReport?: Record<string, unknown>;
+  steps: WorkflowStep[];
+  recordId?: string;
+}
+
 export interface WorkflowContextReport {
   mode: ModeId;
+  artifactKind: WorkflowArtifactKind;
   report: string;
   truncated: boolean;
   createdAt?: string;
 }
+
+export type WorkflowArtifactKind =
+  | "execution_plan"
+  | "audit_findings"
+  | "fix_contract"
+  | "query_map"
+  | "publish_package"
+  | "link_plan"
+  | "review_decision"
+  | "incident_assessment";
 
 export interface WorkflowContext {
   schemaVersion: "vibio-web.workflow-context.v1";

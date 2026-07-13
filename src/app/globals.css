@@ -349,6 +349,41 @@ select:disabled {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
+.mode-rail__switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 10px 10px 0;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-soft);
+  gap: 3px;
+}
+
+.mode-rail__switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 31px;
+  padding: 0 5px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 720;
+}
+
+.mode-rail__switch button.is-active {
+  border-color: var(--line-strong);
+  color: var(--blue-dark);
+  background: var(--surface);
+  box-shadow: 0 2px 7px rgba(23, 32, 51, 0.07);
+}
+
 .mode-rail__items {
   display: grid;
   gap: 6px;
@@ -741,6 +776,445 @@ details[open] > .advanced-summary::after {
 
 .mode-task-form__advanced-fields .field:last-child:nth-child(2) {
   grid-column: 1 / -1;
+}
+
+.handoff-banner {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  margin: -8px 0 24px;
+  padding: 10px 12px;
+  border: 1px solid #bfd6fb;
+  border-left: 3px solid var(--blue);
+  border-radius: 0 7px 7px 0;
+  color: var(--muted);
+  background: var(--blue-soft);
+  gap: 7px 10px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.handoff-banner__label {
+  color: var(--blue-dark);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.handoff-banner strong {
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.automation-workspace {
+  min-width: 0;
+  padding-top: 30px;
+}
+
+.automation-intro {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: start;
+  padding: 4px 0 27px;
+  gap: 14px;
+}
+
+.automation-intro > div,
+.automation-section,
+.automation-console,
+.automation-latest-output,
+.automation-latest-output > header > div {
+  min-width: 0;
+}
+
+.automation-intro__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #a8caff;
+  border-radius: 8px;
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.automation-intro h1 {
+  margin: 5px 0 6px;
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.automation-intro p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.automation-section,
+.automation-console {
+  padding: 24px 0 28px;
+  border-top: 1px solid var(--line);
+}
+
+.automation-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.automation-section-heading > div {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 9px;
+}
+
+.automation-section-heading h2,
+.automation-section-heading h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.automation-section-heading > span {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.automation-section-number {
+  color: var(--blue);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.automation-objective textarea {
+  min-height: 110px;
+  font-size: 15px;
+}
+
+.automation-recipes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.automation-recipes button {
+  display: grid;
+  min-width: 0;
+  min-height: 76px;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  cursor: pointer;
+  gap: 5px;
+  text-align: left;
+}
+
+.automation-recipes button:hover,
+.automation-recipes button.is-active {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.automation-recipes button span {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.automation-recipes button small {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.automation-route-editor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.automation-route-node {
+  display: grid;
+  grid-template-columns: 18px 27px minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 58px;
+  padding: 8px 10px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  gap: 8px;
+  background: var(--surface);
+}
+
+.automation-route-node.is-selected {
+  background: var(--surface-soft);
+}
+
+.automation-route-node input,
+.automation-evidence-item input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--blue);
+}
+
+.automation-route-node__index {
+  color: var(--muted-light);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+}
+
+.automation-route-node > span:nth-of-type(2),
+.automation-evidence-item > span:nth-of-type(2) {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.automation-route-node strong,
+.automation-evidence-item strong {
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.automation-route-node small,
+.automation-evidence-item small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.automation-route-node em,
+.automation-evidence-item em {
+  color: var(--muted-light);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.automation-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.automation-evidence-item {
+  display: grid;
+  grid-template-columns: 18px 30px minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 60px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+  gap: 8px;
+  background: var(--surface);
+}
+
+.automation-evidence-item.is-selected {
+  border-color: #b8cce8;
+  background: var(--surface-soft);
+}
+
+.automation-evidence-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 7px;
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.automation-evidence-item em {
+  display: inline-flex;
+  align-items: center;
+  color: #8a6118;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.automation-evidence-item em.is-ready {
+  color: var(--green);
+}
+
+.automation-policy-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.automation-policy-options button {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--surface);
+  cursor: pointer;
+  gap: 9px;
+  text-align: left;
+}
+
+.automation-policy-options button.is-active {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.automation-policy-options button > span {
+  display: grid;
+  gap: 3px;
+}
+
+.automation-policy-options strong {
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.automation-policy-options small {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.automation-recipe-tag {
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 9px;
+}
+
+.automation-console .workflow-progress {
+  padding: 0;
+}
+
+.automation-latest-output {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.automation-latest-output > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.automation-latest-output h3 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.automation-markdown {
+  max-height: 330px;
+  margin-top: 13px;
+  overflow: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink-soft);
+  background: var(--surface-soft);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.automation-markdown > :first-child { margin-top: 0; }
+.automation-markdown > :last-child { margin-bottom: 0; }
+.automation-markdown h1 { font-size: 18px; }
+.automation-markdown h2 { font-size: 14px; }
+.automation-markdown h3 { font-size: 12px; }
+.automation-markdown pre { max-width: 100%; overflow: auto; }
+.automation-markdown table { display: block; max-width: 100%; overflow-x: auto; }
+
+.automation-handoff {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #bfd6fb;
+  border-radius: 7px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  gap: 9px;
+}
+
+.automation-handoff > div {
+  display: grid;
+  gap: 2px;
+}
+
+.automation-handoff span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.automation-handoff strong {
+  color: var(--ink);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.report-next-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid #bfd6fb;
+  border-radius: 8px;
+  background: var(--blue-soft);
+  gap: 18px;
+}
+
+.report-next-action > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.report-next-action strong {
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.report-next-action .run-button {
+  min-width: 185px;
+}
+
+.run-actions--single {
+  flex: 0 0 auto;
 }
 
 .mode-intro {
@@ -1400,6 +1874,17 @@ details[open] > .advanced-summary::after {
   border-color: var(--green);
   color: var(--green);
   background: var(--green-soft);
+}
+
+.workflow-step--waiting .workflow-step__index,
+.workflow-step--waiting .workflow-step__state {
+  border-color: #d6a348;
+  color: #8a6118;
+  background: var(--gold-soft);
+}
+
+.workflow-step__body .workflow-step__handoff {
+  color: var(--blue-dark);
 }
 
 .workflow-step--skipped .workflow-step__index {
@@ -2227,7 +2712,9 @@ details[open] > .advanced-summary::after {
     position: sticky;
     z-index: 35;
     top: 58px;
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(190px, 220px) minmax(0, 1fr);
+    align-items: stretch;
     width: 100%;
     height: 62px;
     overflow: hidden;
@@ -2240,12 +2727,30 @@ details[open] > .advanced-summary::after {
     display: none;
   }
 
+  .mode-rail__switch {
+    align-self: stretch;
+    min-width: 0;
+    margin: 6px;
+  }
+
+  .mode-rail__switch button {
+    min-height: 0;
+    white-space: nowrap;
+  }
+
+  .mode-rail__switch button svg {
+    flex: 0 0 auto;
+  }
+
   .mode-rail__items {
     display: grid;
     grid-auto-columns: minmax(128px, 150px);
     grid-auto-flow: column;
+    min-width: 0;
     height: 61px;
     padding: 0;
+    border-left: 1px solid var(--line);
+    gap: 0;
     overflow-x: auto;
     overflow-y: hidden;
   }
@@ -2308,6 +2813,21 @@ details[open] > .advanced-summary::after {
 }
 
 @media (max-width: 620px) {
+  .mode-rail {
+    grid-template-columns: 176px minmax(0, 1fr);
+  }
+
+  .mode-rail__switch {
+    margin-right: 5px;
+    margin-left: 5px;
+    gap: 2px;
+  }
+
+  .mode-rail__switch button {
+    padding: 0 3px;
+    gap: 4px;
+  }
+
   .mode-intro {
     grid-template-columns: 44px minmax(0, 1fr);
     padding-bottom: 23px;
@@ -2326,6 +2846,92 @@ details[open] > .advanced-summary::after {
 
   .mode-intro p {
     font-size: 12px;
+  }
+
+  .automation-workspace {
+    padding-top: 22px;
+  }
+
+  .automation-intro {
+    grid-template-columns: 44px minmax(0, 1fr);
+    padding-bottom: 22px;
+    gap: 12px;
+  }
+
+  .automation-intro__icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .automation-intro h1 {
+    font-size: 25px;
+  }
+
+  .automation-intro > .text-button {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .automation-section,
+  .automation-console {
+    padding-top: 20px;
+    padding-bottom: 23px;
+  }
+
+  .automation-section-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .automation-section-heading > span {
+    text-align: left;
+  }
+
+  .automation-recipes,
+  .automation-route-editor,
+  .automation-evidence-grid,
+  .automation-policy-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .automation-recipes button,
+  .automation-route-node,
+  .automation-evidence-item,
+  .automation-policy-options button {
+    max-width: 100%;
+  }
+
+  .automation-route-node,
+  .automation-evidence-item {
+    overflow: hidden;
+  }
+
+  .automation-latest-output > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .handoff-banner {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 3px;
+  }
+
+  .handoff-banner strong,
+  .handoff-banner > span:last-child {
+    overflow-wrap: anywhere;
+  }
+
+  .report-next-action {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .report-next-action .run-button {
+    width: 100%;
+    min-width: 0;
   }
 
   .form-grid--two,
@@ -2415,6 +3021,10 @@ details[open] > .advanced-summary::after {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     width: 100%;
+  }
+
+  .run-actions--single {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .run-button {

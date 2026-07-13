@@ -2,6 +2,7 @@ import type {
   EvidenceFile,
   ModeId,
   ProjectInput,
+  WorkflowArtifactKind,
   WorkflowContext,
   WorkflowStep,
   WorkflowStepStatus,
@@ -24,6 +25,28 @@ export const MAX_WORKFLOW_REPORT_JSON_BYTES = 48 * 1024;
 const RECOVERY_WAITING_REASON = "未发现明确的流量下滑、搜索表现骤降或索引异常信号。";
 const REVIEW_WAITING_REASON =
   "等待已上线变更，或 GSC、GA4、CRM、实验类可比测量证据后再复盘。";
+
+const WORKFLOW_ARTIFACTS: Record<ModeId, WorkflowArtifactKind> = {
+  plan: "execution_plan",
+  audit: "audit_findings",
+  fix: "fix_contract",
+  keyword: "query_map",
+  write: "publish_package",
+  link: "link_plan",
+  review: "review_decision",
+  recover: "incident_assessment",
+};
+
+const MODE_CONTEXT_INPUTS: Record<ModeId, readonly ModeId[]> = {
+  recover: [],
+  audit: ["recover", "plan"],
+  keyword: ["audit", "recover", "plan"],
+  plan: ["recover", "audit", "keyword"],
+  fix: ["recover", "audit", "plan"],
+  write: ["keyword", "plan", "fix"],
+  link: ["audit", "plan", "write"],
+  review: ["plan", "fix", "write", "link"],
+};
 
 const RECOVERY_PATTERNS = [
   /(?:自然搜索|搜索|organic\s+)?(?:流量|点击|曝光|排名|收录|索引).{0,12}(?:下滑|下降|骤降|暴跌|锐减|减少|丢失|消失|掉出|异常)/i,
@@ -90,6 +113,7 @@ const STATUS_LABELS: Record<WorkflowStepStatus, string> = {
   pending: "待运行",
   running: "运行中",
   complete: "已完成",
+  waiting: "等待材料",
   skipped: "已跳过",
   error: "失败",
 };
@@ -179,7 +203,7 @@ export function buildWorkflowPlan(
       return { mode, status: "skipped", reason: RECOVERY_WAITING_REASON };
     }
     if (mode === "review" && !reviewReady) {
-      return { mode, status: "skipped", reason: REVIEW_WAITING_REASON };
+      return { mode, status: "waiting", reason: REVIEW_WAITING_REASON };
     }
     return { mode, status: "pending" };
   });
@@ -197,6 +221,7 @@ export function buildWorkflowContext(steps: readonly WorkflowStep[]): WorkflowCo
       const bounded = truncateReportForContext(report);
       return {
         mode: step.mode,
+        artifactKind: WORKFLOW_ARTIFACTS[step.mode],
         report: bounded.report,
         truncated: bounded.truncated,
         ...(step.createdAt ? { createdAt: step.createdAt } : {}),
@@ -207,6 +232,26 @@ export function buildWorkflowContext(steps: readonly WorkflowStep[]): WorkflowCo
     schemaVersion: "vibio-web.workflow-context.v1",
     completedReports,
   };
+}
+
+export function buildWorkflowContextForMode(
+  steps: readonly WorkflowStep[],
+  targetMode: ModeId,
+): WorkflowContext {
+  const preferredModes = new Set(MODE_CONTEXT_INPUTS[targetMode]);
+  let relevant = steps.filter(
+    (step) => step.status === "complete" && preferredModes.has(step.mode),
+  );
+  if (targetMode === "review" && relevant.length > MAX_WORKFLOW_CONTEXT_REPORTS) {
+    const plan = relevant.find((step) => step.mode === "plan");
+    if (plan) {
+      relevant = [
+        plan,
+        ...relevant.filter((step) => step !== plan).slice(-(MAX_WORKFLOW_CONTEXT_REPORTS - 1)),
+      ];
+    }
+  }
+  return buildWorkflowContext(relevant);
 }
 
 function inline(value: string): string {
@@ -233,6 +278,7 @@ export function aggregateWorkflowMarkdown(
     `- 运行中：${counts.running}`,
     `- 待运行：${counts.pending}`,
     `- 已跳过：${counts.skipped}`,
+    `- 等待材料：${counts.waiting}`,
     `- 失败：${counts.error}`,
   ];
 
@@ -245,6 +291,9 @@ export function aggregateWorkflowMarkdown(
     lines.push(`- 状态：${STATUS_LABELS[step.status]}`);
     if (step.createdAt) lines.push(`- 完成时间：${step.createdAt}`);
     if (step.reason?.trim()) lines.push(`- 说明：${step.reason.trim()}`);
+    if (step.inputModes?.length) {
+      lines.push(`- 自动继承：${step.inputModes.map((mode) => MODE_LABELS[mode]).join("、")}`);
+    }
     lines.push("");
 
     if (step.status === "complete") {

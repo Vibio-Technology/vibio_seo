@@ -14,7 +14,21 @@ const WORKSPACE_DRAFT_KEY = "vibio:workspace:draft:v2";
 const LEGACY_PROJECT_KEY = "vibio:project:draft";
 const MODEL_PREFERENCE_KEY = "vibio:model:preference";
 const API_KEY_SESSION_KEY = "vibio:model:api-key";
+const ACTIVE_WORKFLOW_KEY = "vibio:automation:active:v1";
 const RUNS_KEY = "vibio:runs";
+
+interface AnalyzeRequestBody {
+  mode: ModeId;
+  project: ProjectInput;
+  workflow_context?: {
+    schemaVersion?: string;
+    completedReports?: Array<{
+      mode: ModeId;
+      artifactKind?: string;
+      report: string;
+    }>;
+  };
+}
 
 const MODE_IDS: readonly ModeId[] = [
   "plan",
@@ -44,6 +58,38 @@ const providers = {
 
 function analyzeStreamBody(...events: Array<Record<string, unknown>>): string {
   return `${events.map((event) => JSON.stringify(event)).join("\n")}\n`;
+}
+
+async function mockSuccessfulAnalyses(
+  page: Page,
+  requestedBodies: AnalyzeRequestBody[],
+): Promise<void> {
+  await page.route("**/api/analyze/stream", async (route) => {
+    const body = route.request().postDataJSON() as AnalyzeRequestBody;
+    requestedBodies.push(body);
+    await route.fulfill({
+      contentType: "application/x-ndjson",
+      body: analyzeStreamBody(
+        {
+          type: "accepted",
+          provider: "deepseek",
+          model: "deepseek-v4-flash",
+          mode: body.mode.toUpperCase(),
+        },
+        { type: "heartbeat" },
+        {
+          type: "complete",
+          result: {
+            provider: "deepseek",
+            model: "deepseek-v4-flash",
+            mode: body.mode.toUpperCase(),
+            report: `# ${body.mode.toUpperCase()} 阶段\n\n- ${body.mode} 已完成`,
+            created_at: "2026-07-13T08:00:00Z",
+          },
+        },
+      ),
+    });
+  });
 }
 
 const DEFAULT_PROFILE: ProjectProfile = {
@@ -436,123 +482,261 @@ test("legacy project storage migrates into the shared project context", async ({
   );
 });
 
-test("automatic workflow uses each mode draft and resumes only with the same inputs", async ({ page }) => {
+test("single-step plan hands off to audit and audit hands off to fix without overwriting the fix draft", async ({ page }) => {
   const workflowDraft = createWorkflowDraft();
-  const requestedBodies: Array<{
-    mode: ModeId;
-    project: ProjectInput;
-    workflow_context?: { completedReports?: Array<{ mode: ModeId }> };
-  }> = [];
-  let keywordAttempts = 0;
+  workflowDraft.profile.allowNetworkEvidence = true;
+  workflowDraft.modes.fix.objective = "";
+  const originalFixDraft = { ...workflowDraft.modes.fix };
+  const requestedBodies: AnalyzeRequestBody[] = [];
+  let inspectionAttempts = 0;
 
   await injectWorkspace(page, workflowDraft);
-  await page.route("**/api/analyze/stream", async (route) => {
-    const body = route.request().postDataJSON() as (typeof requestedBodies)[number];
-    requestedBodies.push(body);
-    if (body.mode === "keyword") {
-      keywordAttempts += 1;
-      if (keywordAttempts === 1) {
-        await route.fulfill({
-          contentType: "application/x-ndjson",
-          body: analyzeStreamBody(
-            {
-              type: "accepted",
-              provider: "deepseek",
-              model: "deepseek-v4-flash",
-              mode: body.mode.toUpperCase(),
-            },
-            { type: "error", status: 503, detail: "模型服务临时限流。" },
-          ),
-        });
-        return;
-      }
+  await mockSuccessfulAnalyses(page, requestedBodies);
+  await page.route("**/api/inspect", async (route) => {
+    inspectionAttempts += 1;
+    if (inspectionAttempts === 1) {
+      await route.fulfill({ status: 502, json: { detail: "站点证据暂时不可用" } });
+      return;
     }
-    await route.fulfill({
-      contentType: "application/x-ndjson",
-      body: analyzeStreamBody(
-        {
-          type: "accepted",
-          provider: "deepseek",
-          model: "deepseek-v4-flash",
-          mode: body.mode.toUpperCase(),
-        },
-        { type: "heartbeat" },
-        {
-          type: "complete",
-          result: {
-            provider: "deepseek",
-            model: "deepseek-v4-flash",
-            mode: body.mode.toUpperCase(),
-            report: `# ${body.mode.toUpperCase()} 阶段\n\n- 已完成`,
-            created_at: "2026-07-13T08:00:00Z",
-          },
-        },
-      ),
-    });
+    await route.fulfill({ json: { report: AUDIT_REPORT_FIXTURE } });
   });
 
   await page.goto("/workspace");
-  await page.getByRole("button", { name: "自动跑全流程" }).click();
-  await expect(page.locator(".error-banner")).toContainText("关键词阶段失败");
-  await expect(page.getByRole("button", { name: "从关键词继续" })).toBeVisible();
-  expect(requestedBodies.map(({ mode }) => mode)).toEqual(["audit", "recover", "keyword"]);
+  await page.getByRole("button", { name: /^计划/ }).click();
+  await page.getByRole("button", { name: "运行计划" }).click();
+  await expect(page.getByRole("button", { name: "按此计划开始审计" })).toBeVisible();
 
-  const auditObjective = page.getByLabel("这次最想确认什么？");
-  await auditObjective.fill(`${workflowDraft.modes.audit.objective}（已修改）`);
-  await expect(page.getByRole("button", { name: "重新运行全流程" })).toBeVisible();
-  await auditObjective.fill(workflowDraft.modes.audit.objective);
-  await expect(page.getByRole("button", { name: "从关键词继续" })).toBeVisible();
+  await page.getByRole("button", { name: "按此计划开始审计" }).click();
+  await expect(page.getByRole("heading", { name: "定位搜索阻断" })).toBeVisible();
+  await expect(page.locator(".handoff-banner")).toContainText("自动继承计划");
+  await page.getByRole("button", { name: "运行审计" }).click();
+  await expect(page.getByRole("button", { name: "根据审计生成修复" })).toBeVisible();
 
-  await page.getByRole("button", { name: "从关键词继续" }).click();
-  await expect(page.getByRole("heading", {
-    level: 1,
-    name: "Vibio 自动化测试 SEO 全流程报告",
-  })).toBeVisible();
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(1);
+  await page.getByRole("button", { name: "根据审计生成修复" }).click();
+  await expect(page.getByRole("heading", { name: "形成最小修复契约" })).toBeVisible();
+  await expect(page.locator(".handoff-banner")).toContainText("计划、审计");
+  await expect(page.getByLabel("要修复的已确认问题")).toHaveValue("");
+  await page.getByRole("button", { name: "运行修复" }).click();
+  await expect.poll(() => requestedBodies.map(({ mode }) => mode)).toEqual(["plan", "audit", "fix"]);
+  expect(inspectionAttempts).toBe(2);
 
-  expect(requestedBodies.map(({ mode }) => mode)).toEqual([
+  const auditBody = requestedBodies.find(({ mode }) => mode === "audit");
+  expect(auditBody?.workflow_context?.completedReports?.map(({ mode }) => mode)).toEqual(["plan"]);
+  const fixBody = requestedBodies.find(({ mode }) => mode === "fix");
+  expect(fixBody?.workflow_context).toMatchObject({
+    schemaVersion: "vibio-web.workflow-context.v1",
+    completedReports: [
+      { mode: "plan", artifactKind: "execution_plan" },
+      { mode: "audit", artifactKind: "audit_findings" },
+    ],
+  });
+  expect(fixBody?.workflow_context?.completedReports?.[0].report).toContain("PLAN 阶段");
+  expect(fixBody?.workflow_context?.completedReports?.[1].report).toContain("AUDIT 阶段");
+
+  const storedFixDraft = await page.evaluate((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) ?? "null") as WorkspaceDraftV2 | null;
+    return stored?.modes.fix;
+  }, WORKSPACE_DRAFT_KEY);
+  expect(storedFixDraft).toEqual(originalFixDraft);
+});
+
+test("approval automation runs a selected technical subset and leaves review waiting for evidence", async ({ page }) => {
+  const draft = createWorkspaceDraft({
+    profile: { allowNetworkEvidence: false },
+    modes: {
+      audit: { objective: "检查产品页规范信号" },
+      fix: { objective: "修复已确认的 canonical 冲突" },
+    },
+  });
+  const requestedBodies: AnalyzeRequestBody[] = [];
+  await injectWorkspace(page, draft);
+  await mockSuccessfulAnalyses(page, requestedBodies);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "自动流程" }).click();
+  await expect(page.getByRole("heading", { name: "编排 SEO 能力链" })).toBeVisible();
+  await page.getByRole("radio", { name: /^技术修复/ }).click();
+  await expect(page.locator(".automation-route-node", { hasText: "关键词" }).getByRole("checkbox")).not.toBeChecked();
+  await expect(page.locator(".automation-route-node", { hasText: "审计" }).getByRole("checkbox")).toBeChecked();
+  await expect(page.locator(".automation-route-node", { hasText: "修复" }).getByRole("checkbox")).toBeChecked();
+  await expect(page.locator(".automation-route-node", { hasText: "复盘" }).getByRole("checkbox")).toBeChecked();
+  await expectNoHorizontalOverflow(page);
+  await page.screenshot({ path: "/tmp/vibio-automation-desktop.png", fullPage: true });
+
+  await page.getByRole("button", { name: "确认路线并开始审计" }).click();
+  await expect.poll(() => requestedBodies.map(({ mode }) => mode)).toEqual(["audit"]);
+  await expect(page.getByRole("button", { name: "继续到修复" })).toBeVisible();
+  await expect(page.locator(".automation-latest-output")).toContainText("AUDIT 阶段");
+
+  await page.getByRole("button", { name: "继续到修复" }).click();
+  await expect.poll(() => requestedBodies.map(({ mode }) => mode)).toEqual(["audit", "fix"]);
+  await expect(page.getByRole("tab", { name: "流程轨迹" })).toBeVisible();
+  await page.getByRole("tab", { name: "流程轨迹" }).click();
+  await expect(page.locator(".workflow-step--waiting")).toContainText("复盘");
+  await expect(page.locator(".workflow-step--waiting")).toContainText("等待材料");
+
+  const runs = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "[]"), RUNS_KEY) as Array<{
+    mode?: string;
+    workflow?: { status?: string; steps?: Array<{ mode?: string; status?: string }> };
+  }>;
+  expect(runs).toHaveLength(1);
+  expect(runs[0]).toMatchObject({
+    mode: "workflow",
+    workflow: {
+      status: "partial",
+      steps: [
+        { mode: "audit", status: "complete" },
+        { mode: "fix", status: "complete" },
+        { mode: "review", status: "waiting" },
+      ],
+    },
+  });
+
+  await expect(page.getByRole("button", { name: "等待复盘材料" })).toBeDisabled();
+  await page.locator('.evidence-panel input[type="file"]').setInputFiles({
+    name: "gsc-before-after.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("page,clicks,impressions\n/products,12,140"),
+  });
+  const continueReview = page.getByRole("button", { name: "继续到复盘" });
+  await expect(continueReview).toBeEnabled();
+  await continueReview.click();
+  await expect.poll(() => requestedBodies.map(({ mode }) => mode)).toEqual([
     "audit",
-    "recover",
-    "keyword",
-    "keyword",
-    "plan",
     "fix",
-    "write",
-    "link",
     "review",
   ]);
-  for (const body of requestedBodies) {
-    const expectedDraft = workflowDraft.modes[body.mode];
-    expect(body.project.objective).toBe(expectedDraft.objective);
-    expect(body.project.scope).toBe(expectedDraft.scope);
-    expect(body.project.decisionWindow).toBe(expectedDraft.timing);
-    expect(body.project.details).toBe(
-      `本模式补充信息：\n${expectedDraft.details}\n\n共享项目背景：\n${workflowDraft.sharedContext}`,
-    );
-    for (const otherMode of MODE_IDS.filter((mode) => mode !== body.mode)) {
-      expect(body.project.details).not.toContain(workflowDraft.modes[otherMode].details);
-    }
-  }
+
+  const resumedRuns = await page.evaluate(
+    (key) => JSON.parse(localStorage.getItem(key) ?? "[]"),
+    RUNS_KEY,
+  ) as Array<{ workflow?: { status?: string } }>;
+  expect(resumedRuns).toHaveLength(1);
+  expect(resumedRuns[0].workflow?.status).toBe("complete");
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), ACTIVE_WORKFLOW_KEY)).toBeNull();
+});
+
+test("continuous automation completes the selected technical route in one run", async ({ page }) => {
+  const requestedBodies: AnalyzeRequestBody[] = [];
+  await injectWorkspace(page, createWorkflowDraft());
+  await mockSuccessfulAnalyses(page, requestedBodies);
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "自动流程" }).click();
+  await page.getByRole("radio", { name: /^技术修复/ }).click();
+  await page.getByRole("radio", { name: /^连续分析/ }).click();
+  await page.getByRole("button", { name: "启动连续分析" }).click();
+
+  await expect.poll(() => requestedBodies.map(({ mode }) => mode)).toEqual([
+    "audit",
+    "fix",
+    "review",
+  ]);
+  await expect(page.getByRole("tab", { name: "流程轨迹" })).toBeVisible();
+  expect(requestedBodies[1].workflow_context?.completedReports?.map(({ mode }) => mode)).toEqual([
+    "audit",
+  ]);
+  expect(requestedBodies[2].workflow_context?.completedReports?.map(({ mode }) => mode)).toEqual([
+    "fix",
+  ]);
 
   const stored = await page.evaluate((key) => localStorage.getItem(key), RUNS_KEY);
   expect(stored).not.toContain("temporary-browser-key");
   const runs = JSON.parse(stored ?? "[]") as Array<{
     mode?: string;
-    objective?: string;
-    workflow?: { steps?: unknown[] };
+    workflow?: { status?: string; steps?: Array<{ status?: string }> };
   }>;
   expect(runs).toHaveLength(1);
-  expect(runs[0]).toMatchObject({
-    mode: "workflow",
-    objective: workflowDraft.profile.primaryGoal,
-  });
-  expect(runs[0].workflow?.steps).toHaveLength(8);
+  expect(runs[0]).toMatchObject({ mode: "workflow", workflow: { status: "complete" } });
+  expect(runs[0].workflow?.steps?.every(({ status }) => status === "complete")).toBe(true);
   expect(await page.evaluate((key) => sessionStorage.getItem(key), API_KEY_SESSION_KEY)).toBe(
     "temporary-browser-key",
   );
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), ACTIVE_WORKFLOW_KEY)).toBeNull();
   expect(await page.evaluate((key) => localStorage.getItem(key), MODEL_PREFERENCE_KEY)).toContain(
     "deepseek-v4-flash",
   );
+});
+
+test("approval automation restores completed stages after a page refresh", async ({ page }) => {
+  const requestedBodies: AnalyzeRequestBody[] = [];
+  await injectWorkspace(page, createWorkflowDraft());
+  await mockSuccessfulAnalyses(page, requestedBodies);
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "自动流程" }).click();
+  await page.getByRole("radio", { name: /^技术修复/ }).click();
+  await page.getByRole("button", { name: "确认路线并开始审计" }).click();
+  await expect.poll(() => requestedBodies.map(({ mode }) => mode)).toEqual(["audit"]);
+  await expect(page.getByRole("button", { name: "继续到修复" })).toBeVisible();
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), ACTIVE_WORKFLOW_KEY))
+    .not.toContain("temporary-browser-key");
+
+  await page.reload();
+  const continueFix = page.getByRole("button", { name: "继续到修复" });
+  await expect(continueFix).toBeVisible();
+  await expect(page.locator(".workflow-step--complete", { hasText: "审计" })).toBeVisible();
+  await continueFix.click();
+  await expect.poll(() => requestedBodies.map(({ mode }) => mode)).toEqual(["audit", "fix"]);
+});
+
+test("automatic workflow stays partial when site evidence fails and can retry it", async ({ page }) => {
+  const draft = createWorkflowDraft();
+  draft.profile.allowNetworkEvidence = true;
+  const requestedBodies: AnalyzeRequestBody[] = [];
+  let inspectionAttempts = 0;
+  await injectWorkspace(page, draft);
+  await mockSuccessfulAnalyses(page, requestedBodies);
+  await page.route("**/api/inspect", async (route) => {
+    inspectionAttempts += 1;
+    if (inspectionAttempts === 1) {
+      await route.fulfill({ status: 502, json: { detail: "公开站点暂时不可用" } });
+      return;
+    }
+    await route.fulfill({ json: { report: AUDIT_REPORT_FIXTURE } });
+  });
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "自动流程" }).click();
+  await page.getByRole("radio", { name: /^技术修复/ }).click();
+  await page.getByRole("radio", { name: /^连续分析/ }).click();
+  await page.getByRole("button", { name: "启动连续分析" }).click();
+
+  const retryEvidence = page.getByRole("button", { name: "重试站点证据" });
+  await expect(retryEvidence).toBeVisible();
+  expect(inspectionAttempts).toBe(1);
+  expect(requestedBodies.map(({ mode }) => mode)).toEqual(["audit", "fix", "review"]);
+
+  await retryEvidence.click();
+  await expect.poll(() => inspectionAttempts).toBe(2);
+  await expect.poll(() => requestedBodies.map(({ mode }) => mode)).toEqual([
+    "audit",
+    "fix",
+    "review",
+    "audit",
+    "fix",
+    "review",
+  ]);
+  await expect(page.getByRole("button", { name: "重试站点证据" })).toBeHidden();
+
+  const runs = await page.evaluate(
+    (key) => JSON.parse(localStorage.getItem(key) ?? "[]"),
+    RUNS_KEY,
+  ) as Array<{ workflow?: { status?: string } }>;
+  expect(runs).toHaveLength(1);
+  expect(runs[0].workflow?.status).toBe("complete");
+});
+
+test("automatic workflow builder has no horizontal overflow at 390px", async ({ page }) => {
+  await injectWorkspace(page, createWorkflowDraft());
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "自动流程" }).click();
+  await expect(page.getByRole("heading", { name: "编排 SEO 能力链" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  await page.screenshot({ path: "/tmp/vibio-automation-mobile.png", fullPage: true });
 });
 
 test("analysis connection closure keeps inputs and shows a recoverable error", async ({ page }) => {
@@ -630,6 +814,7 @@ test("leaving the workspace aborts an in-flight model request", async ({ page })
   await expect.poll(() => page.evaluate(
     () => sessionStorage.getItem("vibio:test:analysis-started"),
   )).toBe("true");
+  await expect(page.getByRole("button", { name: "运行记录" })).toBeDisabled();
   await page.getByRole("link", { name: "返回 Vibio SEO 首页" }).click();
 
   await expect(page).toHaveURL(/\/$/);
@@ -715,4 +900,30 @@ test("history drawer traps focus, closes with Escape, and restores the opener", 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "运行记录" })).toBeHidden();
   await expect(opener).toBeFocused();
+});
+
+test("a historical report from another project cannot enter the current manual chain", async ({ page }) => {
+  const historicalRun: RunRecord = {
+    id: "other-project-audit",
+    mode: "audit",
+    projectName: "另一个项目",
+    siteUrl: "https://other.example.com",
+    market: "美国",
+    language: "en-US",
+    objective: "Audit another site",
+    provider: "deepseek",
+    model: "deepseek-v4-flash",
+    report: "# Other project audit",
+    auditReport: AUDIT_REPORT_FIXTURE,
+    evidence: [],
+    createdAt: "2026-07-13T08:00:00Z",
+  };
+  await injectWorkspace(page, createWorkspaceDraft());
+  await injectRun(page, historicalRun);
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "运行记录" }).click();
+  await page.getByRole("button", { name: /另一个项目/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "另一个项目" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "根据审计生成修复" })).toBeHidden();
 });

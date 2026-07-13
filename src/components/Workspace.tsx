@@ -15,10 +15,24 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EMPTY_WORKSPACE_DRAFT, FALLBACK_PROVIDERS, MODES } from "../data";
 import {
+  DEFAULT_AUTOMATION_CONFIG,
+  buildAutomationGatingProject,
+  buildAutomationPlan,
+  buildAutomationProject,
+  getAutomationEvidenceAvailability,
+  selectAutomationEvidence,
+  type AutomationConfig,
+} from "../automation";
+import {
+  clearActiveWorkflow,
   clearRuns,
+  loadActiveWorkflow,
+  loadAutomationConfig,
   loadModelSettings,
   loadRuns,
   loadWorkspaceDraft,
+  saveAutomationConfig,
+  saveActiveWorkflow,
   saveModelSettings,
   saveRun,
   saveWorkspaceDraft,
@@ -36,17 +50,17 @@ import type {
   ProviderDefinition,
   RunRecord,
   RunStage,
+  WorkspaceExecutionMode,
   WorkspaceDraftV2,
+  WorkflowExecutionSnapshot,
   WorkflowStep,
 } from "../types";
 import {
   aggregateWorkflowMarkdown,
-  buildWorkflowContext,
-  buildWorkflowPlan,
+  buildWorkflowContextForMode,
 } from "../workflow";
-import {
-  buildAnalysisProject,
-} from "../workspace-draft";
+import { buildAnalysisProject } from "../workspace-draft";
+import { AutomationWorkspace } from "./AutomationWorkspace";
 import { EvidencePanel } from "./EvidencePanel";
 import { HistoryDrawer } from "./HistoryDrawer";
 import { ModeTaskForm } from "./ModeTaskForm";
@@ -55,7 +69,6 @@ import { ProjectSetup } from "./ProjectSetup";
 import { ProviderPanel } from "./ProviderPanel";
 import { ReportView } from "./ReportView";
 import { RunStatus } from "./RunStatus";
-import { WorkflowProgress } from "./WorkflowProgress";
 
 const DEFAULT_SETTINGS: ModelSettings = {
   provider: FALLBACK_PROVIDERS[0].id,
@@ -65,15 +78,41 @@ const DEFAULT_SETTINGS: ModelSettings = {
 
 const INSPECT_MODES = new Set<ModeId>(["audit", "fix", "review", "recover", "plan", "link"]);
 
+const SINGLE_NEXT_ACTIONS: Partial<Record<ModeId, {
+  mode: ModeId;
+  label: string;
+  description: string;
+}>> = {
+  plan: {
+    mode: "audit",
+    label: "按此计划开始审计",
+    description: "计划结果将作为审计的只读上下文，自动限定检查目标与证据缺口。",
+  },
+  recover: {
+    mode: "audit",
+    label: "继续定向审计",
+    description: "恢复诊断将自动传给审计，用于验证根因和受影响范围。",
+  },
+  audit: {
+    mode: "fix",
+    label: "根据审计生成修复",
+    description: "审计发现、证据边界和复验方式将自动传给修复，不覆盖修复草稿。",
+  },
+  keyword: {
+    mode: "write",
+    label: "按查询映射生成内容",
+    description: "关键词与页面映射将自动传给内容阶段。",
+  },
+  write: {
+    mode: "link",
+    label: "继续规划发现与链接",
+    description: "页面成稿和内链计划将自动传给链接阶段。",
+  },
+};
+
 type ExecutionKind = "single" | "workflow";
 
-interface WorkflowExecution {
-  signature: string;
-  startedAt: string;
-  inspectionComplete: boolean;
-  auditReport?: Record<string, unknown>;
-  steps: WorkflowStep[];
-}
+type WorkflowExecution = WorkflowExecutionSnapshot;
 
 async function readApiError(response: Response): Promise<string> {
   try {
@@ -141,19 +180,50 @@ function cloneWorkspaceDraft(draft: WorkspaceDraftV2): WorkspaceDraftV2 {
   };
 }
 
-function workflowInputSignature(
+function workflowCoreSignature(
   draft: WorkspaceDraftV2,
   settings: ModelSettings,
-  evidence: EvidenceFile[],
   maxPages: number,
+  automationConfig: AutomationConfig,
 ): string {
   return JSON.stringify({
     draft,
     provider: settings.provider,
     model: settings.model,
     maxPages,
-    evidence: evidence.map(({ id: _id, ...file }) => file),
+    automationConfig,
   });
+}
+
+function workflowInputSignature(
+  draft: WorkspaceDraftV2,
+  settings: ModelSettings,
+  evidence: EvidenceFile[],
+  maxPages: number,
+  automationConfig: AutomationConfig,
+): string {
+  const selectedEvidence = selectAutomationEvidence(automationConfig, evidence);
+  return JSON.stringify({
+    core: workflowCoreSignature(draft, settings, maxPages, automationConfig),
+    evidence: selectedEvidence.map(({ id: _id, ...file }) => file),
+  });
+}
+
+function inspectionInputSignature(project: ProjectInput, maxPages: number): string {
+  return JSON.stringify({
+    siteUrl: project.siteUrl.trim().replace(/\/$/, ""),
+    allowNetworkEvidence: project.allowNetworkEvidence,
+    maxPages,
+  });
+}
+
+function runMatchesProfile(record: RunRecord, profile: ProjectProfile): boolean {
+  return (
+    record.projectName.trim() === profile.projectName.trim() &&
+    record.siteUrl.trim().replace(/\/$/, "") === profile.siteUrl.trim().replace(/\/$/, "") &&
+    record.market.trim() === profile.market.trim() &&
+    record.language.trim() === profile.language.trim()
+  );
 }
 
 function inspectionUnavailable(report: Record<string, unknown> | undefined): boolean {
@@ -346,6 +416,8 @@ async function analyzeMode({
 
 export function Workspace() {
   const [modeId, setModeId] = useState<ModeId>("audit");
+  const [workspaceExecutionMode, setWorkspaceExecutionMode] = useState<WorkspaceExecutionMode>("single");
+  const [automationConfig, setAutomationConfig] = useState<AutomationConfig>(DEFAULT_AUTOMATION_CONFIG);
   const [workspaceDraft, setWorkspaceDraft] = useState<WorkspaceDraftV2>(EMPTY_WORKSPACE_DRAFT);
   const [providers, setProviders] = useState<ProviderDefinition[]>(FALLBACK_PROVIDERS);
   const [settings, setSettings] = useState<ModelSettings>(DEFAULT_SETTINGS);
@@ -360,6 +432,9 @@ export function Workspace() {
   const [hydrated, setHydrated] = useState(false);
   const [executionKind, setExecutionKind] = useState<ExecutionKind | null>(null);
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [singleChainSteps, setSingleChainSteps] = useState<WorkflowStep[]>([]);
+  const [singleChainAuditReport, setSingleChainAuditReport] = useState<Record<string, unknown> | undefined>();
+  const [singleChainAuditSignature, setSingleChainAuditSignature] = useState<string>();
   const [editingProject, setEditingProject] = useState(false);
   const [projectEstablished, setProjectEstablished] = useState(false);
   const runLock = useRef(false);
@@ -376,18 +451,74 @@ export function Workspace() {
   const running = ["validating", "collecting", "analyzing"].includes(stage);
   const workflowRunning = running && executionKind === "workflow";
   const singleRunning = running && executionKind === "single";
+  const singleInheritedModes = useMemo(
+    () => buildWorkflowContextForMode(singleChainSteps, modeId).completedReports.map((item) => item.mode),
+    [modeId, singleChainSteps],
+  );
   const failedWorkflowStep = workflowSteps.find((step) => step.status === "error");
+  const nextWorkflowStep = workflowSteps.find(
+    (step) => step.status === "error" || step.status === "pending",
+  );
   const currentWorkflowSignature = useMemo(
-    () => workflowInputSignature(workspaceDraft, settings, evidence, maxPages),
-    [evidence, maxPages, settings.model, settings.provider, workspaceDraft],
+    () => workflowInputSignature(workspaceDraft, settings, evidence, maxPages, automationConfig),
+    [automationConfig, evidence, maxPages, settings.model, settings.provider, workspaceDraft],
+  );
+  const currentWorkflowCoreSignature = useMemo(
+    () => workflowCoreSignature(workspaceDraft, settings, maxPages, automationConfig),
+    [automationConfig, maxPages, settings.model, settings.provider, workspaceDraft],
+  );
+  const automationGatingProject = useMemo(
+    () => buildAutomationGatingProject(workspaceDraft, automationConfig),
+    [automationConfig, workspaceDraft],
+  );
+  const automationReviewProject = useMemo(
+    () => buildAutomationProject(workspaceDraft, "review", automationConfig),
+    [automationConfig, workspaceDraft],
+  );
+  const automationPreviewSteps = useMemo(
+    () => buildAutomationPlan(
+      automationConfig,
+      automationGatingProject,
+      selectAutomationEvidence(automationConfig, evidence),
+      automationReviewProject,
+    ),
+    [automationConfig, automationGatingProject, automationReviewProject, evidence],
+  );
+  const automationEvidenceAvailability = useMemo(
+    () => getAutomationEvidenceAvailability(
+      automationReviewProject,
+      evidence,
+    ),
+    [automationReviewProject, evidence],
+  );
+  const readyWaitingModes = useMemo(
+    () => new Set(
+      automationPreviewSteps
+        .filter((step) => step.status === "pending")
+        .map((step) => step.mode),
+    ),
+    [automationPreviewSteps],
+  );
+  const waitingWorkflowStep = workflowSteps.find((step) => step.status === "waiting");
+  const readyWaitingStep = waitingWorkflowStep && readyWaitingModes.has(waitingWorkflowStep.mode)
+    ? waitingWorkflowStep
+    : undefined;
+  const currentExecution = workflowExecution.current;
+  const workflowWaitingCanResume = Boolean(
+    readyWaitingStep &&
+    currentExecution?.coreSignature === currentWorkflowCoreSignature,
   );
   const workflowCanResume = Boolean(
-    failedWorkflowStep &&
-    workflowExecution.current?.signature === currentWorkflowSignature,
+    currentExecution && (
+      currentExecution.signature === currentWorkflowSignature && (
+        nextWorkflowStep || currentExecution.inspectionComplete === false
+      ) || workflowWaitingCanResume
+    ),
   );
   const workflowWillRetryInspection = Boolean(
     workflowCanResume &&
-    workflowExecution.current?.inspectionComplete === false &&
+    currentExecution?.inspectionComplete === false &&
+    automationConfig.evidenceSources.includes("site") &&
     workspaceDraft.profile.siteUrl &&
     workspaceDraft.profile.allowNetworkEvidence,
   );
@@ -401,6 +532,7 @@ export function Workspace() {
   const workflowContract = useMemo(() => {
     const completed = workflowSteps.filter((step) => step.status === "complete").length;
     const skipped = workflowSteps.filter((step) => step.status === "skipped").length;
+    const waiting = workflowSteps.filter((step) => step.status === "waiting").length;
     if (failedWorkflowStep) {
       const label = MODES.find((item) => item.id === failedWorkflowStep.mode)?.label;
       return workflowWillRetryInspection
@@ -409,15 +541,110 @@ export function Workspace() {
           ? `已完成 ${completed} 步 · 可从${label ?? failedWorkflowStep.mode}继续`
         : "输入已变化 · 将从头重新运行";
     }
-    return `已完成 ${completed} 步 · 条件跳过 ${skipped} 步`;
-  }, [failedWorkflowStep, workflowCanResume, workflowSteps, workflowWillRetryInspection]);
+    if (workflowWillRetryInspection) {
+      return "公开站点证据未完成 · 可重试后重算受影响阶段";
+    }
+    if (readyWaitingStep && workflowWaitingCanResume) {
+      const label = MODES.find((item) => item.id === readyWaitingStep.mode)?.label;
+      return `已完成 ${completed} 步 · ${label ?? readyWaitingStep.mode}材料已就绪`;
+    }
+    if (nextWorkflowStep && workflowCanResume) {
+      const label = MODES.find((item) => item.id === nextWorkflowStep.mode)?.label;
+      return `已完成 ${completed} 步 · 下一步 ${label ?? nextWorkflowStep.mode}`;
+    }
+    if (nextWorkflowStep && workflowSteps.length > 0) {
+      return "输入已变化 · 再次启动将从头运行";
+    }
+    return `已完成 ${completed} 步 · 条件跳过 ${skipped} 步 · 等待材料 ${waiting} 步`;
+  }, [
+    failedWorkflowStep,
+    nextWorkflowStep,
+    readyWaitingStep,
+    workflowCanResume,
+    workflowSteps,
+    workflowWaitingCanResume,
+    workflowWillRetryInspection,
+  ]);
+  const firstAutomationStep = automationPreviewSteps.find((step) => step.status === "pending");
+  const automationActionMode = workflowCanResume
+    ? nextWorkflowStep ?? readyWaitingStep
+    : firstAutomationStep;
+  const automationActionLabel = workflowRunning
+    ? "自动流程运行中"
+    : workflowWillRetryInspection
+      ? "重试站点证据"
+      : failedWorkflowStep && workflowCanResume
+      ? `重试${MODES.find((item) => item.id === failedWorkflowStep.mode)?.label ?? failedWorkflowStep.mode}`
+      : workflowCanResume && automationActionMode
+        ? `继续到${MODES.find((item) => item.id === automationActionMode.mode)?.label ?? automationActionMode.mode}`
+        : workflowSteps.length > 0 && nextWorkflowStep
+          ? "按新输入重新开始"
+        : automationConfig.advanceMode === "continuous"
+          ? "启动连续分析"
+          : `确认路线并开始${firstAutomationStep
+            ? MODES.find((item) => item.id === firstAutomationStep.mode)?.label ?? firstAutomationStep.mode
+            : "运行"}`;
+  const automationContract = workflowSteps.length > 0
+    ? workflowContract
+    : `已编排 ${automationPreviewSteps.length} 个阶段 · ${automationConfig.advanceMode === "approval" ? "逐步确认" : "连续分析"}`;
 
   useEffect(() => {
     const storedDraft = loadWorkspaceDraft(EMPTY_WORKSPACE_DRAFT);
+    const storedSettings = loadModelSettings(DEFAULT_SETTINGS);
+    const storedAutomationConfig = loadAutomationConfig();
+    const storedRuns = loadRuns();
+    const storedWorkflow = loadActiveWorkflow();
+    const profileComplete = projectProfileIsComplete(storedDraft.profile);
     setWorkspaceDraft(storedDraft);
-    setProjectEstablished(projectProfileIsComplete(storedDraft.profile));
-    setSettings(loadModelSettings(DEFAULT_SETTINGS));
-    setRuns(loadRuns());
+    setProjectEstablished(profileComplete);
+    setSettings(storedSettings);
+    setAutomationConfig(storedAutomationConfig);
+    setRuns(storedRuns);
+
+    if (
+      profileComplete &&
+      storedWorkflow &&
+      storedWorkflow.coreSignature === workflowCoreSignature(
+        storedDraft,
+        storedSettings,
+        storedWorkflow.maxPages,
+        storedAutomationConfig,
+      )
+    ) {
+      const interrupted = storedWorkflow.steps.some((step) => step.status === "running");
+      const restoredWorkflow: WorkflowExecution = {
+        ...storedWorkflow,
+        steps: storedWorkflow.steps.map((step) =>
+          step.status === "running"
+            ? {
+                ...step,
+                status: "error",
+                reason: "页面刷新时该阶段仍在运行，服务端状态未知；重试可能重复计费。",
+              }
+            : step,
+        ),
+      };
+      workflowExecution.current = restoredWorkflow;
+      setWorkflowSteps(restoredWorkflow.steps);
+      setWorkspaceExecutionMode("automation");
+      setMaxPages(restoredWorkflow.maxPages);
+      const restoredFailure = restoredWorkflow.steps.find((step) => step.status === "error");
+      const partialRecord = restoredWorkflow.recordId
+        ? storedRuns.find((run) => run.id === restoredWorkflow.recordId && run.mode === "workflow")
+        : undefined;
+      if (restoredFailure) {
+        setError(interrupted
+          ? "上次运行在页面刷新时中断。已保留之前的结果，请确认后重试当前阶段。"
+          : restoredFailure.reason ?? "上次流程在当前阶段失败，可从该阶段继续。");
+        setStage("error");
+        saveActiveWorkflow(restoredWorkflow);
+      } else if (partialRecord) {
+        setRecord(partialRecord);
+        setStage("complete");
+      }
+    } else if (storedWorkflow) {
+      clearActiveWorkflow();
+    }
     setHydrated(true);
   }, []);
 
@@ -428,6 +655,10 @@ export function Workspace() {
   useEffect(() => {
     if (hydrated) saveModelSettings(settings);
   }, [hydrated, settings]);
+
+  useEffect(() => {
+    if (hydrated) saveAutomationConfig(automationConfig);
+  }, [automationConfig, hydrated]);
 
   useEffect(() => () => {
     activeRunController.current?.abort("workspace unmounted");
@@ -450,13 +681,77 @@ export function Workspace() {
     return () => controller.abort();
   }, []);
 
+  const discardActiveWorkflow = () => {
+    workflowExecution.current = null;
+    clearActiveWorkflow();
+  };
+
   const changeMode = (nextMode: ModeId) => {
+    setWorkspaceExecutionMode("single");
     setModeId(nextMode);
     setRecord(null);
     setStage("idle");
     setError("");
     setWorkflowSteps([]);
-    workflowExecution.current = null;
+    setSingleChainSteps([]);
+    setSingleChainAuditReport(undefined);
+    setSingleChainAuditSignature(undefined);
+    discardActiveWorkflow();
+  };
+
+  const changeWorkspaceExecutionMode = (nextMode: WorkspaceExecutionMode) => {
+    if (nextMode === workspaceExecutionMode) return;
+    setWorkspaceExecutionMode(nextMode);
+    setRecord(null);
+    setStage("idle");
+    setError("");
+    setWorkflowSteps([]);
+    setSingleChainSteps([]);
+    setSingleChainAuditReport(undefined);
+    setSingleChainAuditSignature(undefined);
+    discardActiveWorkflow();
+    scrollPageTop();
+  };
+
+  const resetAutomationFlow = () => {
+    setRecord(null);
+    setStage("idle");
+    setError("");
+    setWorkflowSteps([]);
+    setSingleChainSteps([]);
+    setSingleChainAuditReport(undefined);
+    setSingleChainAuditSignature(undefined);
+    discardActiveWorkflow();
+    scrollPageTop();
+  };
+
+  const continueSingleChain = (source: RunRecord, nextMode: ModeId) => {
+    const sourceMode = source.mode;
+    if (sourceMode === "workflow") return;
+    setSingleChainSteps((current) => {
+      const sourceStep: WorkflowStep = {
+        mode: sourceMode,
+        status: "complete",
+        report: source.report,
+        createdAt: source.createdAt,
+      };
+      return [...current.filter((step) => step.mode !== sourceMode), sourceStep];
+    });
+    if (source.auditReport && runMatchesProfile(source, workspaceDraft.profile)) {
+      setSingleChainAuditReport(source.auditReport);
+      setSingleChainAuditSignature(inspectionInputSignature(
+        buildAnalysisProject(workspaceDraft, sourceMode),
+        maxPages,
+      ));
+    }
+    setWorkspaceExecutionMode("single");
+    setModeId(nextMode);
+    setRecord(null);
+    setStage("idle");
+    setError("");
+    setWorkflowSteps([]);
+    discardActiveWorkflow();
+    scrollPageTop();
   };
 
   const runAnalysis = async () => {
@@ -469,8 +764,10 @@ export function Workspace() {
     const runSettings = { ...settings };
     const runMaxPages = maxPages;
     const runEvidence = evidence.map((file) => ({ ...file }));
+    const inheritedContext = buildWorkflowContextForMode(singleChainSteps, runModeId);
+    const currentInspectionSignature = inspectionInputSignature(runProject, runMaxPages);
     const validationError = validateProjectProfile(runDraft.profile)
-      ?? validateModeTask(runDraft, runMode)
+      ?? (inheritedContext.completedReports.length > 0 ? null : validateModeTask(runDraft, runMode))
       ?? validateModelSettings(runSettings);
     if (validationError) {
       setError(validationError);
@@ -483,7 +780,7 @@ export function Workspace() {
     const controller = new AbortController();
     activeRunController.current = controller;
 
-    workflowExecution.current = null;
+    discardActiveWorkflow();
     setWorkflowSteps([]);
     setExecutionKind("single");
     setError("");
@@ -491,9 +788,15 @@ export function Workspace() {
     setRecord(null);
     scrollPageTop();
 
-    let auditReport: Record<string, unknown> | undefined;
+    let auditReport: Record<string, unknown> | undefined =
+      singleChainAuditSignature === currentInspectionSignature
+        ? singleChainAuditReport
+        : undefined;
     const shouldInspect = Boolean(
-      runProject.siteUrl && runProject.allowNetworkEvidence && INSPECT_MODES.has(runModeId),
+      (!auditReport || inspectionUnavailable(auditReport)) &&
+      runProject.siteUrl &&
+      runProject.allowNetworkEvidence &&
+      INSPECT_MODES.has(runModeId),
     );
 
     try {
@@ -509,6 +812,9 @@ export function Workspace() {
         settings: runSettings,
         evidence: runEvidence,
         auditReport,
+        workflowContext: inheritedContext.completedReports.length > 0
+          ? inheritedContext
+          : undefined,
         signal: controller.signal,
       });
       const createdAt = result.created_at || new Date().toISOString();
@@ -528,6 +834,20 @@ export function Workspace() {
         createdAt,
       };
       const saved = saveRun(nextRecord);
+      setSingleChainSteps((current) => [
+        ...current.filter((step) => step.mode !== runModeId),
+        {
+          mode: runModeId,
+          status: "complete",
+          report: result.report,
+          createdAt,
+          inputModes: inheritedContext.completedReports.map((item) => item.mode),
+        },
+      ]);
+      if (auditReport) {
+        setSingleChainAuditReport(auditReport);
+        setSingleChainAuditSignature(currentInspectionSignature);
+      }
       setRecord(nextRecord);
       setRuns(saved.runs);
       if (!saved.persisted) {
@@ -553,15 +873,16 @@ export function Workspace() {
     if (runLock.current) return;
     runLock.current = true;
     const runDraft = cloneWorkspaceDraft(workspaceDraft);
-    const auditProject = buildAnalysisProject(runDraft, "audit");
-    const recoveryProject = buildAnalysisProject(runDraft, "recover");
-    const reviewProject = buildAnalysisProject(runDraft, "review");
+    const auditProject = buildAutomationProject(runDraft, "audit", automationConfig);
+    const gatingProject = buildAutomationGatingProject(runDraft, automationConfig);
+    const reviewProject = buildAutomationProject(runDraft, "review", automationConfig);
     const summaryProject = {
       ...auditProject,
-      objective: runDraft.profile.primaryGoal,
+      objective: automationConfig.objective.trim() || runDraft.profile.primaryGoal,
     };
     const runSettings = { ...settings };
-    const runEvidence = evidence.map((file) => ({ ...file }));
+    const runEvidence = selectAutomationEvidence(automationConfig, evidence)
+      .map((file) => ({ ...file }));
     const runMaxPages = maxPages;
     const validationError = validateProjectProfile(runDraft.profile)
       ?? validateModelSettings(runSettings);
@@ -576,32 +897,69 @@ export function Workspace() {
     const controller = new AbortController();
     activeRunController.current = controller;
 
-    const signature = currentWorkflowSignature;
+    const coreSignature = workflowCoreSignature(
+      runDraft,
+      runSettings,
+      runMaxPages,
+      automationConfig,
+    );
+    const signature = workflowInputSignature(
+      runDraft,
+      runSettings,
+      runEvidence,
+      runMaxPages,
+      automationConfig,
+    );
+    const refreshedPlan = buildAutomationPlan(
+      automationConfig,
+      gatingProject,
+      runEvidence,
+      reviewProject,
+    );
+    const refreshedPendingModes = new Set(
+      refreshedPlan
+        .filter((step) => step.status === "pending")
+        .map((step) => step.mode),
+    );
     const existing = workflowExecution.current;
     const canResume = Boolean(
-      existing &&
-      existing.signature === signature &&
-      existing.steps.some((step) => step.status === "error"),
+      existing && (
+        existing.signature === signature && (
+          existing.inspectionComplete === false ||
+          existing.steps.some((step) => step.status === "error" || step.status === "pending")
+        ) ||
+        existing.coreSignature === coreSignature && existing.steps.some(
+          (step) => step.status === "waiting" && refreshedPendingModes.has(step.mode),
+        )
+      ),
     );
     const execution: WorkflowExecution = canResume && existing
       ? {
           ...existing,
+          signature,
+          coreSignature,
           steps: existing.steps.map((step) =>
             step.status === "error"
-              ? { mode: step.mode, status: "pending" }
+              ? { ...step, status: "pending", reason: undefined }
+              : step.status === "waiting" && refreshedPendingModes.has(step.mode)
+                ? { ...step, status: "pending", reason: undefined }
               : { ...step },
           ),
         }
       : {
+          schemaVersion: 1,
           signature,
+          coreSignature,
           startedAt: new Date().toISOString(),
           inspectionComplete: false,
-          steps: buildWorkflowPlan(recoveryProject, runEvidence, reviewProject),
+          maxPages: runMaxPages,
+          steps: refreshedPlan,
         };
 
     const publishSteps = (steps: WorkflowStep[]) => {
       execution.steps = steps;
       workflowExecution.current = execution;
+      saveActiveWorkflow(execution);
       setWorkflowSteps(steps.map((step) => ({ ...step })));
     };
 
@@ -614,7 +972,10 @@ export function Workspace() {
 
     try {
       const shouldInspect = Boolean(
-        auditProject.siteUrl && auditProject.allowNetworkEvidence,
+        automationConfig.evidenceSources.includes("site") &&
+        execution.steps.some((step) => INSPECT_MODES.has(step.mode)) &&
+        auditProject.siteUrl &&
+        auditProject.allowNetworkEvidence,
       );
       if (!execution.inspectionComplete) {
         if (shouldInspect) {
@@ -649,30 +1010,36 @@ export function Workspace() {
           execution.inspectionComplete = true;
         }
         workflowExecution.current = execution;
+        saveActiveWorkflow(execution);
       }
 
       let steps = execution.steps;
       for (let index = 0; index < steps.length; index += 1) {
         const step = steps[index];
-        if (step.status === "complete" || step.status === "skipped") continue;
+        if (["complete", "skipped", "waiting"].includes(step.status)) continue;
+
+        const workflowContext = buildWorkflowContextForMode(steps, step.mode);
+        const inputModes = workflowContext.completedReports.map((item) => item.mode);
 
         steps = steps.map((item, itemIndex) =>
           itemIndex === index
-            ? { ...item, status: "running", reason: undefined }
+            ? { ...item, status: "running", reason: undefined, inputModes }
             : item,
         );
         publishSteps(steps);
         setStage("analyzing");
 
         try {
-          const stepProject = buildAnalysisProject(runDraft, step.mode);
+          const stepProject = buildAutomationProject(runDraft, step.mode, automationConfig);
           const result = await analyzeMode({
             mode: step.mode,
             project: stepProject,
             settings: runSettings,
             evidence: runEvidence,
             auditReport: execution.auditReport,
-            workflowContext: buildWorkflowContext(steps),
+            workflowContext: workflowContext.completedReports.length > 0
+              ? workflowContext
+              : undefined,
             signal: controller.signal,
           });
           steps = steps.map((item, itemIndex) =>
@@ -687,6 +1054,12 @@ export function Workspace() {
           );
           publishSteps(steps);
           setApiConnected(true);
+          const hasNextStep = steps.slice(index + 1).some((item) => item.status === "pending");
+          if (automationConfig.advanceMode === "approval" && hasNextStep) {
+            setStage("idle");
+            scrollPageTop();
+            return;
+          }
         } catch (stepError) {
           if (controller.signal.aborted) return;
           const message = stepError instanceof Error
@@ -708,13 +1081,13 @@ export function Workspace() {
 
       const completedAt = new Date().toISOString();
       const nextRecord: RunRecord = {
-        id: crypto.randomUUID(),
+        id: execution.recordId ?? crypto.randomUUID(),
         mode: "workflow",
         projectName: summaryProject.projectName,
         siteUrl: summaryProject.siteUrl,
         market: summaryProject.market,
         language: summaryProject.language,
-        objective: runDraft.profile.primaryGoal,
+        objective: summaryProject.objective,
         provider: runSettings.provider,
         model: runSettings.model,
         report: aggregateWorkflowMarkdown(summaryProject, steps),
@@ -722,12 +1095,21 @@ export function Workspace() {
         evidence: runEvidence.map(({ name, type, size }) => ({ name, type, size })),
         createdAt: completedAt,
         workflow: {
-          status: "complete",
+          status: steps.some((step) => step.status === "waiting") || !execution.inspectionComplete
+            ? "partial"
+            : "complete",
           startedAt: execution.startedAt,
           completedAt,
           steps: steps.map(({ report: _report, ...step }) => step),
         },
       };
+      execution.recordId = nextRecord.id;
+      workflowExecution.current = execution;
+      if (nextRecord.workflow?.status === "partial") {
+        saveActiveWorkflow(execution);
+      } else {
+        clearActiveWorkflow();
+      }
       const saved = saveRun(nextRecord);
       setRecord(nextRecord);
       setRuns(saved.runs);
@@ -757,8 +1139,46 @@ export function Workspace() {
     setStage("idle");
     setError("");
     setWorkflowSteps([]);
-    workflowExecution.current = null;
+    setSingleChainSteps([]);
+    setSingleChainAuditReport(undefined);
+    setSingleChainAuditSignature(undefined);
+    discardActiveWorkflow();
   };
+  const nextSingleAction = record && record.mode !== "workflow" && runMatchesProfile(record, workspaceDraft.profile)
+    ? SINGLE_NEXT_ACTIONS[record.mode]
+    : undefined;
+  const workflowRecordIsCurrent = Boolean(
+    record?.mode === "workflow" &&
+    record.workflow?.status === "partial" &&
+    workflowExecution.current?.recordId === record.id,
+  );
+  const nextWorkflowAction = workflowRecordIsCurrent
+    ? workflowWillRetryInspection
+      ? {
+          label: "重试站点证据",
+          description: "公开 URL 证据未完成。重试成功后会重算已受影响的阶段。",
+          onContinue: () => { void runWorkflow(); },
+        }
+      : waitingWorkflowStep
+        ? {
+            label: workflowWaitingCanResume
+              ? `继续到${MODES.find((item) => item.id === waitingWorkflowStep.mode)?.label ?? waitingWorkflowStep.mode}`
+              : "等待复盘材料",
+            description: workflowWaitingCanResume
+              ? "新材料已就绪，将保留已完成阶段，只运行等待中的复盘。"
+              : "在右侧上传发布记录或 GSC、GA4、CRM 对比导出后即可继续。",
+            onContinue: () => { void runWorkflow(); },
+            disabled: !workflowWaitingCanResume,
+          }
+        : undefined
+    : undefined;
+  const reportNextAction = nextSingleAction && record && record.mode !== "workflow"
+    ? {
+        label: nextSingleAction.label,
+        description: nextSingleAction.description,
+        onContinue: () => continueSingleChain(record, nextSingleAction.mode),
+      }
+    : nextWorkflowAction;
 
   return (
     <div className="app-frame">
@@ -780,6 +1200,7 @@ export function Workspace() {
             type="button"
             className="icon-button"
             onClick={() => setHistoryOpen(true)}
+            disabled={running}
             aria-label="运行记录"
             title="运行记录"
           >
@@ -792,7 +1213,14 @@ export function Workspace() {
 
       <div className={`workspace-grid${!workspaceActive ? " workspace-grid--setup" : ""}`}>
         {workspaceActive && (
-          <ModeRail modes={MODES} activeMode={modeId} onChange={changeMode} disabled={running} />
+          <ModeRail
+            modes={MODES}
+            activeMode={modeId}
+            onChange={changeMode}
+            executionMode={workspaceExecutionMode}
+            onExecutionModeChange={changeWorkspaceExecutionMode}
+            disabled={running}
+          />
         )}
 
         <main className="main-workspace" id="main-content">
@@ -818,7 +1246,11 @@ export function Workspace() {
               )}
 
               {record ? (
-                <ReportView record={record} onReset={resetRun} />
+                <ReportView
+                  record={record}
+                  onReset={resetRun}
+                  nextAction={reportNextAction}
+                />
               ) : showingProjectSetup ? (
                 <ProjectSetup
                   profile={workspaceDraft.profile}
@@ -839,6 +1271,13 @@ export function Workspace() {
                     }
                     setProjectEstablished(true);
                     setEditingProject(false);
+                    if (editingProject) {
+                      setWorkflowSteps([]);
+                      setSingleChainSteps([]);
+                      setSingleChainAuditReport(undefined);
+                      setSingleChainAuditSignature(undefined);
+                      discardActiveWorkflow();
+                    }
                     setError("");
                     setStage("idle");
                     scrollPageTop();
@@ -846,9 +1285,50 @@ export function Workspace() {
                   disabled={running}
                   submitLabel={projectEstablished ? "保存项目设置" : "保存并进入工作台"}
                 />
+              ) : workspaceExecutionMode === "automation" ? (
+                <>
+                  <AutomationWorkspace
+                    profile={workspaceDraft.profile}
+                    config={automationConfig}
+                    onChange={setAutomationConfig}
+                    previewSteps={automationPreviewSteps}
+                    steps={workflowSteps}
+                    evidenceAvailability={automationEvidenceAvailability}
+                    onEditProject={() => {
+                      setEditingProject(true);
+                      setError("");
+                      setStage("idle");
+                      scrollPageTop();
+                    }}
+                    onResetFlow={resetAutomationFlow}
+                    disabled={running}
+                  />
+                  <footer className="run-bar">
+                    <div className="run-bar__contract">
+                      <Workflow size={17} aria-hidden="true" />
+                      <div>
+                        <span>自动流程</span>
+                        <strong>{automationContract}</strong>
+                      </div>
+                    </div>
+                    <div className="run-actions run-actions--single">
+                      <button
+                        type="button"
+                        className="run-button"
+                        onClick={() => void runWorkflow()}
+                        disabled={running || !firstAutomationStep && !workflowCanResume}
+                      >
+                        {workflowRunning
+                          ? <Sparkles size={18} className="pulse" />
+                          : <Workflow size={18} />}
+                        <span>{automationActionLabel}</span>
+                        {!running && <ArrowRight size={17} className="run-button__arrow" />}
+                      </button>
+                    </div>
+                  </footer>
+                </>
               ) : (
                 <>
-                  <WorkflowProgress steps={workflowSteps} />
                   <ModeTaskForm
                     mode={mode}
                     profile={workspaceDraft.profile}
@@ -865,20 +1345,21 @@ export function Workspace() {
                       setStage("idle");
                       scrollPageTop();
                     }}
+                    inheritedModes={singleInheritedModes}
                     disabled={running}
                   />
                   <footer className="run-bar">
                     <div className="run-bar__contract">
                       <Sparkles size={17} aria-hidden="true" />
                       <div>
-                        <span>{workflowSteps.length > 0 ? "自动流程" : "本次交付"}</span>
-                        <strong>{workflowSteps.length > 0 ? workflowContract : mode.output}</strong>
+                        <span>本次交付</span>
+                        <strong>{mode.output}</strong>
                       </div>
                     </div>
-                    <div className="run-actions">
+                    <div className="run-actions run-actions--single">
                       <button
                         type="button"
-                        className="run-button run-button--secondary"
+                        className="run-button"
                         onClick={() => void runAnalysis()}
                         disabled={running}
                       >
@@ -886,27 +1367,6 @@ export function Workspace() {
                           ? <Sparkles size={18} className="pulse" />
                           : <Play size={18} fill="currentColor" />}
                         <span>{singleRunning ? "正在运行" : `运行${mode.label}`}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="run-button"
-                        onClick={() => void runWorkflow()}
-                        disabled={running}
-                      >
-                        {workflowRunning
-                          ? <Sparkles size={18} className="pulse" />
-                          : <Workflow size={18} />}
-                        <span>
-                          {workflowRunning
-                            ? "自动流程运行中"
-                            : workflowWillRetryInspection
-                              ? "重试证据并继续"
-                              : failedWorkflowStep && workflowCanResume
-                              ? `从${MODES.find((item) => item.id === failedWorkflowStep.mode)?.label ?? failedWorkflowStep.mode}继续`
-                              : failedWorkflowStep
-                                ? "重新运行全流程"
-                                : "自动跑全流程"}
-                        </span>
                         {!running && <ArrowRight size={17} className="run-button__arrow" />}
                       </button>
                     </div>
@@ -926,7 +1386,9 @@ export function Workspace() {
             loading={running}
           />
           <EvidencePanel
-            mode={mode}
+            mode={workspaceExecutionMode === "automation"
+              ? MODES.find((item) => item.id === "audit") ?? mode
+              : mode}
             files={evidence}
             onChange={setEvidence}
             siteUrl={workspaceDraft.profile.siteUrl}
@@ -963,13 +1425,18 @@ export function Workspace() {
         onClose={() => setHistoryOpen(false)}
         onSelect={(selected) => {
           setRecord(selected);
+          setSingleChainSteps([]);
+          setSingleChainAuditReport(undefined);
+          setSingleChainAuditSignature(undefined);
           if (selected.mode === "workflow") {
+            setWorkspaceExecutionMode("automation");
             setWorkflowSteps(selected.workflow?.steps ?? []);
           } else {
+            setWorkspaceExecutionMode("single");
             setModeId(selected.mode);
             setWorkflowSteps([]);
           }
-          workflowExecution.current = null;
+          discardActiveWorkflow();
           setExecutionKind(null);
           setStage("complete");
           setHistoryOpen(false);

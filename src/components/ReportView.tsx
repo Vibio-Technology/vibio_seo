@@ -1,5 +1,6 @@
 import {
   Check,
+  ArrowRight,
   Clipboard,
   Code2,
   Download,
@@ -22,6 +23,12 @@ import { WorkflowProgress } from "./WorkflowProgress";
 interface ReportViewProps {
   record: RunRecord;
   onReset: () => void;
+  nextAction?: {
+    label: string;
+    description: string;
+    onContinue: () => void;
+    disabled?: boolean;
+  };
 }
 
 function download(name: string, content: string, type: string) {
@@ -38,7 +45,7 @@ function safeFileName(value: string): string {
   return value.trim().replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, "-").slice(0, 48) || "vibio-report";
 }
 
-export function ReportView({ record, onReset }: ReportViewProps) {
+export function ReportView({ record, onReset, nextAction }: ReportViewProps) {
   type ReportTab = "overview" | "report" | "workflow" | "evidence";
   const hasAuditOverview = parseAuditOverview(record.auditReport) !== null;
   const defaultTab: ReportTab = hasAuditOverview ? "overview" : "report";
@@ -228,6 +235,25 @@ export function ReportView({ record, onReset }: ReportViewProps) {
           证据清单
         </button>
       </div>
+
+      {nextAction && (
+        <aside className="report-next-action" aria-label="推荐下一步">
+          <div>
+            <span className="eyebrow">链式下一步</span>
+            <strong>{nextAction.description}</strong>
+          </div>
+          <button
+            type="button"
+            className="run-button"
+            onClick={nextAction.onContinue}
+            disabled={nextAction.disabled}
+          >
+            <Workflow size={18} aria-hidden="true" />
+            <span>{nextAction.label}</span>
+            <ArrowRight size={17} aria-hidden="true" />
+          </button>
+        </aside>
+      )}
 
       {hasAuditOverview && (
         <div

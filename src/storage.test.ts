@@ -1,14 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EMPTY_WORKSPACE_DRAFT } from "./data";
+import type { AutomationConfig } from "./automation";
 import {
+  ACTIVE_WORKFLOW_KEY,
+  AUTOMATION_CONFIG_KEY,
+  clearActiveWorkflow,
+  loadActiveWorkflow,
+  loadAutomationConfig,
   loadModelSettings,
   loadWorkspaceDraft,
+  saveAutomationConfig,
+  saveActiveWorkflow,
   saveRun,
   saveWorkspaceDraft,
   WORKSPACE_DRAFT_KEY,
 } from "./storage";
-import type { RunRecord } from "./types";
+import type { RunRecord, WorkflowExecutionSnapshot } from "./types";
 import { createEmptyWorkspaceDraft } from "./workspace-draft";
 
 const LEGACY_PROJECT_KEY = "vibio:project:draft";
@@ -136,6 +144,131 @@ describe("workspace draft storage", () => {
       "Current workspace",
     );
     expect(local.getItem(LEGACY_PROJECT_KEY)).toBe(legacyValue);
+  });
+});
+
+describe("automation config storage", () => {
+  it("normalizes and persists automation settings under their own key", () => {
+    const workspaceValue = JSON.stringify({ sentinel: "workspace stays untouched" });
+    const local = memoryStorage({ [WORKSPACE_DRAFT_KEY]: workspaceValue });
+    vi.stubGlobal("localStorage", local);
+
+    saveAutomationConfig({
+      schemaVersion: 1,
+      objective: "  修复产品目录  ",
+      recipe: "technical",
+      selectedModes: ["fix", "fix", "review"],
+      evidenceSources: ["site", "site", "deployment"],
+      advanceMode: "continuous",
+    });
+
+    expect(JSON.parse(local.getItem(AUTOMATION_CONFIG_KEY) ?? "{}")).toEqual({
+      schemaVersion: 1,
+      objective: "修复产品目录",
+      recipe: "technical",
+      selectedModes: ["fix", "review"],
+      evidenceSources: ["site", "deployment"],
+      advanceMode: "continuous",
+    });
+    expect(loadAutomationConfig()).toEqual({
+      schemaVersion: 1,
+      objective: "修复产品目录",
+      recipe: "technical",
+      selectedModes: ["fix", "review"],
+      evidenceSources: ["site", "deployment"],
+      advanceMode: "continuous",
+    });
+    expect(local.getItem(WORKSPACE_DRAFT_KEY)).toBe(workspaceValue);
+  });
+
+  it("does not persist API keys or integration secrets from an untrusted config object", () => {
+    const local = memoryStorage();
+    vi.stubGlobal("localStorage", local);
+    const untrustedConfig: AutomationConfig & {
+      apiKey: string;
+      integrationTokens: Record<string, string>;
+    } = {
+      schemaVersion: 1,
+      objective: "运行自动审计",
+      recipe: "growth",
+      selectedModes: ["audit", "fix"],
+      evidenceSources: ["site", "gsc"],
+      advanceMode: "approval",
+      apiKey: "sk-should-not-be-saved",
+      integrationTokens: { gsc: "oauth-secret" },
+    };
+
+    saveAutomationConfig(untrustedConfig);
+
+    const persisted = local.getItem(AUTOMATION_CONFIG_KEY) ?? "";
+    expect(persisted).not.toContain("sk-should-not-be-saved");
+    expect(persisted).not.toContain("oauth-secret");
+    expect(JSON.parse(persisted)).toEqual({
+      schemaVersion: 1,
+      objective: "运行自动审计",
+      recipe: "growth",
+      selectedModes: ["audit", "fix"],
+      evidenceSources: ["site", "gsc"],
+      advanceMode: "approval",
+    });
+  });
+});
+
+describe("active workflow session storage", () => {
+  it("restores a validated stage snapshot without persisting credentials", () => {
+    const session = memoryStorage();
+    vi.stubGlobal("sessionStorage", session);
+    const snapshot: WorkflowExecutionSnapshot & { apiKey: string } = {
+      schemaVersion: 1,
+      signature: "full-signature",
+      coreSignature: "core-signature",
+      startedAt: "2026-07-13T08:00:00Z",
+      inspectionComplete: true,
+      maxPages: 6,
+      auditReport: { evidence_status: "available" },
+      steps: [
+        { mode: "audit", status: "complete", report: "# Audit" },
+        { mode: "fix", status: "pending", inputModes: ["audit"] },
+      ],
+      apiKey: "sk-must-not-persist",
+    };
+
+    saveActiveWorkflow(snapshot);
+
+    const persisted = session.getItem(ACTIVE_WORKFLOW_KEY) ?? "";
+    expect(persisted).not.toContain("sk-must-not-persist");
+    expect(loadActiveWorkflow()).toEqual({
+      schemaVersion: 1,
+      signature: "full-signature",
+      coreSignature: "core-signature",
+      startedAt: "2026-07-13T08:00:00Z",
+      inspectionComplete: true,
+      maxPages: 6,
+      auditReport: { evidence_status: "available" },
+      steps: [
+        { mode: "audit", status: "complete", report: "# Audit" },
+        { mode: "fix", status: "pending", inputModes: ["audit"] },
+      ],
+    });
+
+    clearActiveWorkflow();
+    expect(loadActiveWorkflow()).toBeNull();
+  });
+
+  it("rejects malformed workflow snapshots", () => {
+    vi.stubGlobal("sessionStorage", memoryStorage({
+      [ACTIVE_WORKFLOW_KEY]: JSON.stringify({
+        schemaVersion: 1,
+        signature: "x",
+        coreSignature: "y",
+        startedAt: "invalid",
+        inspectionComplete: true,
+        maxPages: 999,
+        steps: [{ mode: "unknown", status: "complete" }],
+      }),
+    }));
+
+    expect(loadActiveWorkflow()).toBeNull();
   });
 });
 

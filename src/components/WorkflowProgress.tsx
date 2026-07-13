@@ -1,6 +1,7 @@
 import {
   Check,
   CircleDashed,
+  Hourglass,
   LoaderCircle,
   Minus,
   TriangleAlert,
@@ -24,6 +25,7 @@ const STATUS_META: Record<
   pending: { label: "待执行", Icon: CircleDashed },
   running: { label: "运行中", Icon: LoaderCircle },
   complete: { label: "已完成", Icon: Check },
+  waiting: { label: "等待材料", Icon: Hourglass },
   skipped: { label: "已跳过", Icon: Minus },
   error: { label: "失败", Icon: TriangleAlert },
 };
@@ -39,7 +41,7 @@ export function WorkflowProgress({ steps, compact = false }: WorkflowProgressPro
     : errorIndex >= 0
       ? errorIndex + 1
       : pendingIndex >= 0
-        ? pendingIndex
+        ? pendingIndex + 1
         : steps.length;
 
   return (
@@ -59,7 +61,7 @@ export function WorkflowProgress({ steps, compact = false }: WorkflowProgressPro
       </header>
 
       <ol className="workflow-progress__list">
-        {steps.map((step) => {
+        {steps.map((step, index) => {
           const mode = MODES.find((item) => item.id === step.mode);
           const { Icon, label } = STATUS_META[step.status];
 
@@ -70,11 +72,18 @@ export function WorkflowProgress({ steps, compact = false }: WorkflowProgressPro
               aria-current={step.status === "running" ? "step" : undefined}
             >
               <span className="workflow-step__index" aria-hidden="true">
-                {mode?.code ?? "--"}
+                {String(index + 1).padStart(2, "0")}
               </span>
               <div className="workflow-step__body">
                 <strong>{mode?.label ?? step.mode}</strong>
                 <span>{mode?.title ?? "工作流步骤"}</span>
+                {step.inputModes && step.inputModes.length > 0 && (
+                  <small className="workflow-step__handoff">
+                    自动继承：{step.inputModes.map((inputMode) =>
+                      MODES.find((item) => item.id === inputMode)?.label ?? inputMode
+                    ).join("、")}
+                  </small>
+                )}
                 {step.reason && <small>{step.reason}</small>}
               </div>
               <span className="workflow-step__state">

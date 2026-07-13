@@ -2,7 +2,8 @@
 
 import { Globe2, PencilLine, SlidersHorizontal, Target } from "lucide-react";
 import { useId } from "react";
-import type { ModeDefinition, ModeDraft, ProjectProfile } from "../types";
+import type { ModeDefinition, ModeDraft, ModeId, ProjectProfile } from "../types";
+import { MODES } from "../data";
 
 export interface ModeTaskFormProps {
   mode: ModeDefinition;
@@ -10,6 +11,7 @@ export interface ModeTaskFormProps {
   draft: ModeDraft;
   onChange: (draft: ModeDraft) => void;
   onEditProject?: () => void;
+  inheritedModes?: ModeId[];
   disabled?: boolean;
 }
 
@@ -19,6 +21,7 @@ export function ModeTaskForm({
   draft,
   onChange,
   onEditProject,
+  inheritedModes = [],
   disabled = false,
 }: ModeTaskFormProps) {
   const headingId = useId();
@@ -29,17 +32,21 @@ export function ModeTaskForm({
   const objectivePlaceholder = profile.primaryGoal.trim()
     ? `默认：${profile.primaryGoal.trim()}`
     : mode.task.objective.placeholder;
+  const inherited = inheritedModes.length > 0;
   const secondaryFields = ["details", "scope", "timing"] as const;
-  const requiredFields = secondaryFields.filter((field) => mode.task[field]?.required);
+  const requiredFields = secondaryFields.filter(
+    (field) => !inherited && mode.task[field]?.required,
+  );
   const optionalFields = secondaryFields.filter((field) => {
     const definition = mode.task[field];
-    return definition && !definition.required;
+    return definition && (inherited || !definition.required);
   });
 
   const fieldControl = (field: typeof secondaryFields[number]) => {
     const definition = mode.task[field];
     if (!definition) return null;
-    const label = `${definition.label}${definition.required ? " *" : ""}`;
+    const required = Boolean(definition.required && !inherited);
+    const label = `${definition.label}${required ? " *" : ""}`;
     if (field === "details") {
       return (
         <label className="field" key={field}>
@@ -49,7 +56,7 @@ export function ModeTaskForm({
             value={draft[field]}
             onChange={(event) => update(field, event.target.value)}
             placeholder={definition.placeholder}
-            required={definition.required}
+            required={required}
             disabled={disabled}
           />
         </label>
@@ -62,7 +69,7 @@ export function ModeTaskForm({
           value={draft[field]}
           onChange={(event) => update(field, event.target.value)}
           placeholder={definition.placeholder}
-          required={definition.required}
+          required={required}
           disabled={disabled}
         />
       </label>
@@ -107,6 +114,18 @@ export function ModeTaskForm({
         )}
       </section>
 
+      {inheritedModes.length > 0 && (
+        <div className="handoff-banner" role="status">
+          <span className="handoff-banner__label">自动继承</span>
+          <strong>
+            {inheritedModes.map((inputMode) =>
+              MODES.find((item) => item.id === inputMode)?.label ?? inputMode
+            ).join("、")}
+          </strong>
+          <span>上一阶段结果会作为只读上下文传入本次分析，无需粘贴，也不会覆盖当前草稿。</span>
+        </div>
+      )}
+
       <header className="mode-intro">
         <div className={`mode-intro__index mode-intro__index--${mode.accent}`}>{mode.code}</div>
         <div>
@@ -125,14 +144,14 @@ export function ModeTaskForm({
         <label className="field mode-task-form__objective">
           <span>
             {mode.task.objective.label}
-            {mode.task.objective.required ? " *" : ""}
+            {mode.task.objective.required && !inherited ? " *" : ""}
           </span>
           <textarea
             rows={mode.task.objective.rows ?? 3}
             value={draft.objective}
             onChange={(event) => update("objective", event.target.value)}
             placeholder={objectivePlaceholder}
-            required={mode.task.objective.required}
+            required={Boolean(mode.task.objective.required && !inherited)}
             disabled={disabled}
           />
         </label>

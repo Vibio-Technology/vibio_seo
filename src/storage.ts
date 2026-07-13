@@ -1,6 +1,21 @@
-import type { ModelSettings, ProjectInput, RunRecord, WorkspaceDraftV2 } from "./types";
+import type {
+  ModeId,
+  ModelSettings,
+  ProjectInput,
+  RunRecord,
+  WorkflowExecutionSnapshot,
+  WorkflowStep,
+  WorkflowStepStatus,
+  WorkspaceDraftV2,
+} from "./types";
+import {
+  DEFAULT_AUTOMATION_CONFIG,
+  normalizeAutomationConfig,
+  type AutomationConfig,
+} from "./automation";
 import {
   migrateLegacyProject,
+  MODE_IDS,
   normalizeWorkspaceDraft,
 } from "./workspace-draft";
 
@@ -9,9 +24,20 @@ export const WORKSPACE_DRAFT_KEY = "vibio:workspace:draft:v2";
 const PROVIDER_KEY = "vibio:model:preference";
 const API_KEY = "vibio:model:api-key";
 const HISTORY_KEY = "vibio:runs";
+export const AUTOMATION_CONFIG_KEY = "vibio:automation:config:v1";
+export const ACTIVE_WORKFLOW_KEY = "vibio:automation:active:v1";
 const HISTORY_LIMIT = 12;
 
 const DEPRECATED_DEEPSEEK_MODELS = new Set(["deepseek-chat", "deepseek-reasoner"]);
+const MODE_ID_SET = new Set<ModeId>(MODE_IDS);
+const WORKFLOW_STATUS_SET = new Set<WorkflowStepStatus>([
+  "pending",
+  "running",
+  "complete",
+  "waiting",
+  "skipped",
+  "error",
+]);
 
 export interface SaveRunResult {
   runs: RunRecord[];
@@ -36,6 +62,57 @@ function readUnknownJson(storage: Storage, key: string): unknown | undefined {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeWorkflowStep(value: unknown): WorkflowStep | null {
+  if (!isRecord(value) || !MODE_ID_SET.has(value.mode as ModeId)) return null;
+  if (!WORKFLOW_STATUS_SET.has(value.status as WorkflowStepStatus)) return null;
+  const inputModes = Array.isArray(value.inputModes)
+    ? value.inputModes.filter(
+        (mode): mode is ModeId => typeof mode === "string" && MODE_ID_SET.has(mode as ModeId),
+      )
+    : undefined;
+  return {
+    mode: value.mode as ModeId,
+    status: value.status as WorkflowStepStatus,
+    ...(typeof value.report === "string" ? { report: value.report } : {}),
+    ...(typeof value.reason === "string" ? { reason: value.reason } : {}),
+    ...(typeof value.createdAt === "string" ? { createdAt: value.createdAt } : {}),
+    ...(inputModes?.length ? { inputModes } : {}),
+  };
+}
+
+function normalizeActiveWorkflow(value: unknown): WorkflowExecutionSnapshot | null {
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== 1 ||
+    typeof value.signature !== "string" ||
+    typeof value.coreSignature !== "string" ||
+    typeof value.startedAt !== "string" ||
+    typeof value.inspectionComplete !== "boolean" ||
+    typeof value.maxPages !== "number" ||
+    !Number.isInteger(value.maxPages) ||
+    value.maxPages < 1 ||
+    value.maxPages > 10 ||
+    !Array.isArray(value.steps)
+  ) return null;
+  const steps = value.steps.map(normalizeWorkflowStep);
+  if (steps.some((step) => step === null)) return null;
+  return {
+    schemaVersion: 1,
+    signature: value.signature,
+    coreSignature: value.coreSignature,
+    startedAt: value.startedAt,
+    inspectionComplete: value.inspectionComplete,
+    maxPages: value.maxPages,
+    ...(isRecord(value.auditReport) ? { auditReport: value.auditReport } : {}),
+    steps: steps as WorkflowStep[],
+    ...(typeof value.recordId === "string" ? { recordId: value.recordId } : {}),
+  };
+}
+
 export function loadWorkspaceDraft(fallback: WorkspaceDraftV2): WorkspaceDraftV2 {
   try {
     const stored = normalizeWorkspaceDraft(
@@ -55,6 +132,48 @@ export function saveWorkspaceDraft(draft: WorkspaceDraftV2): void {
     localStorage.setItem(WORKSPACE_DRAFT_KEY, JSON.stringify(draft));
   } catch {
     // Browser storage is optional; the active in-memory workspace remains usable.
+  }
+}
+
+export function loadAutomationConfig(): AutomationConfig {
+  try {
+    return normalizeAutomationConfig(readUnknownJson(localStorage, AUTOMATION_CONFIG_KEY));
+  } catch {
+    return normalizeAutomationConfig(DEFAULT_AUTOMATION_CONFIG);
+  }
+}
+
+export function saveAutomationConfig(config: AutomationConfig): void {
+  try {
+    localStorage.setItem(AUTOMATION_CONFIG_KEY, JSON.stringify(normalizeAutomationConfig(config)));
+  } catch {
+    // The active in-memory automation configuration remains usable.
+  }
+}
+
+export function loadActiveWorkflow(): WorkflowExecutionSnapshot | null {
+  try {
+    return normalizeActiveWorkflow(readUnknownJson(sessionStorage, ACTIVE_WORKFLOW_KEY));
+  } catch {
+    return null;
+  }
+}
+
+export function saveActiveWorkflow(snapshot: WorkflowExecutionSnapshot): void {
+  try {
+    const normalized = normalizeActiveWorkflow(snapshot);
+    if (!normalized) return;
+    sessionStorage.setItem(ACTIVE_WORKFLOW_KEY, JSON.stringify(normalized));
+  } catch {
+    // Workflow execution remains available in memory when session storage is unavailable.
+  }
+}
+
+export function clearActiveWorkflow(): void {
+  try {
+    sessionStorage.removeItem(ACTIVE_WORKFLOW_KEY);
+  } catch {
+    // Clearing the in-memory execution is sufficient when session storage is unavailable.
   }
 }
 

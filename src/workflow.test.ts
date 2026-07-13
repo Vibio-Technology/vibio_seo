@@ -7,6 +7,7 @@ import {
   WORKFLOW_MODE_ORDER,
   aggregateWorkflowMarkdown,
   buildWorkflowContext,
+  buildWorkflowContextForMode,
   buildWorkflowPlan,
 } from "./workflow";
 
@@ -42,7 +43,7 @@ describe("buildWorkflowPlan", () => {
       reason: expect.stringContaining("下滑"),
     });
     expect(steps.find((step) => step.mode === "review")).toMatchObject({
-      status: "skipped",
+      status: "waiting",
       reason: expect.stringContaining("等待已上线变更"),
     });
     expect(
@@ -118,7 +119,7 @@ describe("buildWorkflowPlan", () => {
     );
 
     expect(steps.find((step) => step.mode === "recover")?.status).toBe("pending");
-    expect(steps.find((step) => step.mode === "review")?.status).toBe("skipped");
+    expect(steps.find((step) => step.mode === "review")?.status).toBe("waiting");
   });
 
   it("does not let review input enable the recovery gate", () => {
@@ -140,7 +141,7 @@ describe("buildWorkflowPlan", () => {
       (step) => step.mode === "review",
     );
 
-    expect(review?.status).toBe("skipped");
+    expect(review?.status).toBe("waiting");
   });
 
   it("does not enable review for a planned observation window without results", () => {
@@ -148,7 +149,7 @@ describe("buildWorkflowPlan", () => {
       project({ decisionWindow: "计划建立基线窗口和观察期" }),
     ).find((step) => step.mode === "review");
 
-    expect(review?.status).toBe("skipped");
+    expect(review?.status).toBe("waiting");
   });
 
   it.each([
@@ -159,7 +160,7 @@ describe("buildWorkflowPlan", () => {
       (step) => step.mode === "review",
     );
 
-    expect(review?.status).toBe("skipped");
+    expect(review?.status).toBe("waiting");
   });
 });
 
@@ -180,8 +181,13 @@ describe("buildWorkflowContext", () => {
 
     expect(context.schemaVersion).toBe("vibio-web.workflow-context.v1");
     expect(context.completedReports.map((item) => item.mode)).toEqual(["keyword", "fix", "link"]);
-    expect(context.completedReports[0]).toMatchObject({ truncated: false, report: "keyword report" });
+    expect(context.completedReports[0]).toMatchObject({
+      artifactKind: "query_map",
+      truncated: false,
+      report: "keyword report",
+    });
     expect(context.completedReports[2]).toMatchObject({
+      artifactKind: "link_plan",
       truncated: true,
       createdAt: "2026-07-13T10:00:00Z",
     });
@@ -207,6 +213,61 @@ describe("buildWorkflowContext", () => {
   });
 });
 
+describe("buildWorkflowContextForMode", () => {
+  it("feeds audit findings into fix while excluding unrelated completed reports", () => {
+    const context = buildWorkflowContextForMode(
+      [
+        {
+          mode: "audit",
+          status: "complete",
+          report: "产品页 canonical 冲突，需统一到自引用 URL。",
+          createdAt: "2026-07-13T09:00:00Z",
+        },
+        { mode: "keyword", status: "complete", report: "关键词聚类结果" },
+        { mode: "plan", status: "complete", report: "先修复 canonical，再复验索引。" },
+        { mode: "write", status: "complete", report: "不应传给修复模式的内容稿" },
+      ],
+      "fix",
+    );
+
+    expect(context.completedReports).toEqual([
+      {
+        mode: "audit",
+        artifactKind: "audit_findings",
+        report: "产品页 canonical 冲突，需统一到自引用 URL。",
+        truncated: false,
+        createdAt: "2026-07-13T09:00:00Z",
+      },
+      {
+        mode: "plan",
+        artifactKind: "execution_plan",
+        report: "先修复 canonical，再复验索引。",
+        truncated: false,
+      },
+    ]);
+    expect(JSON.stringify(context)).not.toContain("关键词聚类结果");
+    expect(JSON.stringify(context)).not.toContain("内容稿");
+  });
+
+  it("keeps the plan baseline when a full implementation chain reaches review", () => {
+    const context = buildWorkflowContextForMode(
+      [
+        { mode: "plan", status: "complete", report: "计划基线与停止条件" },
+        { mode: "fix", status: "complete", report: "修复契约" },
+        { mode: "write", status: "complete", report: "内容产物" },
+        { mode: "link", status: "complete", report: "链接产物" },
+      ],
+      "review",
+    );
+
+    expect(context.completedReports.map((item) => item.mode)).toEqual(["plan", "write", "link"]);
+    expect(context.completedReports[0]).toMatchObject({
+      artifactKind: "execution_plan",
+      report: "计划基线与停止条件",
+    });
+  });
+});
+
 describe("aggregateWorkflowMarkdown", () => {
   it("combines reports, statuses, reasons, and project metadata into one document", () => {
     const markdown = aggregateWorkflowMarkdown(
@@ -222,6 +283,7 @@ describe("aggregateWorkflowMarkdown", () => {
         { mode: "keyword", status: "running" },
         { mode: "plan", status: "pending" },
         { mode: "fix", status: "error", reason: "模型服务暂不可用。" },
+        { mode: "review", status: "waiting", reason: "等待上线数据。" },
       ],
     );
 
@@ -231,11 +293,13 @@ describe("aggregateWorkflowMarkdown", () => {
     expect(markdown).toContain("- 运行中：1");
     expect(markdown).toContain("- 待运行：1");
     expect(markdown).toContain("- 已跳过：1");
+    expect(markdown).toContain("- 等待材料：1");
     expect(markdown).toContain("- 失败：1");
     expect(markdown).toContain("### 01 审计（AUDIT）");
     expect(markdown).toContain("发现 canonical 冲突。");
     expect(markdown).toContain("- 说明：没有下滑信号。");
     expect(markdown).toContain("- 说明：模型服务暂不可用。");
+    expect(markdown).toContain("- 说明：等待上线数据。");
     expect(markdown).toContain("- 完成时间：2026-07-13T09:00:00Z");
   });
 });
