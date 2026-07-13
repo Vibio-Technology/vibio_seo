@@ -1,6 +1,6 @@
 import { MAX_PROVIDER_RESPONSE_BYTES } from "./privacy";
 
-export const PROVIDER_TIMEOUT_MS = 240_000;
+export const PROVIDER_TIMEOUT_MS = 290_000;
 
 export interface ChatMessage {
   role: "system" | "user";

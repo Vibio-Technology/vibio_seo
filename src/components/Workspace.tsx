@@ -208,23 +208,35 @@ async function analyzeMode({
   auditReport?: Record<string, unknown>;
   workflowContext?: unknown;
 }): Promise<AnalysisResponse> {
-  const response = await fetch("/api/analyze", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Vibio-Api-Key": settings.apiKey,
-    },
-    body: JSON.stringify({
-      provider: settings.provider,
-      model: settings.model,
-      mode,
-      project,
-      evidence: evidence.map(({ id: _id, ...file }) => file),
-      audit_report: auditReport,
-      ...(workflowContext === undefined ? {} : { workflow_context: workflowContext }),
-    }),
-  });
-  if (!response.ok) throw new Error(await readApiError(response));
+  let response: Response;
+  try {
+    response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Vibio-Api-Key": settings.apiKey,
+      },
+      body: JSON.stringify({
+        provider: settings.provider,
+        model: settings.model,
+        mode,
+        project,
+        evidence: evidence.map(({ id: _id, ...file }) => file),
+        audit_report: auditReport,
+        ...(workflowContext === undefined ? {} : { workflow_context: workflowContext }),
+      }),
+    });
+  } catch {
+    throw new Error("分析连接在等待模型返回时中断。输入已保留，请重新运行；单次最长等待约 5 分钟。");
+  }
+  if (!response.ok) {
+    const message = await readApiError(response);
+    throw new Error(
+      response.status === 504 && message === "请求失败（504）"
+        ? "模型在最长 5 分钟内未完成。输入已保留，请重新运行或改用 DeepSeek V4 Flash。"
+        : message,
+    );
+  }
   return (await response.json()) as AnalysisResponse;
 }
 

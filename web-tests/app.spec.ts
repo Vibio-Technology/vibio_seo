@@ -401,6 +401,24 @@ test("automatic workflow uses each mode draft and resumes only with the same inp
   );
 });
 
+test("analysis connection closure keeps inputs and shows a recoverable error", async ({ page }) => {
+  const draft = createWorkspaceDraft({
+    profile: { allowNetworkEvidence: false },
+    modes: { audit: { objective: "保留这次审计输入" } },
+  });
+  await injectWorkspace(page, draft);
+  await page.route("**/api/analyze", async (route) => {
+    await route.abort("connectionclosed");
+  });
+  await page.goto("/workspace");
+
+  await page.getByRole("button", { name: "运行审计" }).click();
+
+  await expect(page.locator(".error-banner")).toContainText("分析连接在等待模型返回时中断");
+  await expect(page.getByLabel("这次最想确认什么？")).toHaveValue("保留这次审计输入");
+  await expect(page.getByRole("button", { name: "运行审计" })).toBeEnabled();
+});
+
 test("history drawer traps focus, closes with Escape, and restores the opener", async ({ page }) => {
   await injectWorkspace(page);
   await page.setViewportSize({ width: 1440, height: 900 });
