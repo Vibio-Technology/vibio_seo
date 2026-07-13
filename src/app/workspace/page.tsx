@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function WorkspacePage() {
   return (
-    <div className="min-h-screen bg-[#f3f4f0] text-[#181c23]">
+    <div className="min-h-screen bg-[#f7f9fc] text-[#172033]">
       <Workspace />
     </div>
   );

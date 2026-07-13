@@ -8,6 +8,7 @@ import {
   FileCode2,
   FilePenLine,
   Fingerprint,
+  Globe2,
   KeyRound,
   LifeBuoy,
   LockKeyhole,
@@ -17,6 +18,8 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  Upload,
+  Workflow,
   Wrench,
 } from "lucide-react";
 import Image from "next/image";
@@ -126,20 +129,11 @@ export default function HomePage() {
 
       <main>
         <section className={styles.hero} aria-labelledby="hero-title">
-          <Image
-            className={styles.heroImage}
-            src="/vibio-workspace-preview.webp"
-            alt="Vibio SEO 工作台的真实界面预览"
-            fill
-            priority
-            sizes="100vw"
-          />
-          <div className={styles.heroShade} aria-hidden="true" />
-          <div className={styles.heroInner}>
+          <div className={`${styles.sectionInner} ${styles.heroGrid}`}>
             <div className={styles.heroCopy}>
               <span className={styles.heroEyebrow}>
                 <Sparkles size={15} aria-hidden="true" />
-                证据驱动的搜索优化工作流
+                证据驱动的 SEO 工作台
               </span>
               <h1 id="hero-title">Vibio SEO</h1>
               <p className={styles.heroLead}>把 SEO 从一堆建议，变成有证据、能执行、可复盘的工作流。</p>
@@ -159,26 +153,106 @@ export default function HomePage() {
                 <Check size={14} aria-hidden="true" />
                 无需注册·使用你自己的模型 API Key
               </p>
+              <dl className={styles.heroFacts} aria-label="产品概览">
+                <div>
+                  <dt>一份</dt>
+                  <dd>项目档案</dd>
+                </div>
+                <div>
+                  <dt>8 种</dt>
+                  <dd>专项能力</dd>
+                </div>
+                <div>
+                  <dt>7 家</dt>
+                  <dd>BYOK 模型</dd>
+                </div>
+              </dl>
             </div>
 
-            <dl className={styles.heroFacts} aria-label="产品概览">
+            <aside className={styles.startPanel} aria-labelledby="start-panel-title">
+              <header className={styles.startPanelHeader}>
+                <span className={styles.startPanelIcon} aria-hidden="true">
+                  <SearchCheck size={23} />
+                </span>
+                <div>
+                  <span>START A PROJECT</span>
+                  <h2 id="start-panel-title">开始一个 SEO 项目</h2>
+                  <p>不知道选什么？保持默认，直接从审计开始。</p>
+                </div>
+              </header>
+
+              <ol className={styles.launchSequence}>
+                <li>
+                  <span>01</span>
+                  <Globe2 size={18} aria-hidden="true" />
+                  <div>
+                    <strong>填写项目坐标</strong>
+                    <small>站点、市场、语言和主要转化</small>
+                  </div>
+                </li>
+                <li>
+                  <span>02</span>
+                  <Upload size={18} aria-hidden="true" />
+                  <div>
+                    <strong>按需补充证据</strong>
+                    <small>公开 URL 或聚合、脱敏的文本文件</small>
+                  </div>
+                </li>
+                <li>
+                  <span>03</span>
+                  <Workflow size={18} aria-hidden="true" />
+                  <div>
+                    <strong>选择运行方式</strong>
+                    <small>单项能力，或自动走完适用流程</small>
+                  </div>
+                </li>
+              </ol>
+
+              <Link className={styles.launchButton} href="/workspace">
+                打开工作台开始
+                <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+              <p className={styles.launchNote}>
+                <ShieldCheck size={14} aria-hidden="true" />
+                Key 仅保留在当前浏览器会话，不写入项目历史。
+              </p>
+            </aside>
+          </div>
+        </section>
+
+        <section className={styles.productPreviewSection} aria-labelledby="preview-title">
+          <div className={styles.sectionInner}>
+            <header className={styles.previewHeader}>
               <div>
-                <dt>一份</dt>
-                <dd>项目档案</dd>
+                <span className={styles.sectionKicker}>THE ACTUAL WORKSPACE</span>
+                <h2 id="preview-title">一处完成输入、运行与报告</h2>
               </div>
-              <div>
-                <dt>8 种</dt>
-                <dd>专项能力</dd>
+              <p>真实工作台界面。项目资料会被复用，每个能力只显示当前任务需要的输入。</p>
+            </header>
+            <figure className={styles.previewFrame}>
+              <div className={styles.previewToolbar}>
+                <div>
+                  <Image src="/vibio-logo.png" alt="" width={24} height={24} />
+                  <strong>Vibio SEO Workspace</strong>
+                </div>
+                <span>真实产品截图</span>
               </div>
-              <div>
-                <dt>7 家</dt>
-                <dd>BYOK 模型</dd>
+              <div className={styles.previewImageWrap}>
+                <Image
+                  src="/vibio-workspace-light.webp"
+                  alt="Vibio SEO 工作台，展示项目摘要、专项能力和模型与证据设置"
+                  width={1440}
+                  height={1000}
+                  priority
+                  sizes="(max-width: 1240px) 100vw, 1180px"
+                />
               </div>
-              <div>
-                <dt>2 种</dt>
-                <dd>报告导出格式</dd>
-              </div>
-            </dl>
+              <figcaption>
+                <span><Check size={14} aria-hidden="true" />项目信息一次填写</span>
+                <span><Workflow size={14} aria-hidden="true" />单项与自动流程并存</span>
+                <span><Braces size={14} aria-hidden="true" />Markdown / JSON 导出</span>
+              </figcaption>
+            </figure>
           </div>
         </section>
 
@@ -303,9 +377,9 @@ export default function HomePage() {
                 Vibio 从公开 URL 和你提供的脱敏材料开始。它会说清自己看到了什么、证明了什么，以及当前还不能知道什么。
               </p>
               <ul className={styles.evidencePoints}>
-                <li><SearchCheck size={18} />读取有界的 HTTP 源码、robots.txt 与 sitemap</li>
-                <li><FileCode2 size={18} />支持 CSV、JSON、HTML、XML、Markdown 与 TXT 证据</li>
-                <li><Braces size={18} />报告可复制，并导出 Markdown 和 JSON</li>
+                <li><SearchCheck size={18} aria-hidden="true" />读取有界的 HTTP 源码、robots.txt 与 sitemap</li>
+                <li><FileCode2 size={18} aria-hidden="true" />支持 CSV、JSON、HTML、XML、Markdown 与 TXT 证据</li>
+                <li><Braces size={18} aria-hidden="true" />报告可复制，并导出 Markdown 和 JSON</li>
               </ul>
             </div>
 
@@ -335,7 +409,7 @@ export default function HomePage() {
                   <dd>在同一证据范围内重新请求与比较产物</dd>
                 </div>
               </dl>
-              <p><LockKeyhole size={14} />限制会和发现一起出现，不放在小字里。</p>
+              <p><LockKeyhole size={14} aria-hidden="true" />限制会和发现一起出现，不放在小字里。</p>
             </figure>
           </div>
         </section>

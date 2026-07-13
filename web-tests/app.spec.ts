@@ -160,12 +160,41 @@ async function injectWorkspace(
 }
 
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {
-  const overflow = await page.evaluate(() => ({
-    document: document.documentElement.scrollWidth - window.innerWidth,
-    body: document.body.scrollWidth - window.innerWidth,
-  }));
+  const overflow = await page.evaluate(() => {
+    const offenders = Array.from(document.body.querySelectorAll<HTMLElement>("*"))
+      .filter((element) => {
+        if (element.tagName.toLowerCase().startsWith("nextjs-")) return false;
+        const rect = element.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return false;
+        let current: HTMLElement | null = element;
+        let insideHorizontalScroller = false;
+        while (current && current !== document.body) {
+          const overflowX = getComputedStyle(current).overflowX;
+          if (["auto", "scroll"].includes(overflowX) && current.scrollWidth > current.clientWidth) {
+            insideHorizontalScroller = true;
+            break;
+          }
+          current = current.parentElement;
+        }
+        if (insideHorizontalScroller) return false;
+        return rect.left < -1 || rect.right > window.innerWidth + 1;
+      })
+      .slice(0, 10)
+      .map((element) => ({
+        tag: element.tagName.toLowerCase(),
+        className: element.className,
+        left: Math.round(element.getBoundingClientRect().left),
+        right: Math.round(element.getBoundingClientRect().right),
+      }));
+    return {
+      document: document.documentElement.scrollWidth - window.innerWidth,
+      body: document.body.scrollWidth - window.innerWidth,
+      offenders,
+    };
+  });
   expect(overflow.document).toBeLessThanOrEqual(1);
   expect(overflow.body).toBeLessThanOrEqual(1);
+  expect(overflow.offenders).toEqual([]);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -194,6 +223,34 @@ for (const viewport of [
     await expect(page.getByRole("heading", { name: "定位搜索阻断" })).toBeVisible();
   });
 }
+
+test("mobile navigation traps focus, restores scrolling, and closes at the desktop breakpoint", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const toggleControl = page.locator('button[aria-controls="marketing-navigation"]');
+  const navigation = page.getByRole("navigation", { name: "主导航" });
+  const toggle = page.getByRole("button", { name: "打开导航" });
+  await toggle.click();
+  await expect(toggleControl).toHaveAttribute("aria-expanded", "true");
+  await expect(navigation.getByRole("link", { name: "工作方式", exact: true })).toBeFocused();
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("hidden");
+
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "关闭导航" }).first()).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(navigation.getByRole("link", { name: "进入工作台", exact: true })).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "打开导航" })).toBeFocused();
+  await expect(toggleControl).toHaveAttribute("aria-expanded", "false");
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("");
+
+  await page.getByRole("button", { name: "打开导航" }).click();
+  await page.setViewportSize({ width: 1200, height: 844 });
+  await expect(toggleControl).toHaveAttribute("aria-expanded", "false");
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("");
+});
 
 for (const viewport of [
   { label: "mobile", width: 390, height: 844 },

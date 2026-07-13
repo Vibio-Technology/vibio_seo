@@ -44,9 +44,9 @@ export const metadata: Metadata = {
     description: "把 SEO 从一堆建议，变成有证据、能执行、可复盘的工作流。",
     images: [
       {
-        url: "/vibio-workspace-preview.webp",
-        width: 1440,
-        height: 1000,
+        url: "/vibio-social-preview.webp",
+        width: 1200,
+        height: 630,
         alt: "Vibio SEO 工作台",
       },
     ],
@@ -55,14 +55,14 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Vibio SEO | 证据驱动的搜索优化工作流",
     description: "有证据、能执行、可复盘的 SEO 工作流。",
-    images: ["/vibio-workspace-preview.webp"],
+    images: ["/vibio-social-preview.webp"],
   },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f3f4f0",
+  themeColor: "#f7f9fc",
   colorScheme: "light",
 };
 
