@@ -278,6 +278,9 @@ export async function chatCompletion(options: {
         messages: options.messages.map((message) => ({ ...message })),
         stream: false,
         max_tokens: 4096,
+        ...(provider.id === "deepseek" && model === "deepseek-v4-flash"
+          ? { thinking: { type: "disabled" } }
+          : {}),
       }),
       redirect: "manual",
       signal: controller.signal,

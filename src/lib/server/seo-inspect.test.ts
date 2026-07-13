@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { POST as inspectRoute } from "../../app/api/inspect/route";
 import {
   assertPublicAddressSet,
+  createPinnedLookup,
   isAllowedByRobots,
   isPublicIpAddress,
   originKey,
@@ -10,6 +11,7 @@ import {
   parseRobotsDocument,
   parseSitemapXml,
   resolvePublicTarget,
+  type DnsAddress,
   validateAuditUrl,
 } from "./seo-inspect";
 
@@ -151,6 +153,28 @@ describe("network target guards", () => {
     const target = await resolvePublicTarget(start, originKey(start), resolver);
     expect(target.addresses).toEqual([{ address: "93.184.216.34", family: 4 }]);
     await expect(resolvePublicTarget("https://www.example.com/", originKey(start), resolver)).rejects.toThrow(/同源/);
+  });
+
+  it("returns the pinned address array when Node requests all lookup results", async () => {
+    const lookup = createPinnedLookup("example.com", {
+      address: "93.184.216.34",
+      family: 4,
+    });
+    const addresses = await new Promise<DnsAddress[]>((resolve, reject) => {
+      lookup("example.com", { all: true }, (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        if (!Array.isArray(result)) {
+          reject(new Error("Expected an address array"));
+          return;
+        }
+        resolve(result as DnsAddress[]);
+      });
+    });
+
+    expect(addresses).toEqual([{ address: "93.184.216.34", family: 4 }]);
   });
 
   it.each([

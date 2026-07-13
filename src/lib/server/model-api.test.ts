@@ -77,7 +77,7 @@ describe("provider catalog", () => {
     const result = await chatCompletion({
       providerId: "deepseek",
       apiKey: "temporary-test-key",
-      model: "deepseek-custom",
+      model: "deepseek-v4-flash",
       messages: [{ role: "user", content: "test" }],
       fetchImpl: successFetch as typeof fetch,
     });
@@ -85,7 +85,8 @@ describe("provider catalog", () => {
     expect(result).toBe("# 结果");
     expect(observed.url).toBe(PROVIDERS.deepseek.endpoint);
     expect(observed.authorization).toBe("Bearer temporary-test-key");
-    expect(observed.payload).toContain('"model":"deepseek-custom"');
+    expect(observed.payload).toContain('"model":"deepseek-v4-flash"');
+    expect(observed.payload).toContain('"thinking":{"type":"disabled"}');
 
     const errorFetch = vi.fn(async () =>
       Response.json(

@@ -410,16 +410,24 @@ export async function resolvePublicTarget(
   };
 }
 
-function createPinnedLookup(expectedHostname: string, pinned: DnsAddress): LookupFunction {
-  return (hostname, _options, callback) => {
+export function createPinnedLookup(expectedHostname: string, pinned: DnsAddress): LookupFunction {
+  return (hostname, options, callback) => {
     const actual = stripIpv6Brackets(hostname).toLowerCase().replace(/\.$/, "");
     if (actual !== expectedHostname) {
       const error = new Error("Pinned DNS hostname mismatch") as NodeJS.ErrnoException;
       error.code = "EPERM";
-      callback(error, "", 0);
+      if (options.all) {
+        callback(error, []);
+      } else {
+        callback(error, "", 0);
+      }
       return;
     }
-    callback(null, pinned.address, pinned.family);
+    if (options.all) {
+      callback(null, [{ address: pinned.address, family: pinned.family }]);
+    } else {
+      callback(null, pinned.address, pinned.family);
+    }
   };
 }
 
