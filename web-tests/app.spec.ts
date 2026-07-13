@@ -30,11 +30,11 @@ const providers = {
     {
       id: "deepseek",
       label: "DeepSeek",
-      description: "适合中文分析与长文推理",
-      default_model: "deepseek-chat",
+      description: "DeepSeek V4，支持长上下文与思考模式",
+      default_model: "deepseek-v4-flash",
       models: [
-        { id: "deepseek-chat", label: "DeepSeek Chat" },
-        { id: "deepseek-reasoner", label: "DeepSeek Reasoner" },
+        { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+        { id: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
       ],
     },
   ],
@@ -151,7 +151,7 @@ async function injectWorkspace(
       localStorage.setItem("vibio:workspace:draft:v2", JSON.stringify(draftValue));
       localStorage.setItem(
         "vibio:model:preference",
-        JSON.stringify({ provider: "deepseek", model: "deepseek-chat" }),
+        JSON.stringify({ provider: "deepseek", model: "deepseek-v4-flash" }),
       );
       sessionStorage.setItem("vibio:model:api-key", key);
     },
@@ -326,7 +326,7 @@ test("automatic workflow uses each mode draft and resumes only with the same inp
     await route.fulfill({
       json: {
         provider: "deepseek",
-        model: "deepseek-chat",
+        model: "deepseek-v4-flash",
         mode: body.mode.toUpperCase(),
         report: `# ${body.mode.toUpperCase()} 阶段\n\n- 已完成`,
         created_at: "2026-07-13T08:00:00Z",
@@ -394,7 +394,7 @@ test("automatic workflow uses each mode draft and resumes only with the same inp
     "temporary-browser-key",
   );
   expect(await page.evaluate((key) => localStorage.getItem(key), MODEL_PREFERENCE_KEY)).toContain(
-    "deepseek-chat",
+    "deepseek-v4-flash",
   );
 });
 

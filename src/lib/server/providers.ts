@@ -27,12 +27,12 @@ export const PROVIDERS: Readonly<Record<string, Provider>> = {
   deepseek: {
     id: "deepseek",
     label: "DeepSeek",
-    description: "DeepSeek 官方 OpenAI 兼容接口。",
+    description: "DeepSeek V4 官方 OpenAI 兼容接口。",
     endpoint: "https://api.deepseek.com/chat/completions",
-    defaultModel: "deepseek-chat",
+    defaultModel: "deepseek-v4-flash",
     models: [
-      { id: "deepseek-chat", label: "DeepSeek Chat" },
-      { id: "deepseek-reasoner", label: "DeepSeek Reasoner" },
+      { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+      { id: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
     ],
   },
   mimo: {

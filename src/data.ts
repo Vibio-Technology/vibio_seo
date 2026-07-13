@@ -256,11 +256,11 @@ export const FALLBACK_PROVIDERS: ProviderDefinition[] = [
   {
     id: "deepseek",
     label: "DeepSeek",
-    description: "适合中文分析与长文推理",
-    default_model: "deepseek-chat",
+    description: "DeepSeek V4，支持长上下文与思考模式",
+    default_model: "deepseek-v4-flash",
     models: [
-      { id: "deepseek-chat", label: "DeepSeek Chat" },
-      { id: "deepseek-reasoner", label: "DeepSeek Reasoner" },
+      { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+      { id: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
     ],
   },
   {

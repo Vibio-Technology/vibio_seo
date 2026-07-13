@@ -55,6 +55,14 @@ describe("provider catalog", () => {
     expect(
       catalog.every((item) => item.models.some((model) => model.id === item.default_model)),
     ).toBe(true);
+    expect(PROVIDERS.deepseek).toMatchObject({
+      endpoint: "https://api.deepseek.com/chat/completions",
+      defaultModel: "deepseek-v4-flash",
+      models: [
+        { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+        { id: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
+      ],
+    });
   });
 
   it("uses only the server-side endpoint and redacts the API key from errors", async () => {

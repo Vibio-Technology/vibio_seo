@@ -11,6 +11,8 @@ const API_KEY = "vibio:model:api-key";
 const HISTORY_KEY = "vibio:runs";
 const HISTORY_LIMIT = 12;
 
+const DEPRECATED_DEEPSEEK_MODELS = new Set(["deepseek-chat", "deepseek-reasoner"]);
+
 export interface SaveRunResult {
   runs: RunRecord[];
   persisted: boolean;
@@ -75,9 +77,16 @@ export function saveProject(project: ProjectInput): void {
 export function loadModelSettings(defaults: ModelSettings): ModelSettings {
   try {
     const preference = readJson<Partial<ModelSettings>>(localStorage, PROVIDER_KEY, {});
+    const provider = preference.provider ?? defaults.provider;
+    const storedModel = preference.model ?? defaults.model;
+    const model = provider === "deepseek" && DEPRECATED_DEEPSEEK_MODELS.has(storedModel)
+      ? "deepseek-v4-flash"
+      : storedModel;
     return {
       ...defaults,
       ...preference,
+      provider,
+      model,
       apiKey: sessionStorage.getItem(API_KEY) ?? "",
     };
   } catch {

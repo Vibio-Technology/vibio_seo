@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EMPTY_WORKSPACE_DRAFT } from "./data";
 import {
+  loadModelSettings,
   loadWorkspaceDraft,
   saveRun,
   saveWorkspaceDraft,
@@ -22,7 +23,7 @@ function run(id: string): RunRecord {
     language: "de-DE",
     objective: "Audit",
     provider: "deepseek",
-    model: "deepseek-chat",
+    model: "deepseek-v4-flash",
     report: `# ${id}`,
     evidence: [],
     createdAt: "2026-07-13T08:00:00Z",
@@ -136,4 +137,28 @@ describe("workspace draft storage", () => {
     );
     expect(local.getItem(LEGACY_PROJECT_KEY)).toBe(legacyValue);
   });
+});
+
+describe("model settings storage", () => {
+  it.each(["deepseek-chat", "deepseek-reasoner"])(
+    "migrates deprecated DeepSeek model %s to V4 Flash",
+    (deprecatedModel) => {
+      vi.stubGlobal("localStorage", memoryStorage({
+        "vibio:model:preference": JSON.stringify({
+          provider: "deepseek",
+          model: deprecatedModel,
+        }),
+      }));
+      vi.stubGlobal("sessionStorage", memoryStorage());
+
+      expect(loadModelSettings({
+        provider: "deepseek",
+        model: "deepseek-v4-flash",
+        apiKey: "",
+      })).toMatchObject({
+        provider: "deepseek",
+        model: "deepseek-v4-flash",
+      });
+    },
+  );
 });
