@@ -29,7 +29,12 @@ export function ProviderPanel({
   };
 
   return (
-    <section className="side-section provider-panel" aria-labelledby="provider-heading">
+    <form
+      className="side-section provider-panel"
+      aria-labelledby="provider-heading"
+      autoComplete="off"
+      onSubmit={(event) => event.preventDefault()}
+    >
       <div className="side-section__heading">
         <div>
           <span className="eyebrow">模型内核</span>
@@ -81,7 +86,8 @@ export function ProviderPanel({
             value={settings.apiKey}
             onChange={(event) => onChange({ ...settings, apiKey: event.target.value })}
             placeholder="输入当前提供商的 Key"
-            autoComplete="off"
+            autoComplete="new-password"
+            name="provider-api-key"
             spellCheck={false}
             disabled={loading}
           />
@@ -105,6 +111,6 @@ export function ProviderPanel({
         <span className="status-dot" />
         <span>{settings.apiKey ? `${provider?.label ?? "模型"} 已就绪` : "等待 API Key"}</span>
       </div>
-    </section>
+    </form>
   );
 }

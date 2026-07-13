@@ -209,6 +209,9 @@ for (const viewport of [
     await expect(page.getByText("Vibio SEO", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "定位搜索阻断" })).toBeVisible();
     await expect(page.getByRole("button", { name: /运行审计/ })).toBeVisible();
+    expect(await page.locator('input[name="provider-api-key"]').evaluate(
+      (element: HTMLInputElement) => element.form !== null,
+    )).toBe(true);
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
       "content",
       /noindex.*nofollow|nofollow.*noindex/,

@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { POST, compactAuditReport } from "../../app/api/analyze/route";
+import { POST, compactAuditReport, maxDuration as analyzeMaxDuration } from "../../app/api/analyze/route";
 import { MAX_KNOWLEDGE_BYTES, SUPPORTED_MODES, loadModeKnowledge } from "./knowledge";
 import {
   PROVIDERS,
+  PROVIDER_TIMEOUT_MS,
   ProviderError,
   chatCompletion,
   publicProviderCatalog,
@@ -122,6 +123,7 @@ describe("provider catalog", () => {
   });
 
   it("keeps the timeout active while reading a stalled provider body", async () => {
+    expect(analyzeMaxDuration).toBe(300);
     vi.useFakeTimers();
     const slowFetch = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
       const signal = init?.signal;
@@ -146,7 +148,7 @@ describe("provider catalog", () => {
       fetchImpl: slowFetch as typeof fetch,
     });
     const expectation = expect(pending).rejects.toMatchObject({ status: 504 });
-    await vi.advanceTimersByTimeAsync(50_001);
+    await vi.advanceTimersByTimeAsync(PROVIDER_TIMEOUT_MS + 1);
     await expectation;
   });
 });

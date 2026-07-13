@@ -15,7 +15,7 @@ import {
 } from "../../../lib/server/privacy";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 interface AnalyzeRequest {
   provider: string;

@@ -1,5 +1,7 @@
 import { MAX_PROVIDER_RESPONSE_BYTES } from "./privacy";
 
+export const PROVIDER_TIMEOUT_MS = 240_000;
+
 export interface ChatMessage {
   role: "system" | "user";
   content: string;
@@ -262,7 +264,7 @@ export async function chatCompletion(options: {
   const model = validateModelId(options.model);
   const fetchImpl = options.fetchImpl ?? fetch;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 50_000);
+  const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
 
   try {
     const response = await fetchImpl(provider.endpoint, {

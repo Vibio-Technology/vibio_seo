@@ -627,7 +627,7 @@ export function Workspace() {
   return (
     <div className="app-frame">
       <header className="topbar">
-        <Link className="brand-lockup" href="/" aria-label="返回 Vibio SEO 首页">
+        <Link className="brand-lockup" href="/" prefetch={false} aria-label="返回 Vibio SEO 首页">
           <Image src="/vibio-logo.png" alt="Vibio" width={37} height={37} priority />
           <div>
             <strong>Vibio SEO</strong>
