@@ -11,16 +11,17 @@ import {
   Workflow,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { EMPTY_PROJECT, FALLBACK_PROVIDERS, MODES } from "../data";
+import { EMPTY_WORKSPACE_DRAFT, FALLBACK_PROVIDERS, MODES } from "../data";
 import {
   clearRuns,
   loadModelSettings,
-  loadProject,
   loadRuns,
+  loadWorkspaceDraft,
   saveModelSettings,
-  saveProject,
   saveRun,
+  saveWorkspaceDraft,
 } from "../storage";
 import type {
   AnalysisResponse,
@@ -28,11 +29,14 @@ import type {
   EvidenceFile,
   InspectResponse,
   ModeId,
+  ModeDefinition,
   ModelSettings,
   ProjectInput,
+  ProjectProfile,
   ProviderDefinition,
   RunRecord,
   RunStage,
+  WorkspaceDraftV2,
   WorkflowStep,
 } from "../types";
 import {
@@ -40,10 +44,14 @@ import {
   buildWorkflowContext,
   buildWorkflowPlan,
 } from "../workflow";
+import {
+  buildAnalysisProject,
+} from "../workspace-draft";
 import { EvidencePanel } from "./EvidencePanel";
 import { HistoryDrawer } from "./HistoryDrawer";
+import { ModeTaskForm } from "./ModeTaskForm";
 import { ModeRail } from "./ModeRail";
-import { ProjectForm } from "./ProjectForm";
+import { ProjectSetup } from "./ProjectSetup";
 import { ProviderPanel } from "./ProviderPanel";
 import { ReportView } from "./ReportView";
 import { RunStatus } from "./RunStatus";
@@ -83,33 +91,64 @@ async function readApiError(response: Response): Promise<string> {
   }
 }
 
-function validateProject(project: ProjectInput, settings: ModelSettings): string | null {
-  if (!project.projectName.trim()) return "请填写项目名称。";
-  if (!project.market.trim()) return "请填写目标国家或地区。";
-  if (!project.language.trim()) return "请填写目标语言。";
-  if (!project.conversion.trim()) return "请定义主要合格转化。";
-  if (!project.objective.trim()) return "请填写本次目标或问题。";
-  if (project.siteUrl) {
+function validateProjectProfile(profile: ProjectProfile): string | null {
+  if (!profile.projectName.trim()) return "请填写项目名称。";
+  if (!profile.market.trim()) return "请填写目标国家或地区。";
+  if (!profile.language.trim()) return "请填写目标语言。";
+  if (!profile.conversion.trim()) return "请定义主要合格转化。";
+  if (!profile.primaryGoal.trim()) return "请填写项目主要目标。";
+  if (profile.siteUrl) {
     try {
-      const url = new URL(project.siteUrl);
+      const url = new URL(profile.siteUrl);
       if (!['http:', 'https:'].includes(url.protocol)) return "站点 URL 必须使用 HTTP 或 HTTPS。";
     } catch {
       return "站点 URL 格式不正确。";
     }
   }
+  return null;
+}
+
+function validateModelSettings(settings: ModelSettings): string | null {
   if (!settings.apiKey.trim()) return "请输入所选模型提供商的 API Key。";
   if (!settings.model.trim()) return "请输入模型 ID。";
   return null;
 }
 
+function validateModeTask(draft: WorkspaceDraftV2, mode: ModeDefinition): string | null {
+  const task = draft.modes[mode.id];
+  const requiredFields = ["objective", "details", "scope", "timing"] as const;
+  for (const field of requiredFields) {
+    const definition = mode.task[field];
+    if (definition?.required && !task[field].trim()) {
+      return `请填写“${definition.label}”。`;
+    }
+  }
+  return null;
+}
+
+function projectProfileIsComplete(profile: ProjectProfile): boolean {
+  return validateProjectProfile(profile) === null;
+}
+
+function cloneWorkspaceDraft(draft: WorkspaceDraftV2): WorkspaceDraftV2 {
+  return {
+    schemaVersion: 2,
+    profile: { ...draft.profile },
+    modes: Object.fromEntries(
+      MODES.map(({ id }) => [id, { ...draft.modes[id] }]),
+    ) as WorkspaceDraftV2["modes"],
+    sharedContext: draft.sharedContext,
+  };
+}
+
 function workflowInputSignature(
-  project: ProjectInput,
+  draft: WorkspaceDraftV2,
   settings: ModelSettings,
   evidence: EvidenceFile[],
   maxPages: number,
 ): string {
   return JSON.stringify({
-    project,
+    draft,
     provider: settings.provider,
     model: settings.model,
     maxPages,
@@ -191,7 +230,7 @@ async function analyzeMode({
 
 export function Workspace() {
   const [modeId, setModeId] = useState<ModeId>("audit");
-  const [project, setProject] = useState<ProjectInput>(EMPTY_PROJECT);
+  const [workspaceDraft, setWorkspaceDraft] = useState<WorkspaceDraftV2>(EMPTY_WORKSPACE_DRAFT);
   const [providers, setProviders] = useState<ProviderDefinition[]>(FALLBACK_PROVIDERS);
   const [settings, setSettings] = useState<ModelSettings>(DEFAULT_SETTINGS);
   const [evidence, setEvidence] = useState<EvidenceFile[]>([]);
@@ -205,6 +244,8 @@ export function Workspace() {
   const [hydrated, setHydrated] = useState(false);
   const [executionKind, setExecutionKind] = useState<ExecutionKind | null>(null);
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [editingProject, setEditingProject] = useState(false);
+  const [projectEstablished, setProjectEstablished] = useState(false);
   const runLock = useRef(false);
   const workflowExecution = useRef<WorkflowExecution | null>(null);
 
@@ -212,13 +253,16 @@ export function Workspace() {
     () => MODES.find((item) => item.id === modeId) ?? MODES[0],
     [modeId],
   );
+  const profileReady = projectProfileIsComplete(workspaceDraft.profile);
+  const workspaceActive = hydrated && projectEstablished && profileReady;
+  const showingProjectSetup = !projectEstablished || editingProject;
   const running = ["validating", "collecting", "analyzing"].includes(stage);
   const workflowRunning = running && executionKind === "workflow";
   const singleRunning = running && executionKind === "single";
   const failedWorkflowStep = workflowSteps.find((step) => step.status === "error");
   const currentWorkflowSignature = useMemo(
-    () => workflowInputSignature(project, settings, evidence, maxPages),
-    [evidence, maxPages, project, settings.model, settings.provider],
+    () => workflowInputSignature(workspaceDraft, settings, evidence, maxPages),
+    [evidence, maxPages, settings.model, settings.provider, workspaceDraft],
   );
   const workflowCanResume = Boolean(
     failedWorkflowStep &&
@@ -227,8 +271,8 @@ export function Workspace() {
   const workflowWillRetryInspection = Boolean(
     workflowCanResume &&
     workflowExecution.current?.inspectionComplete === false &&
-    project.siteUrl &&
-    project.allowNetworkEvidence,
+    workspaceDraft.profile.siteUrl &&
+    workspaceDraft.profile.allowNetworkEvidence,
   );
   const workflowAnalysisLabel = useMemo(() => {
     const runnable = workflowSteps.filter((step) => step.status !== "skipped");
@@ -252,15 +296,17 @@ export function Workspace() {
   }, [failedWorkflowStep, workflowCanResume, workflowSteps, workflowWillRetryInspection]);
 
   useEffect(() => {
-    setProject(loadProject(EMPTY_PROJECT));
+    const storedDraft = loadWorkspaceDraft(EMPTY_WORKSPACE_DRAFT);
+    setWorkspaceDraft(storedDraft);
+    setProjectEstablished(projectProfileIsComplete(storedDraft.profile));
     setSettings(loadModelSettings(DEFAULT_SETTINGS));
     setRuns(loadRuns());
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (hydrated) saveProject(project);
-  }, [hydrated, project]);
+    if (hydrated) saveWorkspaceDraft(workspaceDraft);
+  }, [hydrated, workspaceDraft]);
 
   useEffect(() => {
     if (hydrated) saveModelSettings(settings);
@@ -295,12 +341,16 @@ export function Workspace() {
   const runAnalysis = async () => {
     if (runLock.current) return;
     runLock.current = true;
-    const runProject = { ...project };
-    const runSettings = { ...settings };
+    const runDraft = cloneWorkspaceDraft(workspaceDraft);
     const runModeId = modeId;
+    const runMode = MODES.find((item) => item.id === runModeId) ?? MODES[0];
+    const runProject = buildAnalysisProject(runDraft, runModeId);
+    const runSettings = { ...settings };
     const runMaxPages = maxPages;
     const runEvidence = evidence.map((file) => ({ ...file }));
-    const validationError = validateProject(runProject, runSettings);
+    const validationError = validateProjectProfile(runDraft.profile)
+      ?? validateModeTask(runDraft, runMode)
+      ?? validateModelSettings(runSettings);
     if (validationError) {
       setError(validationError);
       setStage("error");
@@ -375,11 +425,19 @@ export function Workspace() {
   const runWorkflow = async () => {
     if (runLock.current) return;
     runLock.current = true;
-    const runProject = { ...project };
+    const runDraft = cloneWorkspaceDraft(workspaceDraft);
+    const auditProject = buildAnalysisProject(runDraft, "audit");
+    const recoveryProject = buildAnalysisProject(runDraft, "recover");
+    const reviewProject = buildAnalysisProject(runDraft, "review");
+    const summaryProject = {
+      ...auditProject,
+      objective: runDraft.profile.primaryGoal,
+    };
     const runSettings = { ...settings };
     const runEvidence = evidence.map((file) => ({ ...file }));
     const runMaxPages = maxPages;
-    const validationError = validateProject(runProject, runSettings);
+    const validationError = validateProjectProfile(runDraft.profile)
+      ?? validateModelSettings(runSettings);
     if (validationError) {
       setError(validationError);
       setStage("error");
@@ -408,7 +466,7 @@ export function Workspace() {
           signature,
           startedAt: new Date().toISOString(),
           inspectionComplete: false,
-          steps: buildWorkflowPlan(runProject, runEvidence),
+          steps: buildWorkflowPlan(recoveryProject, runEvidence, reviewProject),
         };
 
     const publishSteps = (steps: WorkflowStep[]) => {
@@ -426,7 +484,7 @@ export function Workspace() {
 
     try {
       const shouldInspect = Boolean(
-        runProject.siteUrl && runProject.allowNetworkEvidence,
+        auditProject.siteUrl && auditProject.allowNetworkEvidence,
       );
       if (!execution.inspectionComplete) {
         if (shouldInspect) {
@@ -434,7 +492,7 @@ export function Workspace() {
           setStage("collecting");
           try {
             execution.auditReport = await inspectSite(
-              runProject,
+              auditProject,
               runSettings,
               runMaxPages,
             );
@@ -475,9 +533,10 @@ export function Workspace() {
         setStage("analyzing");
 
         try {
+          const stepProject = buildAnalysisProject(runDraft, step.mode);
           const result = await analyzeMode({
             mode: step.mode,
-            project: runProject,
+            project: stepProject,
             settings: runSettings,
             evidence: runEvidence,
             auditReport: execution.auditReport,
@@ -517,14 +576,14 @@ export function Workspace() {
       const nextRecord: RunRecord = {
         id: crypto.randomUUID(),
         mode: "workflow",
-        projectName: runProject.projectName,
-        siteUrl: runProject.siteUrl,
-        market: runProject.market,
-        language: runProject.language,
-        objective: runProject.objective,
+        projectName: summaryProject.projectName,
+        siteUrl: summaryProject.siteUrl,
+        market: summaryProject.market,
+        language: summaryProject.language,
+        objective: runDraft.profile.primaryGoal,
         provider: runSettings.provider,
         model: runSettings.model,
-        report: aggregateWorkflowMarkdown(runProject, steps),
+        report: aggregateWorkflowMarkdown(summaryProject, steps),
         auditReport: execution.auditReport,
         evidence: runEvidence.map(({ name, type, size }) => ({ name, type, size })),
         createdAt: completedAt,
@@ -568,13 +627,13 @@ export function Workspace() {
   return (
     <div className="app-frame">
       <header className="topbar">
-        <div className="brand-lockup">
+        <Link className="brand-lockup" href="/" aria-label="返回 Vibio SEO 首页">
           <Image src="/vibio-logo.png" alt="Vibio" width={37} height={37} priority />
           <div>
             <strong>Vibio SEO</strong>
             <span>Evidence Workspace</span>
           </div>
-        </div>
+        </Link>
         <div className="topbar__meta">
           <div className={`api-state${apiConnected === false ? " is-offline" : ""}`}>
             <span className="status-dot" />
@@ -589,77 +648,135 @@ export function Workspace() {
         </div>
       </header>
 
-      <div className="workspace-grid">
-        <ModeRail modes={MODES} activeMode={modeId} onChange={changeMode} disabled={running} />
+      <div className={`workspace-grid${!workspaceActive ? " workspace-grid--setup" : ""}`}>
+        {workspaceActive && (
+          <ModeRail modes={MODES} activeMode={modeId} onChange={changeMode} disabled={running} />
+        )}
 
         <main className="main-workspace">
-          <RunStatus
-            stage={stage}
-            analysisLabel={workflowRunning ? workflowAnalysisLabel : undefined}
-          />
-          {error && (
-            <div className="error-banner" role="alert">
-              <TriangleAlert size={17} />
-              <span>{error}</span>
-              <button type="button" onClick={() => setError("")} aria-label="关闭错误提示">关闭</button>
+          {!hydrated ? (
+            <div className="workspace-loading" role="status" aria-label="正在读取项目">
+              <span className="workspace-loading__mark" />
+              <strong>正在读取项目</strong>
             </div>
-          )}
-
-          {record ? (
-            <ReportView record={record} onReset={resetRun} />
           ) : (
             <>
-              <WorkflowProgress steps={workflowSteps} />
-              <ProjectForm mode={mode} project={project} onChange={setProject} disabled={running} />
-              <footer className="run-bar">
-                <div className="run-bar__contract">
-                  <Sparkles size={17} aria-hidden="true" />
-                  <div>
-                    <span>{workflowSteps.length > 0 ? "自动流程" : "本次交付"}</span>
-                    <strong>{workflowSteps.length > 0 ? workflowContract : mode.output}</strong>
-                  </div>
+              {!showingProjectSetup && (
+                <RunStatus
+                  stage={stage}
+                  analysisLabel={workflowRunning ? workflowAnalysisLabel : undefined}
+                />
+              )}
+              {error && (
+                <div className="error-banner" role="alert">
+                  <TriangleAlert size={17} />
+                  <span>{error}</span>
+                  <button type="button" onClick={() => setError("")} aria-label="关闭错误提示">关闭</button>
                 </div>
-                <div className="run-actions">
-                  <button
-                    type="button"
-                    className="run-button run-button--secondary"
-                    onClick={() => void runAnalysis()}
+              )}
+
+              {record ? (
+                <ReportView record={record} onReset={resetRun} />
+              ) : showingProjectSetup ? (
+                <ProjectSetup
+                  profile={workspaceDraft.profile}
+                  sharedContext={workspaceDraft.sharedContext}
+                  onChange={(profile) => {
+                    setWorkspaceDraft((current) => ({ ...current, profile }));
+                  }}
+                  onSharedContextChange={(sharedContext) => {
+                    setWorkspaceDraft((current) => ({ ...current, sharedContext }));
+                  }}
+                  onSubmit={() => {
+                    const profileError = validateProjectProfile(workspaceDraft.profile);
+                    if (profileError) {
+                      setError(profileError);
+                      setStage("error");
+                      scrollPageTop();
+                      return;
+                    }
+                    setProjectEstablished(true);
+                    setEditingProject(false);
+                    setError("");
+                    setStage("idle");
+                    scrollPageTop();
+                  }}
+                  disabled={running}
+                  submitLabel={projectEstablished ? "保存项目设置" : "保存并进入工作台"}
+                />
+              ) : (
+                <>
+                  <WorkflowProgress steps={workflowSteps} />
+                  <ModeTaskForm
+                    mode={mode}
+                    profile={workspaceDraft.profile}
+                    draft={workspaceDraft.modes[modeId]}
+                    onChange={(modeDraft) => {
+                      setWorkspaceDraft((current) => ({
+                        ...current,
+                        modes: { ...current.modes, [modeId]: modeDraft },
+                      }));
+                    }}
+                    onEditProject={() => {
+                      setEditingProject(true);
+                      setError("");
+                      setStage("idle");
+                      scrollPageTop();
+                    }}
                     disabled={running}
-                  >
-                    {singleRunning
-                      ? <Sparkles size={18} className="pulse" />
-                      : <Play size={18} fill="currentColor" />}
-                    <span>{singleRunning ? "正在运行" : `运行${mode.label}`}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="run-button"
-                    onClick={() => void runWorkflow()}
-                    disabled={running}
-                  >
-                    {workflowRunning
-                      ? <Sparkles size={18} className="pulse" />
-                      : <Workflow size={18} />}
-                    <span>
-                      {workflowRunning
-                        ? "自动流程运行中"
-                        : workflowWillRetryInspection
-                          ? "重试证据并继续"
-                          : failedWorkflowStep && workflowCanResume
-                          ? `从${MODES.find((item) => item.id === failedWorkflowStep.mode)?.label ?? failedWorkflowStep.mode}继续`
-                          : failedWorkflowStep
-                            ? "重新运行全流程"
-                            : "自动跑全流程"}
-                    </span>
-                    {!running && <ArrowRight size={17} className="run-button__arrow" />}
-                  </button>
-                </div>
-              </footer>
+                  />
+                  <footer className="run-bar">
+                    <div className="run-bar__contract">
+                      <Sparkles size={17} aria-hidden="true" />
+                      <div>
+                        <span>{workflowSteps.length > 0 ? "自动流程" : "本次交付"}</span>
+                        <strong>{workflowSteps.length > 0 ? workflowContract : mode.output}</strong>
+                      </div>
+                    </div>
+                    <div className="run-actions">
+                      <button
+                        type="button"
+                        className="run-button run-button--secondary"
+                        onClick={() => void runAnalysis()}
+                        disabled={running}
+                      >
+                        {singleRunning
+                          ? <Sparkles size={18} className="pulse" />
+                          : <Play size={18} fill="currentColor" />}
+                        <span>{singleRunning ? "正在运行" : `运行${mode.label}`}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="run-button"
+                        onClick={() => void runWorkflow()}
+                        disabled={running}
+                      >
+                        {workflowRunning
+                          ? <Sparkles size={18} className="pulse" />
+                          : <Workflow size={18} />}
+                        <span>
+                          {workflowRunning
+                            ? "自动流程运行中"
+                            : workflowWillRetryInspection
+                              ? "重试证据并继续"
+                              : failedWorkflowStep && workflowCanResume
+                              ? `从${MODES.find((item) => item.id === failedWorkflowStep.mode)?.label ?? failedWorkflowStep.mode}继续`
+                              : failedWorkflowStep
+                                ? "重新运行全流程"
+                                : "自动跑全流程"}
+                        </span>
+                        {!running && <ArrowRight size={17} className="run-button__arrow" />}
+                      </button>
+                    </div>
+                  </footer>
+                </>
+              )}
             </>
           )}
         </main>
 
-        <aside className="context-panel" aria-label="模型与证据设置">
+        {workspaceActive && (
+          <aside className="context-panel" aria-label="模型与证据设置">
           <ProviderPanel
             providers={providers}
             settings={settings}
@@ -670,8 +787,8 @@ export function Workspace() {
             mode={mode}
             files={evidence}
             onChange={setEvidence}
-            siteUrl={project.siteUrl}
-            networkEnabled={project.allowNetworkEvidence}
+            siteUrl={workspaceDraft.profile.siteUrl}
+            networkEnabled={workspaceDraft.profile.allowNetworkEvidence}
             maxPages={maxPages}
             onMaxPagesChange={setMaxPages}
             onError={(message) => {
@@ -693,7 +810,8 @@ export function Workspace() {
               <li><ShieldCheck size={14} />不自动部署、不发外联、不投广告</li>
             </ul>
           </section>
-        </aside>
+          </aside>
+        )}
       </div>
 
       <HistoryDrawer

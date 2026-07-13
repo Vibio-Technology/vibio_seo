@@ -107,6 +107,34 @@ describe("buildWorkflowPlan", () => {
     expect(review).toEqual({ mode: "review", status: "pending" });
   });
 
+  it("does not let recovery input enable the review gate", () => {
+    const steps = buildWorkflowPlan(
+      project({
+        objective: "GSC 点击和自然流量从 6 月开始骤降",
+        details: "模板修复已于 2026-07-01 上线",
+      }),
+      [],
+      project(),
+    );
+
+    expect(steps.find((step) => step.mode === "recover")?.status).toBe("pending");
+    expect(steps.find((step) => step.mode === "review")?.status).toBe("skipped");
+  });
+
+  it("does not let review input enable the recovery gate", () => {
+    const steps = buildWorkflowPlan(
+      project(),
+      [],
+      project({
+        objective: "GSC 点击和自然流量从 6 月开始骤降",
+        details: "模板修复已于 2026-07-01 上线",
+      }),
+    );
+
+    expect(steps.find((step) => step.mode === "recover")?.status).toBe("skipped");
+    expect(steps.find((step) => step.mode === "review")?.status).toBe("pending");
+  });
+
   it("does not enable review from an empty measurement-shaped file", () => {
     const review = buildWorkflowPlan(project(), [evidence("gsc-before-after.csv")]).find(
       (step) => step.mode === "review",

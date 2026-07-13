@@ -1,6 +1,11 @@
-import type { ModelSettings, ProjectInput, RunRecord } from "./types";
+import type { ModelSettings, ProjectInput, RunRecord, WorkspaceDraftV2 } from "./types";
+import {
+  migrateLegacyProject,
+  normalizeWorkspaceDraft,
+} from "./workspace-draft";
 
 const PROJECT_KEY = "vibio:project:draft";
+export const WORKSPACE_DRAFT_KEY = "vibio:workspace:draft:v2";
 const PROVIDER_KEY = "vibio:model:preference";
 const API_KEY = "vibio:model:api-key";
 const HISTORY_KEY = "vibio:runs";
@@ -17,6 +22,37 @@ function readJson<T>(storage: Storage, key: string, fallback: T): T {
     return value ? (JSON.parse(value) as T) : fallback;
   } catch {
     return fallback;
+  }
+}
+
+function readUnknownJson(storage: Storage, key: string): unknown | undefined {
+  try {
+    const value = storage.getItem(key);
+    return value === null ? undefined : JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+export function loadWorkspaceDraft(fallback: WorkspaceDraftV2): WorkspaceDraftV2 {
+  try {
+    const stored = normalizeWorkspaceDraft(
+      readUnknownJson(localStorage, WORKSPACE_DRAFT_KEY),
+      fallback,
+    );
+    if (stored) return stored;
+
+    return migrateLegacyProject(readUnknownJson(localStorage, PROJECT_KEY), fallback);
+  } catch {
+    return migrateLegacyProject(undefined, fallback);
+  }
+}
+
+export function saveWorkspaceDraft(draft: WorkspaceDraftV2): void {
+  try {
+    localStorage.setItem(WORKSPACE_DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    // Browser storage is optional; the active in-memory workspace remains usable.
   }
 }
 

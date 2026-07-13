@@ -16,6 +16,22 @@ export type RunStage =
   | "complete"
   | "error";
 
+export type ModeTaskFieldId = "objective" | "details" | "scope" | "timing";
+
+export interface ModeTaskFieldDefinition {
+  label: string;
+  placeholder: string;
+  required?: boolean;
+  rows?: number;
+}
+
+export interface ModeTaskDefinition {
+  objective: ModeTaskFieldDefinition;
+  details: ModeTaskFieldDefinition;
+  scope?: ModeTaskFieldDefinition;
+  timing?: ModeTaskFieldDefinition;
+}
+
 export interface ModeDefinition {
   id: ModeId;
   code: string;
@@ -27,23 +43,45 @@ export interface ModeDefinition {
   evidenceHint: string;
   output: string;
   accent: string;
+  task: ModeTaskDefinition;
 }
 
-export interface ProjectInput {
+export interface ProjectProfile {
   projectName: string;
   siteUrl: string;
   market: string;
   language: string;
   conversion: string;
+  primaryGoal: string;
   audience: string;
   businessModel: string;
+  capacity: string;
+  allowNetworkEvidence: boolean;
+  allowStateDraft: boolean;
+}
+
+export interface ModeDraft {
+  objective: string;
+  details: string;
+  scope: string;
+  timing: string;
+}
+
+export type ModeDrafts = Record<ModeId, ModeDraft>;
+
+export interface WorkspaceDraftV2 {
+  schemaVersion: 2;
+  profile: ProjectProfile;
+  modes: ModeDrafts;
+  sharedContext: string;
+}
+
+/** Flat, provider-facing project payload assembled for one analysis mode. */
+export interface ProjectInput extends ProjectProfile {
   objective: string;
   scope: string;
   details: string;
-  capacity: string;
   decisionWindow: string;
-  allowNetworkEvidence: boolean;
-  allowStateDraft: boolean;
 }
 
 export interface EvidenceFile {

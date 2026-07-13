@@ -129,6 +129,7 @@ select:disabled {
   align-items: center;
   min-width: 0;
   gap: 10px;
+  text-decoration: none;
 }
 
 .brand-lockup img {
@@ -265,6 +266,15 @@ select:disabled {
   display: grid;
   grid-template-columns: 236px minmax(560px, 1fr) 324px;
   align-items: start;
+  min-height: calc(100vh - 64px);
+}
+
+.workspace-grid--setup {
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--surface);
+}
+
+.workspace-grid--setup .main-workspace {
   min-height: calc(100vh - 64px);
 }
 
@@ -410,11 +420,207 @@ select:disabled {
   background: var(--surface);
 }
 
+.workspace-loading {
+  display: grid;
+  min-height: calc(100vh - 64px);
+  place-content: center;
+  justify-items: center;
+  color: var(--muted);
+  gap: 12px;
+  font-size: 11px;
+}
+
+.workspace-loading__mark {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 850ms linear infinite;
+}
+
 .project-form,
 .report-view {
   width: min(100%, 940px);
   margin: 0 auto;
   padding: 38px 44px 20px;
+}
+
+.workspace-grid--setup .project-setup {
+  width: min(100%, 920px);
+  padding-top: 54px;
+  padding-bottom: 64px;
+}
+
+.project-setup__intro {
+  padding-bottom: 34px;
+}
+
+.project-setup__advanced,
+.mode-task-form__advanced {
+  padding: 0;
+}
+
+.advanced-summary {
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 720;
+  list-style: none;
+}
+
+.advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-summary::after {
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  content: "";
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 150ms ease;
+}
+
+details[open] > .advanced-summary::after {
+  transform: rotate(225deg) translate(-2px, -2px);
+}
+
+.advanced-summary svg {
+  color: var(--blue);
+}
+
+.project-setup__advanced-grid,
+.project-setup__context,
+.mode-task-form__advanced-fields {
+  margin-bottom: 22px;
+}
+
+.project-setup__context {
+  margin-top: 18px;
+}
+
+.project-setup__permissions {
+  padding: 17px 0 23px;
+  border-top: 1px solid var(--line);
+}
+
+.project-setup__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 26px;
+}
+
+.project-setup__actions .run-button {
+  min-width: 196px;
+}
+
+.project-summary {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) auto auto;
+  align-items: center;
+  margin: -11px 0 31px;
+  padding: 0 0 23px;
+  border-bottom: 1px solid var(--line-strong);
+  gap: 24px;
+}
+
+.project-summary__identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10px;
+}
+
+.project-summary__identity > svg {
+  flex: 0 0 auto;
+  color: var(--cyan);
+}
+
+.project-summary__identity > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.project-summary__identity strong,
+.project-summary__identity > div > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-summary__identity strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.project-summary__identity > div > span:last-child:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.project-summary__facts {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  margin: 0;
+}
+
+.project-summary__facts > div {
+  display: grid;
+  max-width: 142px;
+  padding: 0 13px;
+  border-left: 1px solid var(--line);
+  gap: 3px;
+}
+
+.project-summary__facts dt {
+  color: var(--muted-light);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.project-summary__facts dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-summary__edit {
+  white-space: nowrap;
+}
+
+.mode-task-form {
+  padding-top: 31px;
+}
+
+.mode-task-form__required {
+  margin-top: 17px;
+}
+
+.mode-task-form__advanced-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.mode-task-form__advanced-fields .field:first-child {
+  grid-column: 1 / -1;
+}
+
+.mode-task-form__advanced-fields .field:last-child:nth-child(2) {
+  grid-column: 1 / -1;
 }
 
 .mode-intro {
@@ -1768,6 +1974,25 @@ select:disabled {
     grid-template-columns: 218px minmax(540px, 1fr);
   }
 
+  .workspace-grid.workspace-grid--setup {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .project-summary__facts {
+    grid-column: 1 / -1;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .project-summary__facts > div:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
   .context-panel {
     position: static;
     grid-column: 2;
@@ -1874,6 +2099,11 @@ select:disabled {
     padding: 27px 18px 18px;
   }
 
+  .workspace-grid--setup .project-setup {
+    padding-top: 38px;
+    padding-bottom: 48px;
+  }
+
   .run-status {
     top: 120px;
   }
@@ -1915,8 +2145,54 @@ select:disabled {
   }
 
   .form-grid--two,
-  .context-panel {
+  .context-panel,
+  .mode-task-form__advanced-fields {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-summary {
+    grid-template-columns: minmax(0, 1fr) 38px;
+    margin-top: -5px;
+    gap: 12px;
+  }
+
+  .project-summary__edit {
+    width: 38px;
+    min-width: 38px;
+    padding: 0;
+  }
+
+  .project-summary__edit span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .project-summary__facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .project-summary__facts > div {
+    max-width: none;
+    padding: 0 9px;
+  }
+
+  .project-summary__facts dd {
+    white-space: normal;
+  }
+
+  .mode-task-form__advanced-fields .field,
+  .mode-task-form__advanced-fields .field:first-child,
+  .mode-task-form__advanced-fields .field:last-child:nth-child(2) {
+    grid-column: auto;
+  }
+
+  .project-setup__actions .run-button {
+    width: 100%;
   }
 
   .provider-panel {

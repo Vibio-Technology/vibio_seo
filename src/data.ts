@@ -1,4 +1,12 @@
-import type { ModeDefinition, ProjectInput, ProviderDefinition } from "./types";
+import type {
+  ModeDefinition,
+  ModeDraft,
+  ModeDrafts,
+  ProjectInput,
+  ProjectProfile,
+  ProviderDefinition,
+  WorkspaceDraftV2,
+} from "./types";
 
 export const MODES: ModeDefinition[] = [
   {
@@ -12,6 +20,26 @@ export const MODES: ModeDefinition[] = [
     evidenceHint: "推荐上传页面清单、GSC 导出、历史计划或业务说明。",
     output: "主导约束、Now / Next / Later、负责人、验证与停止条件",
     accent: "blue",
+    task: {
+      objective: {
+        label: "这一阶段最想推进什么结果？",
+        placeholder: "留空时使用项目的主要目标",
+        rows: 3,
+      },
+      details: {
+        label: "现有资源与限制",
+        placeholder: "例如：GSC 已接入，开发每周可投入 2 天",
+        rows: 4,
+      },
+      scope: {
+        label: "计划范围",
+        placeholder: "全站、某个市场或页面组",
+      },
+      timing: {
+        label: "决策窗口",
+        placeholder: "例如：本季度或接下来 6 周",
+      },
+    },
   },
   {
     id: "audit",
@@ -24,6 +52,22 @@ export const MODES: ModeDefinition[] = [
     evidenceHint: "可直接抓取公开 URL，或上传 HTML、DOM、robots、sitemap 与数据导出。",
     output: "观察证据、影响边界、置信度、优先级、修复和复验方式",
     accent: "cyan",
+    task: {
+      objective: {
+        label: "这次最想确认什么？",
+        placeholder: "留空时使用项目的主要目标",
+        rows: 3,
+      },
+      details: {
+        label: "已观察到的症状",
+        placeholder: "例如：产品页近三个月几乎没有自然曝光",
+        rows: 4,
+      },
+      scope: {
+        label: "重点页面或目录",
+        placeholder: "例如：/products/ 或某个页面模板",
+      },
+    },
   },
   {
     id: "fix",
@@ -36,6 +80,23 @@ export const MODES: ModeDefinition[] = [
     evidenceHint: "推荐上传相关源码、模板、构建 HTML、审计报告或配置片段。",
     output: "修复契约、补丁/交接说明、验证清单、未验证项与回滚条件",
     accent: "orange",
+    task: {
+      objective: {
+        label: "要修复的已确认问题",
+        placeholder: "粘贴已验证的审计发现或目标行为",
+        required: true,
+        rows: 3,
+      },
+      details: {
+        label: "当前实现与技术栈",
+        placeholder: "框架/CMS、当前实现、期望行为与回滚要求",
+        rows: 4,
+      },
+      scope: {
+        label: "允许修改的范围",
+        placeholder: "例如：仅产品详情页模板，不改 CMS 数据",
+      },
+    },
   },
   {
     id: "keyword",
@@ -48,6 +109,22 @@ export const MODES: ModeDefinition[] = [
     evidenceHint: "推荐上传匿名 RFQ 用语、GSC、广告搜索词、页面清单或竞品样本。",
     output: "查询族、验证状态、页面映射、蚕食风险与投资顺序",
     accent: "violet",
+    task: {
+      objective: {
+        label: "要研究哪个产品或主题？",
+        placeholder: "留空时使用项目的主要目标",
+        rows: 3,
+      },
+      details: {
+        label: "已知买家用语与任务",
+        placeholder: "询盘用语、种子表达、采购场景或竞品样本",
+        rows: 4,
+      },
+      scope: {
+        label: "需要映射的页面",
+        placeholder: "已有落地页、页面清单或待建页面类型",
+      },
+    },
   },
   {
     id: "write",
@@ -60,6 +137,23 @@ export const MODES: ModeDefinition[] = [
     evidenceHint: "推荐上传专家访谈、产品资料、来源、现有页面与已验证关键词映射。",
     output: "目标语言成稿、metadata、证据账本、内链计划与对抗审查",
     accent: "green",
+    task: {
+      objective: {
+        label: "要创建或改写什么页面？",
+        placeholder: "页面类型、主题或目标查询",
+        required: true,
+        rows: 3,
+      },
+      details: {
+        label: "事实、CTA 与品牌边界",
+        placeholder: "必须回答的问题、可引用事实、品牌语气和不能声称的内容",
+        rows: 4,
+      },
+      scope: {
+        label: "目标查询与页面范围",
+        placeholder: "查询族、现有 URL 或新页面位置",
+      },
+    },
   },
   {
     id: "link",
@@ -72,6 +166,23 @@ export const MODES: ModeDefinition[] = [
     evidenceHint: "推荐上传页面库存、抓取链接表、外链导出与真实可推广资产说明。",
     output: "donor/目标页建议、机会池、编辑理由、风险与待人工审核草稿",
     accent: "gold",
+    task: {
+      objective: {
+        label: "要支持哪个目标页面？",
+        placeholder: "输入 URL、页面名称或页面组",
+        required: true,
+        rows: 3,
+      },
+      details: {
+        label: "可用资产与真实关系",
+        placeholder: "可推广内容、合作伙伴、已知孤儿页或外链导出",
+        rows: 4,
+      },
+      scope: {
+        label: "链接范围",
+        placeholder: "内部发现、商业路径、外部权威或组合",
+      },
+    },
   },
   {
     id: "review",
@@ -84,6 +195,27 @@ export const MODES: ModeDefinition[] = [
     evidenceHint: "推荐上传 GSC/GA4/CRM 聚合导出、实验文件、上线产物或历史报告。",
     output: "七类判定、证据限制、保留/扩展/修订/回退决策与下一窗口",
     accent: "red",
+    task: {
+      objective: {
+        label: "要复盘哪项已上线变更？",
+        placeholder: "说明改了什么以及预期机制",
+        required: true,
+        rows: 3,
+      },
+      details: {
+        label: "指标、护栏与同期干扰",
+        placeholder: "主指标、护栏、可用数据与同期活动",
+        rows: 4,
+      },
+      scope: {
+        label: "受影响的页面",
+        placeholder: "URL、目录、模板组或市场",
+      },
+      timing: {
+        label: "上线日期与比较窗口",
+        placeholder: "例如：2026-07-01 上线，按项目周期比较",
+      },
+    },
   },
   {
     id: "recover",
@@ -96,6 +228,27 @@ export const MODES: ModeDefinition[] = [
     evidenceHint: "推荐上传同口径前后窗口、变更记录、受影响 URL、GSC 与部署历史。",
     output: "异常范围、原因树、证据强度、可逆动作与观察/停止条件",
     accent: "slate",
+    task: {
+      objective: {
+        label: "发生了什么下降或索引异常？",
+        placeholder: "描述可观察的流量、曝光、排名或索引变化",
+        required: true,
+        rows: 3,
+      },
+      details: {
+        label: "同期变更与事件",
+        placeholder: "部署、迁移、内容调整、安全事件或人工处置",
+        rows: 4,
+      },
+      scope: {
+        label: "受影响范围",
+        placeholder: "目录、市场、设备、查询类型或 URL 组",
+      },
+      timing: {
+        label: "异常开始时间",
+        placeholder: "准确日期或大约时间窗口",
+      },
+    },
   },
 ];
 
@@ -157,21 +310,51 @@ export const FALLBACK_PROVIDERS: ProviderDefinition[] = [
   },
 ];
 
-export const EMPTY_PROJECT: ProjectInput = {
+export const EMPTY_PROJECT_PROFILE: ProjectProfile = {
   projectName: "",
   siteUrl: "",
   market: "",
   language: "",
   conversion: "",
+  primaryGoal: "",
   audience: "",
   businessModel: "",
+  capacity: "",
+  allowNetworkEvidence: true,
+  allowStateDraft: true,
+};
+
+export const EMPTY_MODE_DRAFT: ModeDraft = {
+  objective: "",
+  details: "",
+  scope: "",
+  timing: "",
+};
+
+export const EMPTY_MODE_DRAFTS: ModeDrafts = {
+  plan: { ...EMPTY_MODE_DRAFT },
+  audit: { ...EMPTY_MODE_DRAFT },
+  fix: { ...EMPTY_MODE_DRAFT },
+  keyword: { ...EMPTY_MODE_DRAFT },
+  write: { ...EMPTY_MODE_DRAFT },
+  link: { ...EMPTY_MODE_DRAFT },
+  review: { ...EMPTY_MODE_DRAFT },
+  recover: { ...EMPTY_MODE_DRAFT },
+};
+
+export const EMPTY_WORKSPACE_DRAFT: WorkspaceDraftV2 = {
+  schemaVersion: 2,
+  profile: { ...EMPTY_PROJECT_PROFILE },
+  modes: EMPTY_MODE_DRAFTS,
+  sharedContext: "",
+};
+
+export const EMPTY_PROJECT: ProjectInput = {
+  ...EMPTY_PROJECT_PROFILE,
   objective: "",
   scope: "",
   details: "",
-  capacity: "",
   decisionWindow: "",
-  allowNetworkEvidence: true,
-  allowStateDraft: true,
 };
 
 export const ACCEPTED_EVIDENCE = ".csv,.json,.html,.htm,.md,.txt,.xml";

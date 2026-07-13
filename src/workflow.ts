@@ -169,9 +169,10 @@ function truncateReportForContext(value: string): { report: string; truncated: b
 export function buildWorkflowPlan(
   project: ProjectInput,
   evidence: readonly EvidenceFile[] = [],
+  reviewProject: ProjectInput = project,
 ): WorkflowStep[] {
   const recoveryReady = hasRecoverySignal(`${projectText(project)}\n${evidenceSignalText(evidence)}`);
-  const reviewReady = hasReviewSignal(project, evidence);
+  const reviewReady = hasReviewSignal(reviewProject, evidence);
 
   return WORKFLOW_MODE_ORDER.map((mode) => {
     if (mode === "recover" && !recoveryReady) {
