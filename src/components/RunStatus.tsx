@@ -19,7 +19,12 @@ const ORDER: Record<RunStage, number> = {
 
 const ACTIVE_ICONS = [CircleDashed, SearchCheck, Sparkles, Check];
 
-export function RunStatus({ stage }: { stage: RunStage }) {
+interface RunStatusProps {
+  stage: RunStage;
+  analysisLabel?: string;
+}
+
+export function RunStatus({ stage, analysisLabel }: RunStatusProps) {
   if (stage === "idle") return null;
   const activeIndex = ORDER[stage];
 
@@ -32,13 +37,14 @@ export function RunStatus({ stage }: { stage: RunStage }) {
           const finished = index < activeIndex || stage === "complete";
           const active = index === activeIndex && stage !== "complete";
           const Icon = active ? LoaderCircle : finished ? Check : ACTIVE_ICONS[index];
+          const label = step.id === "analyzing" && analysisLabel ? analysisLabel : step.label;
           return (
             <div
               key={step.id}
               className={`run-status__step${active ? " is-active" : ""}${finished ? " is-finished" : ""}`}
             >
               <span><Icon size={14} className={active ? "spin" : ""} /></span>
-              <strong>{step.label}</strong>
+              <strong>{label}</strong>
             </div>
           );
         })

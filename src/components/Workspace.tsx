@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Sparkles,
   TriangleAlert,
+  Workflow,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -32,7 +33,13 @@ import type {
   ProviderDefinition,
   RunRecord,
   RunStage,
+  WorkflowStep,
 } from "../types";
+import {
+  aggregateWorkflowMarkdown,
+  buildWorkflowContext,
+  buildWorkflowPlan,
+} from "../workflow";
 import { EvidencePanel } from "./EvidencePanel";
 import { HistoryDrawer } from "./HistoryDrawer";
 import { ModeRail } from "./ModeRail";
@@ -40,6 +47,7 @@ import { ProjectForm } from "./ProjectForm";
 import { ProviderPanel } from "./ProviderPanel";
 import { ReportView } from "./ReportView";
 import { RunStatus } from "./RunStatus";
+import { WorkflowProgress } from "./WorkflowProgress";
 
 const DEFAULT_SETTINGS: ModelSettings = {
   provider: FALLBACK_PROVIDERS[0].id,
@@ -48,6 +56,16 @@ const DEFAULT_SETTINGS: ModelSettings = {
 };
 
 const INSPECT_MODES = new Set<ModeId>(["audit", "fix", "review", "recover", "plan", "link"]);
+
+type ExecutionKind = "single" | "workflow";
+
+interface WorkflowExecution {
+  signature: string;
+  startedAt: string;
+  inspectionComplete: boolean;
+  auditReport?: Record<string, unknown>;
+  steps: WorkflowStep[];
+}
 
 async function readApiError(response: Response): Promise<string> {
   try {
@@ -84,6 +102,93 @@ function validateProject(project: ProjectInput, settings: ModelSettings): string
   return null;
 }
 
+function workflowInputSignature(
+  project: ProjectInput,
+  settings: ModelSettings,
+  evidence: EvidenceFile[],
+  maxPages: number,
+): string {
+  return JSON.stringify({
+    project,
+    provider: settings.provider,
+    model: settings.model,
+    maxPages,
+    evidence: evidence.map(({ id: _id, ...file }) => file),
+  });
+}
+
+function inspectionUnavailable(report: Record<string, unknown> | undefined): boolean {
+  return report?.evidence_status === "unavailable";
+}
+
+function scrollPageTop(): void {
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  });
+}
+
+async function inspectSite(
+  project: ProjectInput,
+  settings: ModelSettings,
+  maxPages: number,
+): Promise<Record<string, unknown>> {
+  const response = await fetch("/api/inspect", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Vibio-Api-Key": settings.apiKey,
+    },
+    body: JSON.stringify({
+      url: project.siteUrl,
+      max_pages: maxPages,
+      production: false,
+    }),
+  });
+  if (!response.ok) {
+    return {
+      evidence_status: "unavailable",
+      reason: await readApiError(response),
+    };
+  }
+  const inspection = (await response.json()) as InspectResponse;
+  return inspection.report;
+}
+
+async function analyzeMode({
+  mode,
+  project,
+  settings,
+  evidence,
+  auditReport,
+  workflowContext,
+}: {
+  mode: ModeId;
+  project: ProjectInput;
+  settings: ModelSettings;
+  evidence: EvidenceFile[];
+  auditReport?: Record<string, unknown>;
+  workflowContext?: unknown;
+}): Promise<AnalysisResponse> {
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Vibio-Api-Key": settings.apiKey,
+    },
+    body: JSON.stringify({
+      provider: settings.provider,
+      model: settings.model,
+      mode,
+      project,
+      evidence: evidence.map(({ id: _id, ...file }) => file),
+      audit_report: auditReport,
+      ...(workflowContext === undefined ? {} : { workflow_context: workflowContext }),
+    }),
+  });
+  if (!response.ok) throw new Error(await readApiError(response));
+  return (await response.json()) as AnalysisResponse;
+}
+
 export function Workspace() {
   const [modeId, setModeId] = useState<ModeId>("audit");
   const [project, setProject] = useState<ProjectInput>(EMPTY_PROJECT);
@@ -98,13 +203,53 @@ export function Workspace() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [apiConnected, setApiConnected] = useState<boolean | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [executionKind, setExecutionKind] = useState<ExecutionKind | null>(null);
+  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const runLock = useRef(false);
+  const workflowExecution = useRef<WorkflowExecution | null>(null);
 
   const mode = useMemo(
     () => MODES.find((item) => item.id === modeId) ?? MODES[0],
     [modeId],
   );
   const running = ["validating", "collecting", "analyzing"].includes(stage);
+  const workflowRunning = running && executionKind === "workflow";
+  const singleRunning = running && executionKind === "single";
+  const failedWorkflowStep = workflowSteps.find((step) => step.status === "error");
+  const currentWorkflowSignature = useMemo(
+    () => workflowInputSignature(project, settings, evidence, maxPages),
+    [evidence, maxPages, project, settings.model, settings.provider],
+  );
+  const workflowCanResume = Boolean(
+    failedWorkflowStep &&
+    workflowExecution.current?.signature === currentWorkflowSignature,
+  );
+  const workflowWillRetryInspection = Boolean(
+    workflowCanResume &&
+    workflowExecution.current?.inspectionComplete === false &&
+    project.siteUrl &&
+    project.allowNetworkEvidence,
+  );
+  const workflowAnalysisLabel = useMemo(() => {
+    const runnable = workflowSteps.filter((step) => step.status !== "skipped");
+    const current = runnable.findIndex((step) => step.status === "running");
+    if (current < 0) return undefined;
+    const modeLabel = MODES.find((item) => item.id === runnable[current].mode)?.label;
+    return `能力链 ${current + 1}/${runnable.length} · ${modeLabel ?? runnable[current].mode}`;
+  }, [workflowSteps]);
+  const workflowContract = useMemo(() => {
+    const completed = workflowSteps.filter((step) => step.status === "complete").length;
+    const skipped = workflowSteps.filter((step) => step.status === "skipped").length;
+    if (failedWorkflowStep) {
+      const label = MODES.find((item) => item.id === failedWorkflowStep.mode)?.label;
+      return workflowWillRetryInspection
+        ? "URL 证据将重试 · 恢复后重算已完成阶段"
+        : workflowCanResume
+          ? `已完成 ${completed} 步 · 可从${label ?? failedWorkflowStep.mode}继续`
+        : "输入已变化 · 将从头重新运行";
+    }
+    return `已完成 ${completed} 步 · 条件跳过 ${skipped} 步`;
+  }, [failedWorkflowStep, workflowCanResume, workflowSteps, workflowWillRetryInspection]);
 
   useEffect(() => {
     setProject(loadProject(EMPTY_PROJECT));
@@ -143,6 +288,8 @@ export function Workspace() {
     setRecord(null);
     setStage("idle");
     setError("");
+    setWorkflowSteps([]);
+    workflowExecution.current = null;
   };
 
   const runAnalysis = async () => {
@@ -157,13 +304,18 @@ export function Workspace() {
     if (validationError) {
       setError(validationError);
       setStage("error");
+      scrollPageTop();
       runLock.current = false;
       return;
     }
 
+    workflowExecution.current = null;
+    setWorkflowSteps([]);
+    setExecutionKind("single");
     setError("");
     setStage("validating");
     setRecord(null);
+    scrollPageTop();
 
     let auditReport: Record<string, unknown> | undefined;
     const shouldInspect = Boolean(
@@ -173,48 +325,17 @@ export function Workspace() {
     try {
       if (shouldInspect) {
         setStage("collecting");
-        const inspectResponse = await fetch("/api/inspect", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Vibio-Api-Key": runSettings.apiKey,
-          },
-          body: JSON.stringify({
-            url: runProject.siteUrl,
-            max_pages: runMaxPages,
-            production: false,
-          }),
-        });
-        if (inspectResponse.ok) {
-          const inspection = (await inspectResponse.json()) as InspectResponse;
-          auditReport = inspection.report;
-        } else {
-          auditReport = {
-            evidence_status: "unavailable",
-            reason: await readApiError(inspectResponse),
-          };
-        }
+        auditReport = await inspectSite(runProject, runSettings, runMaxPages);
       }
 
       setStage("analyzing");
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Vibio-Api-Key": runSettings.apiKey,
-        },
-        body: JSON.stringify({
-          provider: runSettings.provider,
-          model: runSettings.model,
-          mode: runModeId,
-          project: runProject,
-          evidence: runEvidence.map(({ id: _id, ...file }) => file),
-          audit_report: auditReport,
-        }),
+      const result = await analyzeMode({
+        mode: runModeId,
+        project: runProject,
+        settings: runSettings,
+        evidence: runEvidence,
+        auditReport,
       });
-
-      if (!response.ok) throw new Error(await readApiError(response));
-      const result = (await response.json()) as AnalysisResponse;
       const createdAt = result.created_at || new Date().toISOString();
       const nextRecord: RunRecord = {
         id: crypto.randomUUID(),
@@ -231,16 +352,208 @@ export function Workspace() {
         evidence: runEvidence.map(({ name, type, size }) => ({ name, type, size })),
         createdAt,
       };
+      const saved = saveRun(nextRecord);
       setRecord(nextRecord);
-      setRuns(saveRun(nextRecord));
+      setRuns(saved.runs);
+      if (!saved.persisted) {
+        setError("报告已生成，但浏览器存储空间不足；刷新页面后该记录将不保留。");
+      }
       setStage("complete");
       setApiConnected(true);
+      scrollPageTop();
     } catch (runError) {
       const message = runError instanceof Error ? runError.message : "运行失败，请稍后重试。";
       setError(message);
       setStage("error");
+      scrollPageTop();
     } finally {
       runLock.current = false;
+      setExecutionKind(null);
+    }
+  };
+
+  const runWorkflow = async () => {
+    if (runLock.current) return;
+    runLock.current = true;
+    const runProject = { ...project };
+    const runSettings = { ...settings };
+    const runEvidence = evidence.map((file) => ({ ...file }));
+    const runMaxPages = maxPages;
+    const validationError = validateProject(runProject, runSettings);
+    if (validationError) {
+      setError(validationError);
+      setStage("error");
+      scrollPageTop();
+      runLock.current = false;
+      return;
+    }
+
+    const signature = currentWorkflowSignature;
+    const existing = workflowExecution.current;
+    const canResume = Boolean(
+      existing &&
+      existing.signature === signature &&
+      existing.steps.some((step) => step.status === "error"),
+    );
+    const execution: WorkflowExecution = canResume && existing
+      ? {
+          ...existing,
+          steps: existing.steps.map((step) =>
+            step.status === "error"
+              ? { mode: step.mode, status: "pending" }
+              : { ...step },
+          ),
+        }
+      : {
+          signature,
+          startedAt: new Date().toISOString(),
+          inspectionComplete: false,
+          steps: buildWorkflowPlan(runProject, runEvidence),
+        };
+
+    const publishSteps = (steps: WorkflowStep[]) => {
+      execution.steps = steps;
+      workflowExecution.current = execution;
+      setWorkflowSteps(steps.map((step) => ({ ...step })));
+    };
+
+    publishSteps(execution.steps);
+    setExecutionKind("workflow");
+    setError("");
+    setRecord(null);
+    setStage("validating");
+    scrollPageTop();
+
+    try {
+      const shouldInspect = Boolean(
+        runProject.siteUrl && runProject.allowNetworkEvidence,
+      );
+      if (!execution.inspectionComplete) {
+        if (shouldInspect) {
+          const wasUnavailable = inspectionUnavailable(execution.auditReport);
+          setStage("collecting");
+          try {
+            execution.auditReport = await inspectSite(
+              runProject,
+              runSettings,
+              runMaxPages,
+            );
+          } catch (inspectionError) {
+            execution.auditReport = {
+              evidence_status: "unavailable",
+              reason: inspectionError instanceof Error
+                ? inspectionError.message
+                : "公开 URL 证据暂时不可用。",
+            };
+          }
+          execution.inspectionComplete = !inspectionUnavailable(execution.auditReport);
+          if (wasUnavailable && execution.inspectionComplete) {
+            execution.steps = execution.steps.map((item) =>
+              item.status === "complete"
+                ? { mode: item.mode, status: "pending" }
+                : item,
+            );
+            publishSteps(execution.steps);
+          }
+        } else {
+          execution.inspectionComplete = true;
+        }
+        workflowExecution.current = execution;
+      }
+
+      let steps = execution.steps;
+      for (let index = 0; index < steps.length; index += 1) {
+        const step = steps[index];
+        if (step.status === "complete" || step.status === "skipped") continue;
+
+        steps = steps.map((item, itemIndex) =>
+          itemIndex === index
+            ? { ...item, status: "running", reason: undefined }
+            : item,
+        );
+        publishSteps(steps);
+        setStage("analyzing");
+
+        try {
+          const result = await analyzeMode({
+            mode: step.mode,
+            project: runProject,
+            settings: runSettings,
+            evidence: runEvidence,
+            auditReport: execution.auditReport,
+            workflowContext: buildWorkflowContext(steps),
+          });
+          steps = steps.map((item, itemIndex) =>
+            itemIndex === index
+              ? {
+                  ...item,
+                  status: "complete",
+                  report: result.report,
+                  createdAt: result.created_at || new Date().toISOString(),
+                }
+              : item,
+          );
+          publishSteps(steps);
+          setApiConnected(true);
+        } catch (stepError) {
+          const message = stepError instanceof Error
+            ? stepError.message
+            : "该阶段运行失败。";
+          steps = steps.map((item, itemIndex) =>
+            itemIndex === index
+              ? { ...item, status: "error", reason: message }
+              : item,
+          );
+          publishSteps(steps);
+          const label = MODES.find((item) => item.id === step.mode)?.label ?? step.mode;
+          setError(`${label}阶段失败：${message}`);
+          setStage("error");
+          scrollPageTop();
+          return;
+        }
+      }
+
+      const completedAt = new Date().toISOString();
+      const nextRecord: RunRecord = {
+        id: crypto.randomUUID(),
+        mode: "workflow",
+        projectName: runProject.projectName,
+        siteUrl: runProject.siteUrl,
+        market: runProject.market,
+        language: runProject.language,
+        objective: runProject.objective,
+        provider: runSettings.provider,
+        model: runSettings.model,
+        report: aggregateWorkflowMarkdown(runProject, steps),
+        auditReport: execution.auditReport,
+        evidence: runEvidence.map(({ name, type, size }) => ({ name, type, size })),
+        createdAt: completedAt,
+        workflow: {
+          status: "complete",
+          startedAt: execution.startedAt,
+          completedAt,
+          steps: steps.map(({ report: _report, ...step }) => step),
+        },
+      };
+      const saved = saveRun(nextRecord);
+      setRecord(nextRecord);
+      setRuns(saved.runs);
+      if (!saved.persisted) {
+        setError("报告已生成，但浏览器存储空间不足；刷新页面后该记录将不保留。");
+      }
+      setStage("complete");
+      setApiConnected(true);
+      scrollPageTop();
+    } catch (workflowError) {
+      const message = workflowError instanceof Error
+        ? workflowError.message
+        : "自动流程无法完成。";
+      setError(message);
+      setStage("error");
+      scrollPageTop();
+    } finally {
+      runLock.current = false;
+      setExecutionKind(null);
     }
   };
 
@@ -248,6 +561,8 @@ export function Workspace() {
     setRecord(null);
     setStage("idle");
     setError("");
+    setWorkflowSteps([]);
+    workflowExecution.current = null;
   };
 
   return (
@@ -278,7 +593,10 @@ export function Workspace() {
         <ModeRail modes={MODES} activeMode={modeId} onChange={changeMode} disabled={running} />
 
         <main className="main-workspace">
-          <RunStatus stage={stage} />
+          <RunStatus
+            stage={stage}
+            analysisLabel={workflowRunning ? workflowAnalysisLabel : undefined}
+          />
           {error && (
             <div className="error-banner" role="alert">
               <TriangleAlert size={17} />
@@ -291,25 +609,51 @@ export function Workspace() {
             <ReportView record={record} onReset={resetRun} />
           ) : (
             <>
+              <WorkflowProgress steps={workflowSteps} />
               <ProjectForm mode={mode} project={project} onChange={setProject} disabled={running} />
               <footer className="run-bar">
                 <div className="run-bar__contract">
                   <Sparkles size={17} aria-hidden="true" />
                   <div>
-                    <span>本次交付</span>
-                    <strong>{mode.output}</strong>
+                    <span>{workflowSteps.length > 0 ? "自动流程" : "本次交付"}</span>
+                    <strong>{workflowSteps.length > 0 ? workflowContract : mode.output}</strong>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="run-button"
-                  onClick={() => void runAnalysis()}
-                  disabled={running}
-                >
-                  {running ? <Sparkles size={18} className="pulse" /> : <Play size={18} fill="currentColor" />}
-                  <span>{running ? "正在运行" : `运行${mode.label}`}</span>
-                  {!running && <ArrowRight size={17} />}
-                </button>
+                <div className="run-actions">
+                  <button
+                    type="button"
+                    className="run-button run-button--secondary"
+                    onClick={() => void runAnalysis()}
+                    disabled={running}
+                  >
+                    {singleRunning
+                      ? <Sparkles size={18} className="pulse" />
+                      : <Play size={18} fill="currentColor" />}
+                    <span>{singleRunning ? "正在运行" : `运行${mode.label}`}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="run-button"
+                    onClick={() => void runWorkflow()}
+                    disabled={running}
+                  >
+                    {workflowRunning
+                      ? <Sparkles size={18} className="pulse" />
+                      : <Workflow size={18} />}
+                    <span>
+                      {workflowRunning
+                        ? "自动流程运行中"
+                        : workflowWillRetryInspection
+                          ? "重试证据并继续"
+                          : failedWorkflowStep && workflowCanResume
+                          ? `从${MODES.find((item) => item.id === failedWorkflowStep.mode)?.label ?? failedWorkflowStep.mode}继续`
+                          : failedWorkflowStep
+                            ? "重新运行全流程"
+                            : "自动跑全流程"}
+                    </span>
+                    {!running && <ArrowRight size={17} className="run-button__arrow" />}
+                  </button>
+                </div>
               </footer>
             </>
           )}
@@ -359,10 +703,18 @@ export function Workspace() {
         onClose={() => setHistoryOpen(false)}
         onSelect={(selected) => {
           setRecord(selected);
-          setModeId(selected.mode);
+          if (selected.mode === "workflow") {
+            setWorkflowSteps(selected.workflow?.steps ?? []);
+          } else {
+            setModeId(selected.mode);
+            setWorkflowSteps([]);
+          }
+          workflowExecution.current = null;
+          setExecutionKind(null);
           setStage("complete");
           setHistoryOpen(false);
           setError("");
+          scrollPageTop();
         }}
         onClear={() => {
           clearRuns();

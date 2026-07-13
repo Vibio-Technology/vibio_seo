@@ -1,8 +1,9 @@
-import { Check, Clipboard, Code2, Download, FileText, RotateCcw, SearchCheck } from "lucide-react";
-import { useState } from "react";
+import { Check, Clipboard, Code2, Download, FileText, RotateCcw, SearchCheck, Workflow } from "lucide-react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { RunRecord } from "../types";
+import { WorkflowProgress } from "./WorkflowProgress";
 
 interface ReportViewProps {
   record: RunRecord;
@@ -24,9 +25,37 @@ function safeFileName(value: string): string {
 }
 
 export function ReportView({ record, onReset }: ReportViewProps) {
-  const [tab, setTab] = useState<"report" | "evidence">("report");
+  type ReportTab = "report" | "workflow" | "evidence";
+  const [tab, setTab] = useState<ReportTab>("report");
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const tabRefs = useRef<Partial<Record<ReportTab, HTMLButtonElement | null>>>({});
   const baseName = `${safeFileName(record.projectName)}-${record.mode}-${record.createdAt.slice(0, 10)}`;
+  const tabs: ReportTab[] = record.workflow
+    ? ["report", "workflow", "evidence"]
+    : ["report", "evidence"];
+
+  useEffect(() => {
+    setTab("report");
+    titleRef.current?.focus({ preventScroll: true });
+  }, [record.id]);
+
+  const selectTab = (next: ReportTab) => {
+    setTab(next);
+    window.requestAnimationFrame(() => tabRefs.current[next]?.focus());
+  };
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const current = tabs.indexOf(tab);
+    const next = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? tabs.length - 1
+        : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    selectTab(tabs[next]);
+  };
 
   const copyReport = async () => {
     try {
@@ -52,7 +81,7 @@ export function ReportView({ record, onReset }: ReportViewProps) {
       <header className="report-header">
         <div>
           <span className="eyebrow">运行完成 · {record.provider} / {record.model}</span>
-          <h1 id="report-title">{record.projectName}</h1>
+          <h1 id="report-title" ref={titleRef} tabIndex={-1}>{record.projectName}</h1>
           <p>{record.objective}</p>
         </div>
         <div className="report-actions">
@@ -92,23 +121,52 @@ export function ReportView({ record, onReset }: ReportViewProps) {
         <time dateTime={record.createdAt}>{new Date(record.createdAt).toLocaleString("zh-CN")}</time>
       </div>
 
-      <div className="report-tabs" role="tablist" aria-label="报告视图">
+      <div
+        className="report-tabs"
+        role="tablist"
+        aria-label="报告视图"
+        onKeyDown={handleTabKeyDown}
+      >
         <button
           type="button"
           role="tab"
+          id="report-tab-report"
+          aria-controls="report-panel-report"
           aria-selected={tab === "report"}
+          tabIndex={tab === "report" ? 0 : -1}
+          ref={(element) => { tabRefs.current.report = element; }}
           className={tab === "report" ? "is-active" : ""}
-          onClick={() => setTab("report")}
+          onClick={() => selectTab("report")}
         >
           <FileText size={16} />
           分析报告
         </button>
+        {record.workflow && (
+          <button
+            type="button"
+            role="tab"
+            id="report-tab-workflow"
+            aria-controls="report-panel-workflow"
+            aria-selected={tab === "workflow"}
+            tabIndex={tab === "workflow" ? 0 : -1}
+            ref={(element) => { tabRefs.current.workflow = element; }}
+            className={tab === "workflow" ? "is-active" : ""}
+            onClick={() => selectTab("workflow")}
+          >
+            <Workflow size={16} />
+            流程轨迹
+          </button>
+        )}
         <button
           type="button"
           role="tab"
+          id="report-tab-evidence"
+          aria-controls="report-panel-evidence"
           aria-selected={tab === "evidence"}
+          tabIndex={tab === "evidence" ? 0 : -1}
+          ref={(element) => { tabRefs.current.evidence = element; }}
           className={tab === "evidence" ? "is-active" : ""}
-          onClick={() => setTab("evidence")}
+          onClick={() => selectTab("evidence")}
         >
           <SearchCheck size={16} />
           证据清单
@@ -116,11 +174,33 @@ export function ReportView({ record, onReset }: ReportViewProps) {
       </div>
 
       {tab === "report" ? (
-        <article className="markdown-report">
+        <article
+          className="markdown-report"
+          role="tabpanel"
+          id="report-panel-report"
+          aria-labelledby="report-tab-report"
+          tabIndex={0}
+        >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{record.report}</ReactMarkdown>
         </article>
+      ) : tab === "workflow" && record.workflow ? (
+        <div
+          className="workflow-report"
+          role="tabpanel"
+          id="report-panel-workflow"
+          aria-labelledby="report-tab-workflow"
+          tabIndex={0}
+        >
+          <WorkflowProgress steps={record.workflow.steps} compact />
+        </div>
       ) : (
-        <div className="evidence-report">
+        <div
+          className="evidence-report"
+          role="tabpanel"
+          id="report-panel-evidence"
+          aria-labelledby="report-tab-evidence"
+          tabIndex={0}
+        >
           <div className="evidence-manifest">
             <h2>输入来源</h2>
             {record.siteUrl && (

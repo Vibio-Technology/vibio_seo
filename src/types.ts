@@ -100,7 +100,7 @@ export interface AnalysisResponse {
 
 export interface RunRecord {
   id: string;
-  mode: ModeId;
+  mode: ModeId | "workflow";
   projectName: string;
   siteUrl: string;
   market: string;
@@ -112,6 +112,38 @@ export interface RunRecord {
   auditReport?: Record<string, unknown>;
   evidence: EvidenceSummary[];
   createdAt: string;
+  workflow?: WorkflowRunSummary;
+}
+
+export type WorkflowStepStatus = "pending" | "running" | "complete" | "skipped" | "error";
+
+export interface WorkflowStep {
+  mode: ModeId;
+  status: WorkflowStepStatus;
+  report?: string;
+  reason?: string;
+  createdAt?: string;
+}
+
+export type WorkflowStepState = WorkflowStep;
+
+export interface WorkflowRunSummary {
+  status: "complete" | "partial";
+  startedAt: string;
+  completedAt?: string;
+  steps: WorkflowStep[];
+}
+
+export interface WorkflowContextReport {
+  mode: ModeId;
+  report: string;
+  truncated: boolean;
+  createdAt?: string;
+}
+
+export interface WorkflowContext {
+  schemaVersion: "vibio-web.workflow-context.v1";
+  completedReports: WorkflowContextReport[];
 }
 
 export interface ApiErrorPayload {

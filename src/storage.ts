@@ -6,6 +6,11 @@ const API_KEY = "vibio:model:api-key";
 const HISTORY_KEY = "vibio:runs";
 const HISTORY_LIMIT = 12;
 
+export interface SaveRunResult {
+  runs: RunRecord[];
+  persisted: boolean;
+}
+
 function readJson<T>(storage: Storage, key: string, fallback: T): T {
   try {
     const value = storage.getItem(key);
@@ -68,17 +73,22 @@ export function loadRuns(): RunRecord[] {
   }
 }
 
-export function saveRun(record: RunRecord): RunRecord[] {
+export function saveRun(record: RunRecord): SaveRunResult {
   const next = [record, ...loadRuns().filter((item) => item.id !== record.id)].slice(
     0,
     HISTORY_LIMIT,
   );
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-  } catch {
-    // The returned in-memory history still includes the completed run.
+  let candidate = next;
+  while (candidate.length > 0) {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(candidate));
+      return { runs: candidate, persisted: true };
+    } catch {
+      if (candidate.length === 1) break;
+      candidate = candidate.slice(0, -1);
+    }
   }
-  return next;
+  return { runs: next, persisted: false };
 }
 
 export function clearRuns(): void {

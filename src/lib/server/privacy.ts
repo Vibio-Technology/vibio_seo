@@ -2,6 +2,7 @@ export const MAX_REQUEST_BYTES = 2 * 1024 * 1024;
 export const MAX_PROJECT_BYTES = 24 * 1024;
 export const MAX_EVIDENCE_BYTES = 96 * 1024;
 export const MAX_AUDIT_REPORT_BYTES = 512 * 1024;
+export const MAX_WORKFLOW_CONTEXT_BYTES = 192 * 1024;
 export const MAX_PROVIDER_RESPONSE_BYTES = 2 * 1024 * 1024;
 export const MAX_API_KEY_LENGTH = 4096;
 export const MAX_JSON_DEPTH = 32;
@@ -154,6 +155,7 @@ export function validateAnalyzePayload(
   project: unknown,
   evidence: unknown,
   auditReport: unknown | null,
+  workflowContext: unknown | null = null,
 ): void {
   ensureJsonSize(project, "project", MAX_PROJECT_BYTES);
   ensureJsonSize(evidence, "evidence", MAX_EVIDENCE_BYTES);
@@ -162,6 +164,10 @@ export function validateAnalyzePayload(
   if (auditReport !== null) {
     ensureJsonSize(auditReport, "audit_report", MAX_AUDIT_REPORT_BYTES);
     scanSensitive(auditReport, "audit_report");
+  }
+  if (workflowContext !== null) {
+    ensureJsonSize(workflowContext, "workflow_context", MAX_WORKFLOW_CONTEXT_BYTES);
+    scanSensitive(workflowContext, "workflow_context");
   }
 }
 
